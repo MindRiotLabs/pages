@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // -------------------------------------------------------------
-    // Tools Category Tabs Handler
+    // Tools Category/Security Tabs Handler
     // -------------------------------------------------------------
     tabButtons.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -103,11 +103,25 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.add('active');
 
             const category = btn.getAttribute('data-category');
+            const security = btn.getAttribute('data-security');
 
             // Filter cards
             toolCards.forEach(card => {
                 const cardCategory = card.getAttribute('data-category');
-                if (category === 'all' || cardCategory === category) {
+                const cardSecurity = card.getAttribute('data-security');
+
+                let show = false;
+                if (category) {
+                    if (category === 'all' || cardCategory === category) {
+                        show = true;
+                    }
+                } else if (security) {
+                    if (cardSecurity === security) {
+                        show = true;
+                    }
+                }
+
+                if (show) {
                     card.classList.remove('hidden');
                 } else {
                     card.classList.add('hidden');

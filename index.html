@@ -290,11 +290,11 @@
                                 </li>
                             </ul>
                         </div>
-                        <button class="btn btn-primary open-audit-modal">Secure Your Sprint</button>
+                        <a href="#audit?package=sprint" class="btn btn-primary open-audit-modal">Secure Your Sprint</a>
                     </div>
                 </div>
                 <div class="advisory-tiers-note">
-                    Need an audit before building? Ask about our <strong>1-Week AI Opportunity & Security Audit ($4,500)</strong> or <strong>Fractional Chief AI Officer retainers ($7,500/mo)</strong>.
+                    Need an audit before building? Secure a <a href="#audit?package=audit" class="gradient-text font-bold" style="text-decoration: underline;">1-Week AI Opportunity & Security Audit ($4,500)</a> or ask about our <strong>Fractional Chief AI Officer retainers ($7,500/mo)</strong>.
                 </div>
             </div>
         </section>
@@ -410,6 +410,26 @@
                         <div class="case-block roi">
                             <div class="case-block-label">Impact ROI</div>
                             <p>Delivers pro-grade analytics at SaaS price points while completely eliminating typical manual errors.</p>
+                        </div>
+                </div>
+
+                <!-- Case 6: RecruitLoop ATS -->
+                <div class="case-card glass-panel animate-on-scroll">
+                    <div class="case-badge">Talent Acquisition & Automation</div>
+                    <h3>RecruitLoop ATS</h3>
+                    <p class="case-sub">AI Candidate Screening & Multi-Tenant Recruiter Operations</p>
+                    <div class="case-body">
+                        <div class="case-block problem">
+                            <div class="case-block-label">Problem</div>
+                            <p>SMBs spend 10+ hours a week manually reviewing résumés, tracking applicants in spreadsheets, and managing chaotic hiring pipelines.</p>
+                        </div>
+                        <div class="case-block solution">
+                            <div class="case-block-label">Solution</div>
+                            <p>Built an AI-first talent platform featuring automated résumé parsing, candidate score synthesis, and role-gated recruiter dashboards.</p>
+                        </div>
+                        <div class="case-block roi">
+                            <div class="case-block-label">Impact ROI</div>
+                            <p>Replaced manual screening bottlenecks with autonomous candidate scoring and accelerated time-to-hire.</p>
                         </div>
                     </div>
                 </div>
@@ -722,6 +742,17 @@
                         </select>
                         <div class="form-error">Please select your company revenue and size.</div>
                     </div>
+
+                    <div class="form-group" id="tierGroup">
+                        <label for="clientTier">Service Tier Interest</label>
+                        <select id="clientTier" required>
+                            <option value="" disabled selected>Select service tier...</option>
+                            <option value="sprint">2-Week AI Acceleration Sprint ($12,500)</option>
+                            <option value="audit">1-Week AI Opportunity & Security Audit ($4,500)</option>
+                            <option value="fractional">Fractional CAIO Retainer ($7,500/mo)</option>
+                        </select>
+                        <div class="form-error">Please select your service tier interest.</div>
+                    </div>
                     
                     <div class="form-group" id="bottleneckGroup">
                         <label for="clientBottleneck">Primary Operational Bottleneck</label>
@@ -779,6 +810,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js?v=3"></script>
 </body>
 </html>

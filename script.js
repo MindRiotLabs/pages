@@ -3,7 +3,17 @@
    Interactive Client-Side JavaScript
 */
 
-document.addEventListener('DOMContentLoaded', () => {
+
+// -------------------------------------------------------------
+// Supabase Database Configuration
+// -------------------------------------------------------------
+const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR_ANON_KEY_HERE";
+
+// Initialize Supabase Client (handles case when CDN fails to load)
+const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+function initApplication() {
     // -------------------------------------------------------------
     // DOM Element Selections
     // -------------------------------------------------------------
@@ -36,7 +46,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Modal Open / Close Handlers
     // -------------------------------------------------------------
     function openModal(e) {
-        if (e) e.preventDefault();
+        if (e && e.currentTarget) {
+            const href = e.currentTarget.getAttribute('href');
+            if (href && href.startsWith('#audit')) {
+                if (e.preventDefault) e.preventDefault();
+                window.location.hash = href;
+                return;
+            }
+        }
+
+        if (e && e.preventDefault) e.preventDefault();
         auditModal.classList.add('active');
         document.body.style.overflow = 'hidden'; // Prevent background scroll
         
@@ -51,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.overflow = ''; // Restore background scroll
         
         // Clear hash if it was #audit to support back navigation
-        if (window.location.hash === '#audit') {
+        if (window.location.hash.startsWith('#audit')) {
             history.pushState("", document.title, window.location.pathname + window.location.search);
         }
 
@@ -87,17 +106,42 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // URL Hash Routing for #audit modal trigger
-    if (window.location.hash === '#audit') {
-        openModal();
-    }
+    checkHashAndOpenModal();
 
     window.addEventListener('hashchange', () => {
-        if (window.location.hash === '#audit') {
-            openModal();
+        if (window.location.hash.startsWith('#audit')) {
+            checkHashAndOpenModal();
         } else if (auditModal.classList.contains('active')) {
             closeModal();
         }
     });
+
+    function checkHashAndOpenModal() {
+        const hash = window.location.hash;
+        if (hash.startsWith('#audit')) {
+            // Open modal
+            auditModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Check for package parameter
+            const queryPart = hash.split('?')[1];
+            if (queryPart) {
+                const params = new URLSearchParams(queryPart);
+                const pkg = params.get('package');
+                const tierSelect = document.getElementById('clientTier');
+                if (tierSelect && pkg) {
+                    if (pkg === 'sprint' || pkg === 'audit' || pkg === 'fractional') {
+                        tierSelect.value = pkg;
+                    }
+                }
+            }
+
+            // Auto-focus first field
+            setTimeout(() => {
+                document.getElementById('clientName').focus();
+            }, 100);
+        }
+    }
 
     // -------------------------------------------------------------
     // Smooth Scroll to Pricing
@@ -267,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return regex.test(email.trim());
     }
 
-    leadForm.addEventListener('submit', (e) => {
+    leadForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         clearFormErrors();
 
@@ -276,6 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const company = document.getElementById('clientCompany').value.trim();
         const industry = document.getElementById('clientIndustry').value;
         const size = document.getElementById('clientSize').value;
+        const tier = document.getElementById('clientTier').value;
         const bottleneck = document.getElementById('clientBottleneck').value.trim();
 
         let hasError = false;
@@ -310,6 +355,12 @@ document.addEventListener('DOMContentLoaded', () => {
             hasError = true;
         }
 
+        // Tier Validation
+        if (!tier) {
+            document.getElementById('tierGroup').classList.add('has-error');
+            hasError = true;
+        }
+
         // Bottleneck Validation
         if (!bottleneck) {
             document.getElementById('bottleneckGroup').classList.add('has-error');
@@ -333,10 +384,39 @@ document.addEventListener('DOMContentLoaded', () => {
             company,
             industry,
             companySize: size,
+            serviceTier: tier,
             operationalBottleneck: bottleneck,
             submittedAt: new Date().toISOString(),
             source: 'Opportunity Audit Lead Form'
         };
+
+        // Try inserting into Supabase audit_leads table
+        if (supabaseClient) {
+            try {
+                const { error } = await supabaseClient
+                    .from('audit_leads')
+                    .insert([
+                        {
+                            full_name: name,
+                            email: email,
+                            business_name: company,
+                            industry: industry,
+                            revenue_size: size,
+                            service_tier: tier,
+                            bottleneck: bottleneck
+                        }
+                    ]);
+                if (error) {
+                    console.error('[Supabase Error] Insert failed:', error.message);
+                } else {
+                    console.log('[Supabase Success] Lead inserted successfully.');
+                }
+            } catch (err) {
+                console.error('[Supabase Catch] Error submitting to database:', err);
+            }
+        } else {
+            console.warn('[Supabase Warning] Client not initialized. Data logged locally only.');
+        }
 
         // Save payload locally for audit trail
         try {
@@ -518,7 +598,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApplication);
+} else {
+    initApplication();
+}
 
 // Dynamic keyframe injection for drawer shake animation
 const styleSheet = document.createElement("style");

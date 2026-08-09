@@ -163,6 +163,68 @@
             </div>
         </section>
 
+        <!-- SOP Search Micro-Demo Section -->
+        <section id="sop-demo" class="section-padding container">
+            <div class="demo-header">
+                <h2>Interactive Demo: Private SOP Search Engine</h2>
+                <p>See how our secure, isolated AI models answer employee questions using your internal company documents—keeping 100% of your data private.</p>
+            </div>
+            
+            <div class="demo-container glass-panel">
+                <div class="demo-sidebar">
+                    <h4>Click a Sample Prompt</h4>
+                    <p class="sidebar-help">Click any operational question below to simulate an instant RAG vector lookup against company policy files.</p>
+                    <div class="prompt-chips">
+                        <button class="prompt-chip" data-prompt="refund">
+                            <span>What is our refund policy?</span>
+                            <span class="doc-ref">SOP-Billing-v3.pdf</span>
+                        </button>
+                        <button class="prompt-chip" data-prompt="dispatch">
+                            <span>How are field dispatch tickets prioritized?</span>
+                            <span class="doc-ref">Field-Ops-Manual.docx</span>
+                        </button>
+                        <button class="prompt-chip" data-prompt="subcontractors">
+                            <span>How do we onboard new sub-contractors?</span>
+                            <span class="doc-ref">HR-Onboarding-SOP.pdf</span>
+                        </button>
+                        <button class="prompt-chip" data-prompt="retention">
+                            <span>What is our data retention policy?</span>
+                            <span class="doc-ref">MindRiot-Security.pdf</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="demo-terminal">
+                    <div class="terminal-header">
+                        <div class="terminal-dots">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                        </div>
+                        <div class="terminal-title">Private RAG Console [Active Node]</div>
+                        <div class="privacy-badge">🔒 100% Isolated Data</div>
+                    </div>
+                    
+                    <div class="terminal-body" id="terminalBody">
+                        <div class="terminal-output init-message">
+                            <p class="console-log text-muted">[System] Node ready. Awaiting operational prompt...</p>
+                        </div>
+                    </div>
+                    
+                    <form class="terminal-input-group" id="terminalForm">
+                        <input type="text" id="terminalInput" placeholder="Or type your own custom question here..." autocomplete="off">
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            Query
+                            <svg class="btn-icon" viewBox="0 0 24 24">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
         <!-- Pricing / Product Section -->
         <section id="pricing" class="section-padding container">
             <div class="pricing-header">
@@ -365,9 +427,10 @@
             <!-- Tab Buttons -->
             <div class="tabs-container">
                 <button class="tab-btn active" data-category="all">All Tools</button>
-                <button class="tab-btn" data-category="rag">Document Intelligence / RAG</button>
-                <button class="tab-btn" data-category="automation">Process Automation</button>
-                <button class="tab-btn" data-category="intake">Client Intake</button>
+                <button class="tab-btn" data-category="knowledge">Knowledge</button>
+                <button class="tab-btn" data-category="automation">Automation</button>
+                <button class="tab-btn" data-category="analytics">Analytics</button>
+                <button class="tab-btn" data-category="field-ops">Field Ops</button>
                 <button class="tab-btn" data-security="safe">Enterprise Safe</button>
                 <button class="tab-btn" data-security="caution">Exercise Caution</button>
                 <button class="tab-btn" data-security="risk">Public Model Risk</button>
@@ -377,7 +440,7 @@
             <div class="tools-grid" id="toolsGrid">
                 
                 <!-- Tool 1 -->
-                <div class="tool-card glass-panel" data-category="rag" data-security="safe">
+                <div class="tool-card glass-panel" data-category="knowledge" data-security="safe">
                     <div class="tool-header">
                         <h4>Private Company Search Engine</h4>
                         <span class="security-badge badge-safe">🟢 Enterprise Safe</span>
@@ -390,7 +453,7 @@
                 </div>
 
                 <!-- Tool 2 -->
-                <div class="tool-card glass-panel" data-category="rag" data-security="caution">
+                <div class="tool-card glass-panel" data-category="knowledge" data-security="caution">
                     <div class="tool-header">
                         <h4>NotebookLM (Google)</h4>
                         <span class="security-badge badge-caution">🟡 Exercise Caution</span>
@@ -429,7 +492,7 @@
                 </div>
 
                 <!-- Tool 5 -->
-                <div class="tool-card glass-panel" data-category="intake" data-security="safe">
+                <div class="tool-card glass-panel" data-category="automation" data-security="safe">
                     <div class="tool-header">
                         <h4>Local Whisper OCR Pipeline</h4>
                         <span class="security-badge badge-safe">🟢 Enterprise Safe</span>
@@ -442,7 +505,7 @@
                 </div>
 
                 <!-- Tool 6 -->
-                <div class="tool-card glass-panel" data-category="intake" data-security="risk">
+                <div class="tool-card glass-panel" data-category="automation" data-security="risk">
                     <div class="tool-header">
                         <h4>Public API Voice Agents</h4>
                         <span class="security-badge badge-risk">🔴 Public Model Risk</span>
@@ -451,6 +514,71 @@
                     <div class="tool-meta">
                         <span>Best For: Top-of-Funnel Filtering</span>
                         <span>Complexity: Medium</span>
+                    </div>
+                </div>
+
+                <!-- Tool 7 (RadianceSIS Blueprint) -->
+                <div class="tool-card glass-panel" data-category="knowledge" data-security="safe">
+                    <div class="tool-header">
+                        <h4>RadianceSIS SOP Search Blueprint</h4>
+                        <span class="security-badge badge-safe">🟢 Enterprise Safe</span>
+                    </div>
+                    <p class="tool-desc">Reusable private document search blueprint using secure vector retrieval while strictly respecting user permission levels.</p>
+                    <div class="tool-meta">
+                        <span>Best For: Role-Gated Doc Search</span>
+                        <span>Complexity: Mid-High</span>
+                    </div>
+                </div>
+
+                <!-- Tool 8 (PoolzHQ Blueprint) -->
+                <div class="tool-card glass-panel" data-category="field-ops" data-security="safe">
+                    <div class="tool-header">
+                        <h4>PoolzHQ Route & Dispatch Blueprint</h4>
+                        <span class="security-badge badge-safe">🟢 Enterprise Safe</span>
+                    </div>
+                    <p class="tool-desc">Reusable system blueprint integrating route planning, crew dispatching, and automated localized marketing for field operations.</p>
+                    <div class="tool-meta">
+                        <span>Best For: Crew Scheduling & Dispatch</span>
+                        <span>Complexity: Mid-High</span>
+                    </div>
+                </div>
+
+                <!-- Tool 9 (Lax Evals Blueprint) -->
+                <div class="tool-card glass-panel" data-category="analytics" data-security="safe">
+                    <div class="tool-header">
+                        <h4>Lax Evals Tryout Scoring Blueprint</h4>
+                        <span class="security-badge badge-safe">🟢 Enterprise Safe</span>
+                    </div>
+                    <p class="tool-desc">Digital tryout evaluation blueprint featuring multi-evaluator rating consensus, automated score calculation, and direct notifications.</p>
+                    <div class="tool-meta">
+                        <span>Best For: Multi-Evaluator Assessments</span>
+                        <span>Complexity: Low-Medium</span>
+                    </div>
+                </div>
+
+                <!-- Tool 10 (Member Portal Blueprint) -->
+                <div class="tool-card glass-panel" data-category="automation" data-security="safe">
+                    <div class="tool-header">
+                        <h4>Member Portal Chapters Blueprint</h4>
+                        <span class="security-badge badge-safe">🟢 Enterprise Safe</span>
+                    </div>
+                    <p class="tool-desc">Smart membership management portal blueprint with self-operating check-ins, health scorecards, and automated member outreach.</p>
+                    <div class="tool-meta">
+                        <span>Best For: Member Operations & Tracking</span>
+                        <span>Complexity: Medium</span>
+                    </div>
+                </div>
+
+                <!-- Tool 11 (InstaStats Blueprint) -->
+                <div class="tool-card glass-panel" data-category="analytics" data-security="safe">
+                    <div class="tool-header">
+                        <h4>InstaStats Video OCR Blueprint</h4>
+                        <span class="security-badge badge-safe">🟢 Enterprise Safe</span>
+                    </div>
+                    <p class="tool-desc">Computer vision recognition pipeline blueprint parsing scoreboard OCR and gameplay footage to extract game stats automatically.</p>
+                    <div class="tool-meta">
+                        <span>Best For: Video Analytics & OCR</span>
+                        <span>Complexity: High</span>
                     </div>
                 </div>
 
@@ -563,26 +691,41 @@
                     </div>
 
                     <div class="form-group" id="companyGroup">
-                        <label for="clientCompany">Company Name</label>
+                        <label for="clientCompany">Business Name</label>
                         <input type="text" id="clientCompany" placeholder="e.g. Jenkins Logistics" required>
-                        <div class="form-error">Please enter your company name.</div>
+                        <div class="form-error">Please enter your business name.</div>
+                    </div>
+
+                    <div class="form-group" id="industryGroup">
+                        <label for="clientIndustry">Industry</label>
+                        <select id="clientIndustry" required>
+                            <option value="" disabled selected>Select industry...</option>
+                            <option value="Professional Services">Professional Services</option>
+                            <option value="Field Services & Logistics">Field Services & Logistics</option>
+                            <option value="Manufacturing & Industrial">Manufacturing & Industrial</option>
+                            <option value="Healthcare & Medical">Healthcare & Medical</option>
+                            <option value="Real Estate & Property">Real Estate & Property</option>
+                            <option value="Retail & E-commerce">Retail & E-commerce</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <div class="form-error">Please select your industry.</div>
                     </div>
                     
                     <div class="form-group" id="sizeGroup">
-                        <label for="clientSize">Company Size</label>
+                        <label for="clientSize">Estimated Revenue / Team Size</label>
                         <select id="clientSize" required>
-                            <option value="" disabled selected>Select headcount...</option>
-                            <option value="1-10">1 - 10 employees</option>
-                            <option value="11-50">11 - 50 employees</option>
-                            <option value="51-200">51 - 200 employees</option>
-                            <option value="200+">200+ employees</option>
+                            <option value="" disabled selected>Select revenue & size...</option>
+                            <option value="Under $1M / <10 team">Under $1M / &lt;10 employees</option>
+                            <option value="$1M - $5M / 10-50 team">$1M - $5M / 10-50 employees</option>
+                            <option value="$5M - $20M / 51-200 team">$5M - $20M / 51-200 employees</option>
+                            <option value="$20M+ / 200+ team">$20M+ / 200+ employees</option>
                         </select>
-                        <div class="form-error">Please select your company size.</div>
+                        <div class="form-error">Please select your company revenue and size.</div>
                     </div>
                     
                     <div class="form-group" id="bottleneckGroup">
-                        <label for="clientBottleneck">Top Operational Bottleneck</label>
-                        <textarea id="clientBottleneck" placeholder="e.g., Managing nightly inventory reconciliations or manual CRM client routing..." required></textarea>
+                        <label for="clientBottleneck">Primary Operational Bottleneck</label>
+                        <textarea id="clientBottleneck" placeholder="e.g., Juggling manual crew routes or inputting dispatch tickets..." required></textarea>
                         <div class="form-error">Please describe your top operational bottleneck.</div>
                     </div>
                     
@@ -603,9 +746,34 @@
                         <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                 </div>
-                <h3>Opportunity Audit Requested!</h3>
-                <p>Thanks for sharing. Joseph is analyzing your bottleneck details and will contact you at your business email within 24 hours with custom workflow ideas.</p>
-                <button class="btn btn-secondary" id="successCloseBtn">Close Panel</button>
+                <h3>Audit Request Received!</h3>
+                <p class="success-subtitle">Your custom 1-Page Systems Roadmap is underway. Here is what happens next:</p>
+                
+                <div class="roadmap-timeline">
+                    <div class="roadmap-timeline-item">
+                        <div class="roadmap-timeline-number">1</div>
+                        <div class="roadmap-timeline-content">
+                            <h4>Initial Blueprint Draft</h4>
+                            <p>Joseph Van Harken will review your operational bottleneck and analyze potential leverage points within 24 hours.</p>
+                        </div>
+                    </div>
+                    <div class="roadmap-timeline-item">
+                        <div class="roadmap-timeline-number">2</div>
+                        <div class="roadmap-timeline-content">
+                            <h4>15-Minute Technical Validation</h4>
+                            <p>We will email you a calendar link to verify data compliance constraints and confirm software connections.</p>
+                        </div>
+                    </div>
+                    <div class="roadmap-timeline-item">
+                        <div class="roadmap-timeline-number">3</div>
+                        <div class="roadmap-timeline-content">
+                            <h4>Roadmap Delivery</h4>
+                            <p>Receive your custom 1-Page Systems Roadmap outlining the exact automation flow to save 15+ hours/week.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-secondary" id="successCloseBtn" style="margin-top: 1.5rem; width: 100%;">Close Panel</button>
             </div>
         </div>
     </div>

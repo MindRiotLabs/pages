@@ -50,6 +50,11 @@ document.addEventListener('DOMContentLoaded', () => {
         auditModal.classList.remove('active');
         document.body.style.overflow = ''; // Restore background scroll
         
+        // Clear hash if it was #audit to support back navigation
+        if (window.location.hash === '#audit') {
+            history.pushState("", document.title, window.location.pathname + window.location.search);
+        }
+
         // Reset form state after close transition completes
         setTimeout(() => {
             leadForm.reset();
@@ -77,6 +82,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Close modal on Escape key press
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && auditModal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    // URL Hash Routing for #audit modal trigger
+    if (window.location.hash === '#audit') {
+        openModal();
+    }
+
+    window.addEventListener('hashchange', () => {
+        if (window.location.hash === '#audit') {
+            openModal();
+        } else if (auditModal.classList.contains('active')) {
             closeModal();
         }
     });
@@ -123,8 +141,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (show) {
                     card.classList.remove('hidden');
+                    // Trigger reflow to restart entry animation
+                    card.offsetHeight;
+                    card.classList.add('fade-in');
                 } else {
                     card.classList.add('hidden');
+                    card.classList.remove('fade-in');
                 }
             });
         });
@@ -252,6 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = document.getElementById('clientName').value.trim();
         const email = document.getElementById('clientEmail').value.trim();
         const company = document.getElementById('clientCompany').value.trim();
+        const industry = document.getElementById('clientIndustry').value;
         const size = document.getElementById('clientSize').value;
         const bottleneck = document.getElementById('clientBottleneck').value.trim();
 
@@ -272,6 +295,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Company Validation
         if (!company) {
             document.getElementById('companyGroup').classList.add('has-error');
+            hasError = true;
+        }
+
+        // Industry Validation
+        if (!industry) {
+            document.getElementById('industryGroup').classList.add('has-error');
             hasError = true;
         }
 
@@ -302,6 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
             name,
             email,
             company,
+            industry,
             companySize: size,
             operationalBottleneck: bottleneck,
             submittedAt: new Date().toISOString(),
@@ -330,6 +360,163 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function simulateWebhookPost(payload) {
         console.log('[Webhook Simulation] Posting payload to database...', payload);
+    }
+
+    // -------------------------------------------------------------
+    // SOP Search Micro-Demo Handler
+    // -------------------------------------------------------------
+    const promptChips = document.querySelectorAll('.prompt-chip');
+    const terminalBody = document.getElementById('terminalBody');
+    const terminalForm = document.getElementById('terminalForm');
+    const terminalInput = document.getElementById('terminalInput');
+
+    const sopDatabase = {
+        refund: {
+            source: 'SOP-Billing-and-Refunds-v3.pdf',
+            docRef: 'SOP-Billing-v3.pdf',
+            query: 'What is our refund policy?',
+            answer: 'Clients can request a full refund within <strong>7 business days</strong> of starting the AI Sprint if the initial audit finds no viable bottlenecks. After work begins in Week 2, billing is fixed and non-refundable, but includes 30 days of post-launch support.',
+            hash: '0x8f2a71bc9d',
+            retrievalTime: '12ms'
+        },
+        dispatch: {
+            source: 'Field-Operations-Manual-2026.docx',
+            docRef: 'Field-Ops-Manual.docx',
+            query: 'How are field dispatch tickets prioritized?',
+            answer: 'Field dispatch tickets are prioritized automatically based on client service level tier and emergency status: <strong>Tier 1 (Emergency)</strong> is dispatched within <strong>2 hours</strong>; <strong>Tier 2 (Scheduled)</strong> within <strong>24 hours</strong>; and <strong>Tier 3 (Consultations)</strong> is batched weekly.',
+            hash: '0x3c11da88b2',
+            retrievalTime: '18ms'
+        },
+        subcontractors: {
+            source: 'HR-Subcontractor-Onboarding.pdf',
+            docRef: 'HR-Onboarding-SOP.pdf',
+            query: 'How do we onboard new sub-contractors?',
+            answer: 'New sub-contractors must complete: 1) Signed NDA & Service Agreement, 2) Secure Endpoint Verification, and 3) Access Gating Setup. Once verified, onboarding scripts auto-provision limited access keys for specific active tickets.',
+            hash: '0xe4e1a0b12c',
+            retrievalTime: '24ms'
+        },
+        retention: {
+            source: 'MindRiot-Security-Policy-2026.pdf',
+            docRef: 'MindRiot-Security.pdf',
+            query: 'What is our data retention policy?',
+            answer: 'Customer data is retained locally for the duration of the active engagement. After project hand-off and the 30-day fine-tuning period, all database credentials and customer records are securely purged from our systems, leaving the client with complete local control.',
+            hash: '0x99a77f240e',
+            retrievalTime: '15ms'
+        }
+    };
+
+    let queryTimeout = null;
+
+    function runRAGQuery(queryText, docRef, answerText, sourceFile, hash, retrievalTime) {
+        // Clear previous timeouts and logs
+        if (queryTimeout) clearTimeout(queryTimeout);
+        terminalBody.innerHTML = '';
+
+        // 1. User Query log
+        const userLog = document.createElement('p');
+        userLog.className = 'console-log user-query';
+        userLog.textContent = `> Query: ${queryText}`;
+        terminalBody.appendChild(userLog);
+        scrollTerminal();
+
+        // 2. Initializing log
+        queryTimeout = setTimeout(() => {
+            const initLog = document.createElement('p');
+            initLog.className = 'console-log sys-log';
+            initLog.textContent = '[1/3] Connecting to secure local vector store... OK';
+            terminalBody.appendChild(initLog);
+            scrollTerminal();
+
+            // 3. Scanning logs
+            queryTimeout = setTimeout(() => {
+                const scanLog = document.createElement('p');
+                scanLog.className = 'console-log sys-progress';
+                scanLog.textContent = `Scanning document index... Checked [${docRef}] (96% semantic match)`;
+                terminalBody.appendChild(scanLog);
+                scrollTerminal();
+
+                // 4. Formatting output
+                queryTimeout = setTimeout(() => {
+                    const formatLog = document.createElement('p');
+                    formatLog.className = 'console-log sys-log';
+                    formatLog.textContent = '[3/3] Synthesizing isolated answer with local LLM context...';
+                    terminalBody.appendChild(formatLog);
+                    scrollTerminal();
+
+                    // 5. Answer card
+                    queryTimeout = setTimeout(() => {
+                        const answerCard = document.createElement('div');
+                        answerCard.className = 'console-log answer-card';
+                        answerCard.innerHTML = answerText;
+
+                        const meta = document.createElement('div');
+                        meta.className = 'answer-meta';
+                        meta.innerHTML = `
+                            <span>📄 Source: ${sourceFile}</span>
+                            <span>⏱️ Latency: ${retrievalTime}</span>
+                            <span>🔑 Node Hash: ${hash}</span>
+                            <span>🛡️ Privacy: 100% Isolated VPC</span>
+                        `;
+                        answerCard.appendChild(meta);
+                        terminalBody.appendChild(answerCard);
+                        scrollTerminal();
+                    }, 400);
+
+                }, 500);
+
+            }, 450);
+
+        }, 300);
+    }
+
+    function scrollTerminal() {
+        terminalBody.scrollTop = terminalBody.scrollHeight;
+    }
+
+    promptChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            // Remove active classes
+            promptChips.forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+
+            const key = chip.getAttribute('data-prompt');
+            const data = sopDatabase[key];
+            if (data) {
+                runRAGQuery(data.query, data.docRef, data.answer, data.source, data.hash, data.retrievalTime);
+            }
+        });
+    });
+
+    if (terminalForm) {
+        terminalForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const val = terminalInput.value.trim();
+            if (!val) return;
+
+            // Remove active state on prompt chips
+            promptChips.forEach(c => c.classList.remove('active'));
+
+            runRAGQuery(
+                val,
+                'Dynamic-Vector-Cache',
+                'This is a live interactive proof of concept demonstrating our private search system. In a production build, this search engine will query your actual PDFs, Notion pages, and CRM records. <a href="#audit" class="gradient-text font-bold" style="text-decoration: underline;">Request a B2B AI Sprint Opportunity Audit</a> to design a private SOP search console for your business.',
+                'Simulated-Document-Store',
+                '0x77d12f88ff',
+                '32ms'
+            );
+
+            terminalInput.value = '';
+        });
+    }
+
+    if (terminalBody) {
+        terminalBody.addEventListener('click', (e) => {
+            const link = e.target.closest('a[href="#audit"]');
+            if (link) {
+                e.preventDefault();
+                openModal(e);
+            }
+        });
     }
 });
 

@@ -7,8 +7,8 @@
 // -------------------------------------------------------------
 // Supabase Database Configuration
 // -------------------------------------------------------------
-const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR_ANON_KEY_HERE";
+const SUPABASE_URL = "https://qtrypzzcjebvfcihiynt.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR_ACTUAL_ANON_KEY_HERE";
 
 // Initialize Supabase Client (handles case when CDN fails to load)
 const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;

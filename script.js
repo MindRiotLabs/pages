@@ -7,7 +7,7 @@
 // -------------------------------------------------------------
 // Supabase Database Configuration
 // -------------------------------------------------------------
-const SUPABASE_URL = "https://qtrypzzcjebvfcihiynt.supabase.co";
+const SUPABASE_URL = "https://xkgtipcyswjpvwmmawmf.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_a84bMzDhwTFRDxLnfMTLcA_pov-Kgr3";
 
 // Initialize Supabase Client (handles case when CDN fails to load)
@@ -41,6 +41,11 @@ function initApplication() {
     const newsletterEmail = document.getElementById('newsletterEmail');
     const newsletterError = document.getElementById('newsletterError');
     const newsletterSuccess = document.getElementById('newsletterSuccess');
+
+    // Conditional Industry elements
+    const clientIndustry = document.getElementById('clientIndustry');
+    const industryOtherGroup = document.getElementById('industry-other-group');
+    const clientIndustryOther = document.getElementById('clientIndustryOther');
 
     // -------------------------------------------------------------
     // Modal Open / Close Handlers
@@ -78,6 +83,9 @@ function initApplication() {
         setTimeout(() => {
             leadForm.reset();
             clearFormErrors();
+            if (industryOtherGroup) {
+                industryOtherGroup.style.display = 'none';
+            }
             formState.style.display = 'block';
             successState.style.display = 'none';
         }, 400);
@@ -104,6 +112,19 @@ function initApplication() {
             closeModal();
         }
     });
+
+    // Industry dropdown toggle for "Other" conditional specification
+    if (clientIndustry && industryOtherGroup) {
+        clientIndustry.addEventListener('change', () => {
+            if (clientIndustry.value.toLowerCase() === 'other') {
+                industryOtherGroup.style.display = 'block';
+            } else {
+                industryOtherGroup.style.display = 'none';
+                if (clientIndustryOther) clientIndustryOther.value = '';
+                industryOtherGroup.classList.remove('has-error');
+            }
+        });
+    }
 
     // URL Hash Routing for #audit modal trigger
     checkHashAndOpenModal();
@@ -319,6 +340,7 @@ function initApplication() {
         const email = document.getElementById('clientEmail').value.trim();
         const company = document.getElementById('clientCompany').value.trim();
         const industry = document.getElementById('clientIndustry').value;
+        const industryOtherVal = document.getElementById('clientIndustryOther').value.trim();
         const size = document.getElementById('clientSize').value;
         const tier = document.getElementById('clientTier').value;
         const bottleneck = document.getElementById('clientBottleneck').value.trim();
@@ -346,6 +368,12 @@ function initApplication() {
         // Industry Validation
         if (!industry) {
             document.getElementById('industryGroup').classList.add('has-error');
+            hasError = true;
+        }
+
+        // Industry Other Validation
+        if (industry.toLowerCase() === 'other' && !industryOtherVal) {
+            document.getElementById('industry-other-group').classList.add('has-error');
             hasError = true;
         }
 
@@ -378,11 +406,16 @@ function initApplication() {
         }
 
         // If form is valid, prepare payload
+        let finalIndustry = industry;
+        if (industry.toLowerCase() === 'other') {
+            finalIndustry = "Other: " + industryOtherVal;
+        }
+
         const leadPayload = {
             name,
             email,
             company,
-            industry,
+            industry: finalIndustry,
             companySize: size,
             serviceTier: tier,
             operationalBottleneck: bottleneck,
@@ -397,13 +430,11 @@ function initApplication() {
                     .from('audit_leads')
                     .insert([
                         {
-                            full_name: name,
-                            email: email,
                             business_name: company,
-                            industry: industry,
+                            industry: finalIndustry,
                             revenue_size: size,
-                            service_tier: tier,
-                            bottleneck: bottleneck
+                            bottleneck: bottleneck,
+                            email: email
                         }
                     ]);
                 if (error) {

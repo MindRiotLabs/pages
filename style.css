@@ -1482,6 +1482,11 @@ footer {
     transition: var(--transition-smooth);
 }
 
+.form-group select option {
+    background-color: #121824;
+    color: #f3f4f6;
+}
+
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {

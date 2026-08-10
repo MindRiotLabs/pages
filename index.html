@@ -49,6 +49,7 @@
                 <li><a href="#pricing">Services</a></li>
                 <li><a href="#cases">Case Studies</a></li>
                 <li><a href="#tools">AI Tools</a></li>
+                <li><a href="#portal" class="open-portal-btn">Client Login</a></li>
             </ul>
             <button class="btn btn-primary open-audit-modal">
                 Book Audit
@@ -659,6 +660,7 @@
                             <li><a href="#pricing">Services</a></li>
                             <li><a href="#cases">Case Studies</a></li>
                             <li><a href="#tools">AI Tools</a></li>
+                            <li><a href="#portal" class="open-portal-btn">Client Login</a></li>
                         </ul>
                     </div>
                     <div class="footer-col">
@@ -811,6 +813,254 @@
                 </div>
                 
                 <button class="btn btn-secondary" id="successCloseBtn" style="margin-top: 1.5rem; width: 100%;">Close Panel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Portal Modal Overlay -->
+    <div class="modal-overlay" id="portal">
+        <div class="modal-drawer portal-drawer">
+            <button class="modal-close-btn" id="closePortalBtn" aria-label="Close Portal">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+
+            <!-- Unauthenticated Login State -->
+            <div id="portalLoginState">
+                <div class="modal-header">
+                    <h2>Client Portal Login</h2>
+                    <p>Enter your registered business email. We'll send you a passwordless magic login link.</p>
+                </div>
+                <form id="portalLoginForm" novalidate>
+                    <div class="form-group" id="portalEmailGroup">
+                        <label for="portalEmail">Business Email</label>
+                        <input type="email" id="portalEmail" placeholder="e.g. sarah@yourcompany.com" required style="width: 100%; padding: 0.85rem 1rem; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; font-family: var(--font-body); margin-top: 0.5rem;">
+                        <div class="form-error" id="portalEmailError">Please enter a valid business email address.</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="portalSubmitEmailBtn" style="width: 100%; margin-top: 0.5rem;">
+                        Send Magic Link
+                        <svg class="btn-icon" viewBox="0 0 24 24">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+                    <!-- Simulation bypass button for developers/testing -->
+                    <button type="button" class="btn btn-secondary" id="portalSimulateLoginBtn" style="width: 100%; margin-top: 1rem;">
+                        ⚡ Simulate Auth Bypass (Testing)
+                    </button>
+                </form>
+                <div class="auth-message success-message" id="portalAuthSuccess" style="display: none; margin-top: 1.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid var(--accent-emerald); color: var(--accent-emerald); padding: 1rem; border-radius: 8px; font-size: 0.95rem; line-height: 1.4;">
+                    ✓ Magic link sent! Please check your email inbox to verify your session and access the portal dashboard.
+                </div>
+            </div>
+
+            <!-- Authenticated Dashboard State -->
+            <div id="portalDashboardState" style="display: none; flex-direction: column; height: 100%;">
+                <div class="portal-dashboard-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                            <span class="portal-status-badge" id="portalStatusBadge">Proposal Ready</span>
+                            <span style="font-size: 0.8rem; color: var(--accent-cyan); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Client Console</span>
+                        </div>
+                        <h2 id="portalGreeting" style="font-size: 2.2rem; font-family: var(--font-heading); color: #fff;">Welcome Back</h2>
+                        <p id="portalCompanyName" style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 0; margin-top: 0.25rem;">Loading your Systems Roadmap...</p>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" id="portalSignOutBtn" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Sign Out</button>
+                </div>
+
+                <!-- Tabs Navigation -->
+                <div class="portal-tabs" style="display: flex; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1px; margin-bottom: 2rem;">
+                    <button class="portal-tab-btn active" data-portal-tab="tracker" style="background: none; border: none; border-bottom: 2px solid var(--accent-cyan); color: #fff; padding: 0.75rem 1.25rem; cursor: pointer; font-family: var(--font-body); font-weight: 600; font-size: 0.95rem; transition: var(--transition-smooth);">Active Sprint Tracker</button>
+                    <button class="portal-tab-btn" data-portal-tab="roadmap" style="background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary); padding: 0.75rem 1.25rem; cursor: pointer; font-family: var(--font-body); font-weight: 600; font-size: 0.95rem; transition: var(--transition-smooth);">Systems Roadmap</button>
+                    <button class="portal-tab-btn" data-portal-tab="docs" style="background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary); padding: 0.75rem 1.25rem; cursor: pointer; font-family: var(--font-body); font-weight: 600; font-size: 0.95rem; transition: var(--transition-smooth);">Deliverables & Docs</button>
+                </div>
+
+                <!-- Tabs Content -->
+                <div class="portal-tab-content active" id="portalTabTracker">
+                    <h3 style="font-size: 1.35rem; margin-bottom: 0.5rem;">Active Sprint Tracker</h3>
+                    <p class="text-secondary" style="font-size: 0.95rem; margin-bottom: 2rem;">Your 14-day AI Acceleration Sprint timeline & progress checkpoints.</p>
+                    
+                    <div class="sprint-timeline">
+                        <div class="timeline-step completed" id="sprintStep1">
+                            <div class="timeline-step-icon">✓</div>
+                            <div class="timeline-step-info">
+                                <h4>Milestone 1: Operations Audit (Days 1-5)</h4>
+                                <p>Deep dive into bottlenecks, systems mapping, compliance and database schema verification.</p>
+                                <span class="step-badge">Completed</span>
+                            </div>
+                        </div>
+                        <div class="timeline-step active" id="sprintStep2">
+                            <div class="timeline-step-icon">2</div>
+                            <div class="timeline-step-info">
+                                <h4>Milestone 2: System Build (Days 6-10)</h4>
+                                <p>Developing the private search engine, database connections, and custom workflow connectors.</p>
+                                <span class="step-badge pulsing">In Progress</span>
+                            </div>
+                        </div>
+                        <div class="timeline-step upcoming" id="sprintStep3">
+                            <div class="timeline-step-icon">3</div>
+                            <div class="timeline-step-info">
+                                <h4>Milestone 3: Deployment & Hand-off (Days 11-14)</h4>
+                                <p>Live team training session, custom SOP documentation delivery, and system hand-off.</p>
+                                <span class="step-badge">Upcoming</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="portal-tab-content" id="portalTabRoadmap" style="display: none;">
+                    <div id="dynamicRoadmapView">
+                        <h3 style="font-size: 1.35rem; margin-bottom: 0.5rem;">Tailored 1-Page Systems Roadmap</h3>
+                        <p class="text-secondary" style="font-size: 0.95rem; margin-bottom: 2rem;">A strategic workflow blueprint custom generated from your lead audit details.</p>
+                        
+                        <div class="roadmap-section glass-panel" style="padding: 1.5rem; margin-bottom: 1.5rem;">
+                            <h4 style="font-size: 1.1rem; color: var(--accent-cyan); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Bottleneck Analysis</h4>
+                            <p id="roadmapBottleneckText" style="font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;">Analyzing your business operations bottlenecks...</p>
+                        </div>
+
+                        <div class="roadmap-section glass-panel" style="padding: 1.5rem; margin-bottom: 1.5rem;">
+                            <h4 style="font-size: 1.1rem; color: var(--accent-emerald); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">Target Automation Workflow</h4>
+                            <div id="roadmapWorkflowVisual" class="workflow-visual" style="display: flex; flex-direction: column; gap: 1rem; position: relative;">
+                                <!-- Step cards styled with CSS -->
+                            </div>
+                        </div>
+
+                        <div class="roadmap-section glass-panel" style="padding: 1.5rem; margin-bottom: 1.5rem;">
+                            <h4 style="font-size: 1.1rem; color: #A78BFA; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">Recommended Tech Stack</h4>
+                            <div id="roadmapTechStack" class="tech-stack-badges" style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                                <!-- Tags like Supabase, Make, OpenAI -->
+                            </div>
+                        </div>
+
+                        <div class="roadmap-section glass-panel" style="padding: 1.5rem; margin-bottom: 1.5rem;">
+                            <h4 style="font-size: 1.1rem; color: var(--text-primary); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">Sprint Investment Options</h4>
+                            <div class="sprint-payment-options" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 0.5rem;">
+                                <div class="payment-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+                                    <div>
+                                        <h5 style="font-size: 1rem; margin-bottom: 0.5rem;">2-Week AI Acceleration Sprint</h5>
+                                        <p class="price" style="font-size: 1.5rem; font-weight: 700; color: #fff; margin-bottom: 0.25rem;">$12,500</p>
+                                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">50% Deposit ($6,250) to start project setup.</p>
+                                    </div>
+                                    <button class="btn btn-primary stripe-trigger-btn" data-amount="6250" data-service="2-Week AI Acceleration Sprint (Deposit)" style="width: 100%; font-size: 0.9rem; padding: 0.75rem 1rem;">
+                                        Pay Deposit ($6,250)
+                                    </button>
+                                </div>
+                                <div class="payment-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+                                    <div>
+                                        <h5 style="font-size: 1rem; margin-bottom: 0.5rem;">1-Week AI Audit</h5>
+                                        <p class="price" style="font-size: 1.5rem; font-weight: 700; color: #fff; margin-bottom: 0.25rem;">$4,500</p>
+                                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">100% Upfront Opportunity Assessment fee.</p>
+                                    </div>
+                                    <button class="btn btn-secondary stripe-trigger-btn" data-amount="4500" data-service="1-Week AI Opportunity Audit" style="width: 100%; font-size: 0.9rem; padding: 0.75rem 1rem;">
+                                        Pay Upfront ($4,500)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="portal-tab-content" id="portalTabDocs" style="display: none;">
+                    <h3 style="font-size: 1.35rem; margin-bottom: 0.5rem;">Deliverables & Docs</h3>
+                    <p class="text-secondary" style="font-size: 0.95rem; margin-bottom: 2rem;">Access SOP search engines, technical APIs, and video system overviews.</p>
+                    
+                    <div class="docs-list" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                        <a href="#sop-demo" class="doc-link-card glass-panel" id="portalSopSearchLink" style="display: flex; align-items: center; gap: 1.25rem; padding: 1.25rem; text-decoration: none; color: inherit; transition: var(--transition-smooth);">
+                            <div class="doc-link-icon" style="font-size: 1.75rem; background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.2); width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--accent-cyan);">🔍</div>
+                            <div class="doc-link-info">
+                                <h4 style="font-size: 1.05rem; margin-bottom: 0.25rem; color: #fff;">SOP Private Search Engine Console</h4>
+                                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0;">Launch search demo interface and query local document vectors.</p>
+                            </div>
+                        </a>
+                        <div class="doc-link-card glass-panel" style="display: flex; align-items: center; gap: 1.25rem; padding: 1.25rem; transition: var(--transition-smooth);">
+                            <div class="doc-link-icon" style="font-size: 1.75rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--accent-emerald);">📁</div>
+                            <div class="doc-link-info">
+                                <h4 style="font-size: 1.05rem; margin-bottom: 0.25rem; color: #fff;">Webhook & Schema API Docs</h4>
+                                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0;">Standard input schema specs for automatic lead ingestion endpoints.</p>
+                            </div>
+                        </div>
+                        <div class="doc-link-card glass-panel" style="display: flex; align-items: center; gap: 1.25rem; padding: 1.25rem; transition: var(--transition-smooth);">
+                            <div class="doc-link-icon" style="font-size: 1.75rem; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.2); width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #A78BFA;">🎥</div>
+                            <div class="doc-link-info">
+                                <h4 style="font-size: 1.05rem; margin-bottom: 0.25rem; color: #fff;">Systems Architecture Loom Walk-through</h4>
+                                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0;">15-minute video tutorial reviewing pipeline security & local data privacy.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stripe Checkout Simulation Modal -->
+    <div class="modal-overlay" id="stripeModal" style="z-index: 3000;">
+        <div class="modal-drawer stripe-drawer" style="max-width: 450px; align-self: center; height: auto; border-radius: 16px; border-left: none; border: 1px solid var(--border-color); transform: scale(0.9); opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); margin: auto;">
+            <button class="modal-close-btn" id="closeStripeBtn" aria-label="Close Payment" style="top: 1.5rem; right: 1.5rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            
+            <div id="stripePaymentState">
+                <div class="stripe-header" style="margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                    <div style="font-family: var(--font-heading); font-weight: 800; font-size: 1.35rem; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="background: #635bff; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.95rem; font-weight: 900; letter-spacing: -0.02em;">stripe</span>
+                        <span style="font-size: 1.1rem; font-weight: 600; color: var(--text-secondary);">Checkout</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem; margin-bottom: 0;">Secured client transaction portal</p>
+                </div>
+                
+                <div class="stripe-summary" style="background: rgba(255,255,255,0.02); padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);" id="stripePaymentItem">Sprint Deposit Payment</span>
+                    <h3 style="font-size: 2.2rem; margin-top: 0.25rem; color: #fff; font-family: var(--font-heading); font-weight: 800;" id="stripePaymentAmount">$6,250.00</h3>
+                </div>
+                
+                <form id="stripeForm">
+                    <div class="form-group">
+                        <label style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: block; font-weight: 500;">Card Number</label>
+                        <input type="text" id="stripeCardNumber" placeholder="4242 4242 4242 4242" maxlength="19" required style="width: 100%; padding: 0.85rem 1rem; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; font-family: var(--font-body); font-size: 0.95rem;">
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div style="width: 50%;">
+                            <label style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: block; font-weight: 500;">Expiration Date</label>
+                            <input type="text" id="stripeCardExpiry" placeholder="MM/YY" maxlength="5" required style="width: 100%; padding: 0.85rem 1rem; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; font-family: var(--font-body); font-size: 0.95rem; text-align: center;">
+                        </div>
+                        <div style="width: 50%;">
+                            <label style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: block; font-weight: 500;">CVC / Security Code</label>
+                            <input type="text" id="stripeCardCvc" placeholder="123" maxlength="4" required style="width: 100%; padding: 0.85rem 1rem; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; font-family: var(--font-body); font-size: 0.95rem; text-align: center;">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: block; font-weight: 500;">Cardholder Name</label>
+                        <input type="text" id="stripeCardName" placeholder="Sarah Jenkins" required style="width: 100%; padding: 0.85rem 1rem; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; font-family: var(--font-body); font-size: 0.95rem;">
+                    </div>
+                    
+                    <button type="button" class="btn btn-secondary btn-sm" id="stripeFillDemoBtn" style="margin-bottom: 1.5rem; font-size: 0.85rem; width: 100%; border: 1px dashed rgba(255,255,255,0.25); border-radius: 8px; font-weight: 500; cursor: pointer; color: var(--accent-cyan);">
+                        💳 Autofill Test Card (4242)
+                    </button>
+                    
+                    <button type="submit" class="btn btn-primary" id="stripeSubmitBtn" style="width: 100%; background: #635bff; box-shadow: 0 4px 15px rgba(99, 91, 255, 0.3); border: none; border-radius: 8px; padding: 0.9rem; font-weight: 600; color: #fff; cursor: pointer;">
+                        Pay Now
+                    </button>
+                </form>
+            </div>
+            
+            <div id="stripeLoadingState" style="display: none; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 0;">
+                <div class="stripe-spinner" style="width: 50px; height: 50px; border: 3px solid rgba(99, 91, 255, 0.2); border-top-color: #635bff; border-radius: 50%; animation: spin 1s infinite linear; margin-bottom: 1.5rem;"></div>
+                <h4 style="color: #fff; font-size: 1.15rem; font-family: var(--font-heading); margin-bottom: 0.5rem;">Processing Payment...</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0; text-align: center;">Securing transaction with end-to-end encryption...</p>
+            </div>
+            
+            <div id="stripeSuccessState" style="display: none; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 0; text-align: center;">
+                <div style="width: 60px; height: 60px; background: rgba(16, 185, 129, 0.1); border: 2px solid var(--accent-emerald); color: var(--accent-emerald); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold; margin-bottom: 1.5rem; animation: pulse 2s infinite;">✓</div>
+                <h3 style="color: #fff; font-family: var(--font-heading); font-size: 1.35rem; margin-bottom: 0.5rem;">Payment Confirmed!</h3>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem; max-width: 320px; line-height: 1.5;">Your transaction was successful. The Systems Roadmap has been activated and your status has been updated in real-time.</p>
+                <button class="btn btn-primary btn-sm" id="stripeSuccessCloseBtn" style="padding: 0.6rem 1.2rem; font-size: 0.9rem;">Return to Dashboard</button>
             </div>
         </div>
     </div>

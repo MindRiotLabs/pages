@@ -629,6 +629,671 @@ function initApplication() {
             }
         });
     }
+
+    // =============================================================
+    // Client Portal & Stripe Simulation Handler (Sprint 3)
+    // =============================================================
+    const openPortalButtons = document.querySelectorAll('.open-portal-btn');
+    const portalModal = document.getElementById('portal');
+    const closePortalBtn = document.getElementById('closePortalBtn');
+    
+    const portalLoginState = document.getElementById('portalLoginState');
+    const portalDashboardState = document.getElementById('portalDashboardState');
+    const portalLoginForm = document.getElementById('portalLoginForm');
+    const portalEmailInput = document.getElementById('portalEmail');
+    const portalEmailGroup = document.getElementById('portalEmailGroup');
+    const portalAuthSuccess = document.getElementById('portalAuthSuccess');
+    const portalSimulateLoginBtn = document.getElementById('portalSimulateLoginBtn');
+    const portalSignOutBtn = document.getElementById('portalSignOutBtn');
+    
+    // Tab switching
+    const portalTabButtons = document.querySelectorAll('.portal-tab-btn');
+    const portalTabContents = document.querySelectorAll('.portal-tab-content');
+    
+    // Stripe Modal selections
+    const stripeModal = document.getElementById('stripeModal');
+    const closeStripeBtn = document.getElementById('closeStripeBtn');
+    const stripeForm = document.getElementById('stripeForm');
+    const stripeCardNumber = document.getElementById('stripeCardNumber');
+    const stripeCardExpiry = document.getElementById('stripeCardExpiry');
+    const stripeCardCvc = document.getElementById('stripeCardCvc');
+    const stripeCardName = document.getElementById('stripeCardName');
+    const stripeFillDemoBtn = document.getElementById('stripeFillDemoBtn');
+    const stripeSubmitBtn = document.getElementById('stripeSubmitBtn');
+    const stripePaymentItem = document.getElementById('stripePaymentItem');
+    const stripePaymentAmount = document.getElementById('stripePaymentAmount');
+    
+    const stripePaymentState = document.getElementById('stripePaymentState');
+    const stripeLoadingState = document.getElementById('stripeLoadingState');
+    const stripeSuccessState = document.getElementById('stripeSuccessState');
+    const stripeSuccessCloseBtn = document.getElementById('stripeSuccessCloseBtn');
+    
+    let activeUserEmail = null;
+    let isMockAuth = false;
+    let pendingPaymentItem = null;
+
+    // Open/Close handlers
+    function openPortal(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        portalModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        // Push state for hash routing
+        window.location.hash = '#portal';
+        
+        // Verify session
+        checkPortalAuthState();
+    }
+
+    function closePortal() {
+        portalModal.classList.remove('active');
+        document.body.style.overflow = '';
+        
+        if (window.location.hash === '#portal') {
+            history.pushState("", document.title, window.location.pathname + window.location.search);
+        }
+    }
+
+    openPortalButtons.forEach(btn => {
+        btn.addEventListener('click', openPortal);
+    });
+
+    closePortalBtn.addEventListener('click', closePortal);
+
+    portalModal.addEventListener('click', (e) => {
+        if (e.target === portalModal) {
+            closePortal();
+        }
+    });
+
+    // Close on Escape key press
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (portalModal.classList.contains('active')) {
+                closePortal();
+            }
+            if (stripeModal.classList.contains('active')) {
+                closeStripeCheckout();
+            }
+        }
+    });
+
+    // Handle hash route for portal
+    function checkHashAndOpenPortal() {
+        if (window.location.hash === '#portal') {
+            openPortal();
+        }
+    }
+    
+    window.addEventListener('hashchange', () => {
+        if (window.location.hash === '#portal') {
+            checkHashAndOpenPortal();
+        } else if (portalModal.classList.contains('active') && window.location.hash !== '#portal') {
+            portalModal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+    
+    checkHashAndOpenPortal();
+
+    // Check Auth State
+    async function checkPortalAuthState() {
+        // First check mock auth
+        const mockUser = localStorage.getItem('mindriot_mock_user');
+        if (mockUser) {
+            activeUserEmail = mockUser;
+            isMockAuth = true;
+            showAuthenticatedDashboard(mockUser);
+            return;
+        }
+
+        // Then check real Supabase auth
+        if (supabaseClient) {
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session) {
+                    activeUserEmail = session.user.email;
+                    isMockAuth = false;
+                    showAuthenticatedDashboard(session.user.email);
+                    return;
+                }
+            } catch (err) {
+                console.error('[Supabase Auth Check Fail]:', err);
+            }
+        }
+
+        // Default to login form
+        showLoginForm();
+    }
+
+    function showLoginForm() {
+        portalLoginState.style.display = 'block';
+        portalDashboardState.style.display = 'none';
+        portalAuthSuccess.style.display = 'none';
+        portalLoginForm.reset();
+        
+        // Update Nav Client Login labels
+        updateNavLoginLabels(false);
+    }
+
+    async function showAuthenticatedDashboard(email) {
+        portalLoginState.style.display = 'none';
+        portalDashboardState.style.display = 'flex';
+        
+        document.getElementById('portalGreeting').textContent = `Welcome Back`;
+        document.getElementById('portalCompanyName').textContent = `Loading your Systems Roadmap...`;
+        
+        // Update Nav Labels
+        updateNavLoginLabels(true, email);
+        
+        // Load roadmap proposal data
+        await loadClientProposal(email);
+    }
+
+    function updateNavLoginLabels(loggedIn, email = '') {
+        const portalNavLinks = document.querySelectorAll('.open-portal-btn');
+        portalNavLinks.forEach(link => {
+            if (loggedIn) {
+                link.innerHTML = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10B981; margin-right:6px; box-shadow: 0 0 6px #10B981;"></span>Portal Dashboard`;
+                link.title = `Logged in as ${email}`;
+            } else {
+                link.textContent = 'Client Login';
+                link.title = '';
+            }
+        });
+    }
+
+    // Portal Tab switching
+    portalTabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            portalTabButtons.forEach(b => {
+                b.classList.remove('active');
+                b.style.borderBottomColor = 'transparent';
+                b.style.color = 'var(--text-secondary)';
+            });
+            btn.classList.add('active');
+            btn.style.borderBottomColor = 'var(--accent-cyan)';
+            btn.style.color = '#fff';
+
+            const targetTab = btn.getAttribute('data-portal-tab');
+            portalTabContents.forEach(content => {
+                if (content.id === `portalTab${targetTab.charAt(0).toUpperCase() + targetTab.slice(1)}`) {
+                    content.style.display = 'block';
+                } else {
+                    content.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Supabase Auth listener
+    if (supabaseClient) {
+        supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            if (session) {
+                activeUserEmail = session.user.email;
+                isMockAuth = false;
+                showAuthenticatedDashboard(session.user.email);
+            } else if (!isMockAuth) {
+                activeUserEmail = null;
+                showLoginForm();
+            }
+        });
+    }
+
+    // Login Form Submit (OTP Magic Link)
+    portalLoginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        portalEmailGroup.classList.remove('has-error');
+        portalAuthSuccess.style.display = 'none';
+
+        const email = portalEmailInput.value.trim();
+        if (!email || !validateEmail(email)) {
+            portalEmailGroup.classList.add('has-error');
+            return;
+        }
+
+        const submitBtn = document.getElementById('portalSubmitEmailBtn');
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = 'Sending Magic Link... <span class="stripe-spinner" style="width: 14px; height: 14px; border-width: 2px; margin-left: 6px; display: inline-block;"></span>';
+
+        if (supabaseClient) {
+            try {
+                const { error } = await supabaseClient.auth.signInWithOtp({
+                    email,
+                    options: {
+                        redirectTo: window.location.origin
+                    }
+                });
+                
+                if (error) {
+                    console.error('[Supabase Auth Error]:', error.message);
+                    alert('Supabase Auth error: ' + error.message);
+                } else {
+                    portalAuthSuccess.style.display = 'block';
+                    portalLoginForm.reset();
+                }
+            } catch (err) {
+                console.error('[Auth Exception]:', err);
+                alert('An auth exception occurred: ' + err.message);
+            }
+        } else {
+            console.warn('[Supabase Warning] Supabase client is not available. Please use Simulation Auth Bypass.');
+            alert('Supabase is not configured on this client. Please click the "⚡ Simulate Auth Bypass" button to log in instantly.');
+        }
+
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+    });
+
+    // Mock Login Bypass click
+    portalSimulateLoginBtn.addEventListener('click', () => {
+        const email = portalEmailInput.value.trim() || "test@mindriotlabs.com";
+        localStorage.setItem('mindriot_mock_user', email);
+        activeUserEmail = email;
+        isMockAuth = true;
+        showAuthenticatedDashboard(email);
+    });
+
+    // Sign Out Handler
+    portalSignOutBtn.addEventListener('click', async () => {
+        if (isMockAuth) {
+            localStorage.removeItem('mindriot_mock_user');
+            isMockAuth = false;
+            activeUserEmail = null;
+            showLoginForm();
+        } else if (supabaseClient) {
+            await supabaseClient.auth.signOut();
+        }
+    });
+
+    // Load Client Proposal / Lead details
+    async function loadClientProposal(email) {
+        let clientData = null;
+        
+        // Attempt query from database
+        if (supabaseClient && !isMockAuth) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('audit_leads')
+                    .select('*')
+                    .eq('email', email)
+                    .order('id', { ascending: false })
+                    .limit(1);
+                
+                if (data && data.length > 0) {
+                    clientData = data[0];
+                }
+            } catch (err) {
+                console.error('[Supabase Query Lead Error]:', err);
+            }
+        }
+
+        // If no data found, check if it's the mock user, or build fallback data
+        if (!clientData) {
+            // Check if there are local leads matching
+            try {
+                const localLeads = JSON.parse(localStorage.getItem('mindriot_leads') || '[]');
+                const matching = localLeads.reverse().find(l => l.email === email);
+                if (matching) {
+                    clientData = {
+                        business_name: matching.company,
+                        industry: matching.industry,
+                        revenue_size: matching.companySize,
+                        bottleneck: matching.operationalBottleneck,
+                        email: matching.email
+                    };
+                }
+            } catch (err) {
+                console.warn('LocalStorage local lead search failed.');
+            }
+        }
+
+        // Mock Default for standard test logins if no leads found in database or localStorage
+        if (!clientData) {
+            if (email === 'test@mindriotlabs.com' || email.includes('test')) {
+                clientData = {
+                    business_name: "Radiance Logistics Ltd",
+                    industry: "Field Services & Logistics",
+                    revenue_size: "$1M - $5M / 10-50 team",
+                    bottleneck: "Dispatch crew tickets are scheduled on manual spreadsheets, costing 15+ hours weekly in communications.",
+                    email: email
+                };
+            } else {
+                // Return fallback state prompting them to book audit
+                renderFallbackProposal(email);
+                return;
+            }
+        }
+
+        // Fill greetings
+        document.getElementById('portalGreeting').textContent = `Welcome, ${clientData.business_name || 'Client'}`;
+        document.getElementById('portalCompanyName').textContent = `${clientData.business_name || 'Anonymous Ltd'} • ${clientData.industry || 'General SMB'}`;
+
+        // Populate Systems Roadmap
+        populateSystemsRoadmap(clientData);
+        
+        // Sync payment badge and tracker milestones
+        syncPaymentStatus(email);
+    }
+
+    function renderFallbackProposal(email) {
+        document.getElementById('portalGreeting').textContent = `Hello, Client`;
+        document.getElementById('portalCompanyName').textContent = `${email}`;
+        
+        const badge = document.getElementById('portalStatusBadge');
+        badge.className = 'portal-status-badge ready';
+        badge.textContent = 'No Lead Record';
+
+        document.getElementById('roadmapBottleneckText').innerHTML = `
+            No active lead opportunity or operational audit record was found in the database for <strong>${email}</strong>.<br><br>
+            To create a custom Systems Roadmap, please fill out the <strong>AI Opportunity Audit Form</strong> on the homepage.
+        `;
+
+        document.getElementById('roadmapWorkflowVisual').innerHTML = `
+            <div class="workflow-step-card">
+                <div class="workflow-step-num">!</div>
+                <div class="workflow-step-details">
+                    <h5>Audit Required</h5>
+                    <p>Schedule your AI Sprint Audit on the homepage to generate a custom step-by-step automated workflow blueprint.</p>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('roadmapTechStack').innerHTML = `
+            <span class="tech-badge">Supabase</span>
+            <span class="tech-badge">Make.com</span>
+            <span class="tech-badge">AI Roadmap Engine</span>
+        `;
+        
+        // Reset timelines to default
+        setTimelineStepStatus('upcoming', 'upcoming', 'upcoming');
+    }
+
+    // Populate systems roadmap elements from lead details
+    function populateSystemsRoadmap(lead) {
+        const bottleneck = lead.bottleneck || '';
+        const lowerBottleneck = bottleneck.toLowerCase();
+        
+        // 1. Dynamic Bottleneck Analysis mapping
+        let analysisText = "";
+        if (lowerBottleneck.includes('spreadsheet') || lowerBottleneck.includes('manual') || lowerBottleneck.includes('scheduling') || lowerBottleneck.includes('dispatch')) {
+            analysisText = `Our operational analysis of <strong>${lead.business_name}</strong> reveals a primary logistics scheduling bottleneck. Managing route assignments and crew dispatch via static sheets introduces a cumulative <strong>15–20 hours/week</strong> of administrative overhead. The workflow is highly vulnerable to human communication lag, resulting in delayed service responses and customer contact friction.`;
+        } else if (lowerBottleneck.includes('intake') || lowerBottleneck.includes('lead') || lowerBottleneck.includes('email') || lowerBottleneck.includes('crm')) {
+            analysisText = `Our analysis of <strong>${lead.business_name}</strong>'s sales operations shows substantial friction in customer lead intake and response systems. The manual filtering of raw emails and CRM entry delays initial responses by an average of 4-12 hours, directly lowering top-of-funnel customer conversions. Auto-synthesizing and prioritizing incoming records represents a major operational growth point.`;
+        } else {
+            analysisText = `A deep dive into <strong>${lead.business_name}</strong>'s workflows highlights immediate efficiency constraints in: <em>"${bottleneck}"</em>. The lack of centralized automation results in redundant manual transcription gates, information silos, and unnecessary resource expenditures, bottlenecking team capacity.`;
+        }
+        document.getElementById('roadmapBottleneckText').innerHTML = analysisText;
+
+        // 2. Dynamic Workflow Steps visual mapping
+        let workflowSteps = [];
+        if (lowerBottleneck.includes('spreadsheet') || lowerBottleneck.includes('manual') || lowerBottleneck.includes('scheduling') || lowerBottleneck.includes('dispatch')) {
+            workflowSteps = [
+                { title: "Intake Node (Voice & Email parsing)", desc: "Incoming customer inquiries and voicemail tickets are transcribed & extracted into structured JSON automatically." },
+                { title: "Optimizer Node (Route Allocation)", desc: "Syncs coordinates with Google Maps API and assigns routes based on team capacity and priority." },
+                { title: "Notification Node (Real-time SMS Routing)", desc: "Pushes optimized tickets to field crew devices via SMS with live updates dispatched back to CRM." }
+            ];
+        } else if (lowerBottleneck.includes('intake') || lowerBottleneck.includes('lead') || lowerBottleneck.includes('email') || lowerBottleneck.includes('crm')) {
+            workflowSteps = [
+                { title: "Lead Capture webhook", desc: "Monitors email contact forms, PDFs, and website endpoints in real-time." },
+                { title: "AI Filtering & Scoring (LLM Synthesis)", desc: "Categorizes and scores lead value, extracting company budgets, sizes, and operational bottlenecks." },
+                { title: "CRM Sync & Team slack alert", desc: "Logs priority records in Hubspot/Salesforce and alerts account managers on Slack instantly." }
+            ];
+        } else {
+            workflowSteps = [
+                { title: "Data Ingestion webhook", desc: "Automated trigger captures data entries and file uploads instantly." },
+                { title: "AI Extraction Node (Isolated LLM)", desc: "Secured local retrieval parsing details, checking compliance rules, and formatting output." },
+                { title: "Target Database & Webhook execution", desc: "Direct database updates synchronized across internal operations dashboard nodes." }
+            ];
+        }
+
+        const workflowContainer = document.getElementById('roadmapWorkflowVisual');
+        workflowContainer.innerHTML = '';
+        workflowSteps.forEach((step, idx) => {
+            const stepCard = document.createElement('div');
+            stepCard.className = 'workflow-step-card';
+            stepCard.innerHTML = `
+                <div class="workflow-step-num">${idx + 1}</div>
+                <div class="workflow-step-details">
+                    <h5>${step.title}</h5>
+                    <p>${step.desc}</p>
+                </div>
+            `;
+            workflowContainer.appendChild(stepCard);
+        });
+
+        // 3. Recommended Tech Stack badges mapping
+        let techStack = [];
+        if (lowerBottleneck.includes('spreadsheet') || lowerBottleneck.includes('manual') || lowerBottleneck.includes('scheduling') || lowerBottleneck.includes('dispatch')) {
+            techStack = [
+                { name: "Make.com", type: "violet" },
+                { name: "Supabase DB", type: "emerald" },
+                { name: "Google Maps API", type: "emerald" },
+                { name: "Twilio SMS API", type: "cyan" },
+                { name: "OpenAI GPT-4o OCR", type: "cyan" }
+            ];
+        } else if (lowerBottleneck.includes('intake') || lowerBottleneck.includes('lead') || lowerBottleneck.includes('email') || lowerBottleneck.includes('crm')) {
+            techStack = [
+                { name: "Make.com Integrations", type: "violet" },
+                { name: "Hubspot CRM", type: "violet" },
+                { name: "Claude 3.5 Sonnet API", type: "cyan" },
+                { name: "Slack Webhooks", type: "cyan" }
+            ];
+        } else {
+            techStack = [
+                { name: "Supabase DB & Auth", type: "emerald" },
+                { name: "Make.com", type: "violet" },
+                { name: "OpenAI API", type: "cyan" },
+                { name: "Local Server Node", type: "emerald" }
+            ];
+        }
+
+        const techContainer = document.getElementById('roadmapTechStack');
+        techContainer.innerHTML = '';
+        techStack.forEach(tech => {
+            const badge = document.createElement('span');
+            badge.className = `tech-badge ${tech.type}`;
+            badge.textContent = tech.name;
+            techContainer.appendChild(badge);
+        });
+    }
+
+    // Sync Payment Badge and Milestones
+    function syncPaymentStatus(email) {
+        const badge = document.getElementById('portalStatusBadge');
+        
+        // Get status (try local storage fallback first, representing the simulated DB state)
+        let status = localStorage.getItem(`mindriot_payment_status_${email}`) || 'Proposal Ready';
+        
+        // Apply class
+        if (status === 'Deposit Received') {
+            badge.className = 'portal-status-badge received';
+            badge.textContent = 'Deposit Received';
+            setTimelineStepStatus('completed', 'active', 'upcoming');
+        } else if (status === 'Sprint Active') {
+            badge.className = 'portal-status-badge active-sprint';
+            badge.textContent = 'Sprint Active';
+            setTimelineStepStatus('completed', 'completed', 'active');
+        } else {
+            badge.className = 'portal-status-badge ready';
+            badge.textContent = 'Proposal Ready';
+            setTimelineStepStatus('completed', 'upcoming', 'upcoming');
+        }
+    }
+
+    // Timeline steps controller
+    function setTimelineStepStatus(step1, step2, step3) {
+        updateStepElement('sprintStep1', step1, '✓');
+        updateStepElement('sprintStep2', step2, '2');
+        updateStepElement('sprintStep3', step3, '3');
+    }
+
+    function updateStepElement(elementId, state, stepNumber) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        
+        el.className = `timeline-step ${state}`;
+        const icon = el.querySelector('.timeline-step-icon');
+        const badge = el.querySelector('.step-badge');
+        
+        if (state === 'completed') {
+            icon.textContent = '✓';
+            badge.textContent = 'Completed';
+            badge.className = 'step-badge';
+        } else if (state === 'active') {
+            icon.textContent = stepNumber;
+            badge.textContent = 'In Progress';
+            badge.className = 'step-badge pulsing';
+        } else {
+            icon.textContent = stepNumber;
+            badge.textContent = 'Upcoming';
+            badge.className = 'step-badge';
+        }
+    }
+
+    // =============================================================
+    // Stripe Checkout Simulation Form & Event Handlers
+    // =============================================================
+    
+    // Bind Stripe trigger buttons dynamically (since buttons are inside authenticated view)
+    document.addEventListener('click', (e) => {
+        const trigger = e.target.closest('.stripe-trigger-btn');
+        if (trigger) {
+            e.preventDefault();
+            const amount = trigger.getAttribute('data-amount');
+            const service = trigger.getAttribute('data-service');
+            
+            openStripeCheckout(amount, service);
+        }
+    });
+
+    function openStripeCheckout(amount, service) {
+        pendingPaymentItem = service;
+        
+        // Set info
+        stripePaymentItem.textContent = service;
+        stripePaymentAmount.textContent = `$${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+        
+        // Reset states
+        stripePaymentState.style.display = 'block';
+        stripeLoadingState.style.display = 'none';
+        stripeSuccessState.style.display = 'none';
+        stripeForm.reset();
+        
+        // Open overlay
+        stripeModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        // Auto focus card number
+        setTimeout(() => {
+            stripeCardNumber.focus();
+        }, 100);
+    }
+
+    function closeStripeCheckout() {
+        stripeModal.classList.remove('active');
+        // Restore background scroll ONLY if portal isn't also active
+        if (!portalModal.classList.contains('active')) {
+            document.body.style.overflow = '';
+        }
+    }
+
+    closeStripeBtn.addEventListener('click', closeStripeCheckout);
+    stripeSuccessCloseBtn.addEventListener('click', closeStripeCheckout);
+
+    // Auto format card number input
+    stripeCardNumber.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+        let formatted = '';
+        for (let i = 0; i < value.length; i++) {
+            if (i > 0 && i % 4 === 0) formatted += ' ';
+            formatted += value[i];
+        }
+        e.target.value = formatted;
+    });
+
+    // Auto format expiration MM/YY
+    stripeCardExpiry.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+        if (value.length > 2) {
+            e.target.value = value.slice(0, 2) + '/' + value.slice(2, 4);
+        } else {
+            e.target.value = value;
+        }
+    });
+
+    // CVC filters
+    stripeCardCvc.addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/[^0-9]/gi, '');
+    });
+
+    // Autofill Test card helper
+    stripeFillDemoBtn.addEventListener('click', () => {
+        stripeCardNumber.value = "4242 4242 4242 4242";
+        stripeCardExpiry.value = "12/28";
+        stripeCardCvc.value = "424";
+        stripeCardName.value = "Sarah Jenkins";
+        
+        // Trigger visual effect on inputs
+        const inputs = [stripeCardNumber, stripeCardExpiry, stripeCardCvc, stripeCardName];
+        inputs.forEach(input => {
+            input.style.borderColor = 'var(--accent-cyan)';
+            setTimeout(() => {
+                input.style.borderColor = '';
+            }, 800);
+        });
+    });
+
+    // Stripe Submit Form Simulation
+    stripeForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        // Show loading state
+        stripePaymentState.style.display = 'none';
+        stripeLoadingState.style.display = 'flex';
+        
+        setTimeout(async () => {
+            // Update status based on pending payment
+            let nextStatus = 'Deposit Received';
+            if (pendingPaymentItem && pendingPaymentItem.includes('Audit')) {
+                nextStatus = 'Sprint Active';
+            }
+            
+            // Save state locally first (robust fallback)
+            if (activeUserEmail) {
+                localStorage.setItem(`mindriot_payment_status_${activeUserEmail}`, nextStatus);
+                
+                // Attempt to update database table audit_leads
+                if (supabaseClient && !isMockAuth) {
+                    try {
+                        const { error } = await supabaseClient
+                            .from('audit_leads')
+                            .update({ payment_status: nextStatus })
+                            .eq('email', activeUserEmail);
+                        
+                        if (error) {
+                            console.error('[Supabase Payment Status Update Fail]:', error.message);
+                        } else {
+                            console.log('[Supabase Payment Status Update Success]');
+                        }
+                    } catch (err) {
+                        console.error('[Supabase Payment Update Catch Exception]:', err);
+                    }
+                }
+            }
+            
+            // Re-sync dashboard
+            if (activeUserEmail) {
+                syncPaymentStatus(activeUserEmail);
+            }
+            
+            // Show Success screen
+            stripeLoadingState.style.display = 'none';
+            stripeSuccessState.style.display = 'flex';
+            
+        }, 1800); // 1.8s simulation latency
+    });
 }
 
 if (document.readyState === 'loading') {

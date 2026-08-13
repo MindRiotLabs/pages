@@ -11,20 +11,20 @@
     --bg-card: #141417;        /* Zinc-900 glassmorphism base */
     --bg-card-hover: #1D1D22;  /* Slightly lighter dark on hover */
     --border-color: rgba(255, 255, 255, 0.08); /* Transparent borders for glassmorphism */
-    --border-highlight: rgba(6, 182, 212, 0.25); /* Cyan border highlight */
+    --border-highlight: rgba(0, 196, 159, 0.25); /* Cyan border highlight */
     
     /* Text Colors */
     --text-primary: #FAFAFA;   /* Pure white headings */
     --text-secondary: #A1A1AA; /* Light gray body copy */
     --text-muted: #71717A;     /* Muted metadata */
     
-    /* Accents (Cyan/Emerald/Violet) */
-    --accent-cyan: #06B6D4;
-    --accent-emerald: #10B981;
+    /* Accents (Lime Green to Cyan Gradient) */
+    --accent-cyan: #00C49F;
+    --accent-emerald: #82C43C;
     --accent-violet: #8B5CF6;
-    --accent-gradient: linear-gradient(135deg, #06B6D4 0%, #10B981 50%, #8B5CF6 100%);
-    --cyan-glow: rgba(6, 182, 212, 0.15);
-    --emerald-glow: rgba(16, 185, 129, 0.15);
+    --accent-gradient: linear-gradient(135deg, #82C43C 0%, #00C49F 100%);
+    --cyan-glow: rgba(0, 196, 159, 0.15);
+    --emerald-glow: rgba(130, 196, 60, 0.15);
 
     /* Fonts & Typography */
     --font-heading: 'Plus Jakarta Sans', sans-serif;
@@ -219,13 +219,19 @@ header {
 .logo {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
     text-decoration: none;
-    color: var(--text-primary);
-    font-family: var(--font-heading);
-    font-weight: 800;
-    font-size: 1.35rem;
-    letter-spacing: -0.03em;
+}
+
+.logo img {
+    height: 38px;
+    width: auto;
+    display: block;
+    object-fit: contain;
+    transition: var(--transition-smooth);
+}
+
+.logo:hover img {
+    opacity: 0.9;
 }
 
 .logo-icon {
@@ -1974,6 +1980,43 @@ footer {
     color: var(--text-secondary);
     margin-bottom: 0;
     line-height: 1.5;
+}
+
+.tech-stack-integration {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tech-stack-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent-cyan);
+    margin-bottom: 0.5rem;
+}
+
+.tech-stack-desc {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 0.75rem !important;
+}
+
+.tech-stack-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.demo-stack-badges {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
 }
 
 /* Tech Badges */

@@ -1277,20 +1277,20 @@ function initApplication() {
     });
 
     // -------------------------------------------------------------
-    // Centerpiece Logo Shrink & Dock + Parallax Watermark Scroll Animation
+    // Split-Logo Scroll Transition + Synchronized Parallax Watermark
     // -------------------------------------------------------------
     const headerLogo = document.getElementById('headerLogo');
     const centerpieceLogo = document.getElementById('heroCenterpieceLogo');
-    const heroWatermark = document.querySelector('.hero-watermark');
+    const heroWatermark = document.getElementById('heroWatermark') || document.querySelector('.hero-watermark');
     
     if (headerLogo && centerpieceLogo) {
         let startTop = 0;
         let startLeft = 0;
         let targetTop = 0;
         let targetLeft = 0;
-        let startHeight = 90;
-        let targetHeight = 38;
-        let threshold = 200;
+        let startHeight = 180;
+        let targetHeight = 46;
+        let threshold = 250;
         let animationFrameId = null;
 
         function updateDimensions() {
@@ -1311,7 +1311,7 @@ function initApplication() {
             targetLeft = targetLogoRect.left + window.scrollX;
             targetHeight = targetLogoRect.height;
             
-            threshold = Math.max(startTop - targetTop, 100);
+            threshold = Math.max(startTop - targetTop, 150);
             
             // Re-trigger scroll processing
             onScroll();
@@ -1321,12 +1321,14 @@ function initApplication() {
             const scrollY = window.scrollY;
             const ratio = Math.min(scrollY / threshold, 1);
             
+            // --- Centerpiece Fade Out + Scale Down ---
             if (ratio >= 1) {
                 centerpieceLogo.style.opacity = '0';
                 centerpieceLogo.style.transform = `translate(${targetLeft - startLeft}px, ${targetTop - startTop + scrollY}px) scale(${targetHeight / startHeight})`;
                 headerLogo.classList.add('docked');
             } else {
-                centerpieceLogo.style.opacity = '1';
+                // Fade out centerpiece as user scrolls (opacity 1 -> 0)
+                centerpieceLogo.style.opacity = String(1 - ratio);
                 headerLogo.classList.remove('docked');
                 
                 const tx = (targetLeft - startLeft) * ratio;
@@ -1336,9 +1338,16 @@ function initApplication() {
                 centerpieceLogo.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
             }
 
+            // --- Synchronized Watermark Fade In + Continuous Parallax ---
             if (heroWatermark) {
-                // Parallax background watermark eye (scrolls at 30% speed)
-                heroWatermark.style.transform = `translateY(${scrollY * 0.3}px)`;
+                // Fade in the eye as the centerpiece fades out (split effect)
+                const watermarkMaxOpacity = 0.12;
+                heroWatermark.style.opacity = String(ratio * watermarkMaxOpacity);
+                
+                // Continuous parallax: eye drifts slowly relative to scroll
+                // Using a gentle multiplier so it stays in view as ambient backdrop
+                const parallaxOffset = scrollY * 0.08;
+                heroWatermark.style.transform = `translateY(${parallaxOffset}px)`;
             }
         }
 
@@ -1346,7 +1355,7 @@ function initApplication() {
         setTimeout(() => {
             updateDimensions();
             window.addEventListener('resize', updateDimensions);
-        }, 100);
+        }, 150);
 
         window.addEventListener('scroll', () => {
             if (animationFrameId) {

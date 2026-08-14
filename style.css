@@ -470,26 +470,49 @@ header.nav-scrolled {
     border: 1px solid var(--border-color);
 }
 
-.avatar-placeholder {
-    width: 130px;
-    height: 130px;
+.spotlight-avatar-wrapper {
+    width: 140px;
+    height: 140px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-hover) 100%);
     margin: 0 auto 1.5rem auto;
     border: 2px solid var(--accent-cyan);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    box-shadow: 0 0 25px rgba(6, 182, 212, 0.25);
     overflow: hidden;
     position: relative;
+    background: var(--bg-card);
 }
 
-.avatar-svg {
-    width: 60%;
-    height: 60%;
-    fill: none;
-    stroke: var(--accent-cyan);
-    stroke-width: 1.5;
+.spotlight-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.linkedin-link-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.65rem 1rem;
+    margin-bottom: 1.5rem;
+    background: rgba(10, 102, 194, 0.12);
+    border: 1px solid rgba(10, 102, 194, 0.35);
+    border-radius: 8px;
+    color: #38BDF8;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: var(--transition-smooth);
+}
+
+.linkedin-link-btn:hover {
+    background: rgba(10, 102, 194, 0.25);
+    border-color: #0A66C2;
+    color: #FFFFFF;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(10, 102, 194, 0.25);
 }
 
 .spotlight-card h4 {
@@ -2002,25 +2025,52 @@ footer {
         transform: none !important;
     }
 
+    .terminal-header {
+        padding: 0.65rem 0.85rem !important;
+        flex-wrap: wrap !important;
+        gap: 0.4rem !important;
+    }
+
+    .terminal-title {
+        font-size: 0.72rem !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 170px !important;
+    }
+
+    .privacy-badge {
+        font-size: 0.68rem !important;
+        padding: 0.15rem 0.45rem !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        margin-left: auto !important;
+    }
+
     .demo-terminal {
         height: 380px !important;
         padding: 0 !important;
     }
 
     .terminal-input-group {
-        padding: 0.75rem 1rem !important;
-        gap: 0.5rem !important;
+        padding: 0.65rem 0.85rem !important;
+        gap: 0.4rem !important;
     }
 
     .terminal-input-group input {
-        font-size: 0.88rem !important;
+        font-size: 0.82rem !important;
         min-width: 0 !important;
+    }
+
+    .terminal-input-group input::placeholder {
+        font-size: 0.78rem !important;
+        text-overflow: ellipsis !important;
     }
 
     .terminal-input-group .btn {
         display: inline-flex !important;
-        padding: 0.6rem 1rem !important;
-        font-size: 0.82rem !important;
+        padding: 0.55rem 0.85rem !important;
+        font-size: 0.8rem !important;
         white-space: nowrap !important;
         flex-shrink: 0 !important;
     }

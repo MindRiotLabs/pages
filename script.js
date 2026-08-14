@@ -1275,6 +1275,86 @@ function initApplication() {
             
         }, 1800); // 1.8s simulation latency
     });
+
+    // -------------------------------------------------------------
+    // Centerpiece Logo Shrink & Dock + Parallax Watermark Scroll Animation
+    // -------------------------------------------------------------
+    const headerLogo = document.getElementById('headerLogo');
+    const centerpieceLogo = document.getElementById('heroCenterpieceLogo');
+    const heroWatermark = document.querySelector('.hero-watermark');
+    
+    if (headerLogo && centerpieceLogo) {
+        let startTop = 0;
+        let startLeft = 0;
+        let targetTop = 0;
+        let targetLeft = 0;
+        let startHeight = 90;
+        let targetHeight = 38;
+        let threshold = 200;
+        let animationFrameId = null;
+
+        function updateDimensions() {
+            // Temporarily reset styles to measure original layouts
+            centerpieceLogo.style.transform = '';
+            centerpieceLogo.style.opacity = '1';
+            headerLogo.classList.remove('docked');
+            
+            const centerpieceRect = centerpieceLogo.getBoundingClientRect();
+            const headerLogoImg = headerLogo.querySelector('img');
+            const targetLogoRect = headerLogoImg ? headerLogoImg.getBoundingClientRect() : headerLogo.getBoundingClientRect();
+            
+            startTop = centerpieceRect.top + window.scrollY;
+            startLeft = centerpieceRect.left + window.scrollX;
+            startHeight = centerpieceRect.height;
+            
+            targetTop = targetLogoRect.top + window.scrollY;
+            targetLeft = targetLogoRect.left + window.scrollX;
+            targetHeight = targetLogoRect.height;
+            
+            threshold = Math.max(startTop - targetTop, 100);
+            
+            // Re-trigger scroll processing
+            onScroll();
+        }
+
+        function onScroll() {
+            const scrollY = window.scrollY;
+            const ratio = Math.min(scrollY / threshold, 1);
+            
+            if (ratio >= 1) {
+                centerpieceLogo.style.opacity = '0';
+                centerpieceLogo.style.transform = `translate(${targetLeft - startLeft}px, ${targetTop - startTop + scrollY}px) scale(${targetHeight / startHeight})`;
+                headerLogo.classList.add('docked');
+            } else {
+                centerpieceLogo.style.opacity = '1';
+                headerLogo.classList.remove('docked');
+                
+                const tx = (targetLeft - startLeft) * ratio;
+                const ty = (targetTop - startTop + scrollY) * ratio;
+                const scale = 1 - (1 - (targetHeight / startHeight)) * ratio;
+                
+                centerpieceLogo.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+            }
+
+            if (heroWatermark) {
+                // Parallax background watermark eye (scrolls at 30% speed)
+                heroWatermark.style.transform = `translateY(${scrollY * 0.3}px)`;
+            }
+        }
+
+        // Delay initialization slightly to ensure initial images/layouts are rendered
+        setTimeout(() => {
+            updateDimensions();
+            window.addEventListener('resize', updateDimensions);
+        }, 100);
+
+        window.addEventListener('scroll', () => {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            animationFrameId = requestAnimationFrame(onScroll);
+        }, { passive: true });
+    }
 }
 
 if (document.readyState === 'loading') {

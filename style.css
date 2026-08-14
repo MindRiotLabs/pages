@@ -288,7 +288,34 @@ header {
     z-index: 1;
     pointer-events: none;
     filter: drop-shadow(0 0 40px rgba(0, 196, 159, 0.15)) blur(2px);
-    transition: var(--transition-smooth);
+    will-change: transform;
+}
+
+#headerLogo {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+#headerLogo.docked {
+    opacity: 1;
+}
+
+.hero-logo-centerpiece-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+    height: 90px;
+    position: relative;
+    z-index: 1001;
+}
+
+.hero-logo-centerpiece {
+    height: 90px;
+    width: auto;
+    display: block;
+    object-fit: contain;
+    transform-origin: center center;
+    will-change: transform, opacity;
 }
 
 .hero-section {

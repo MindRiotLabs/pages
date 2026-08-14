@@ -1719,12 +1719,48 @@ footer {
 }
 
 @media (max-width: 768px) {
-    .section-padding {
-        padding: 3rem 1.25rem !important;
+    body, main {
+        overflow-x: hidden !important;
+        max-width: 100% !important;
+        width: 100% !important;
     }
 
-    .container {
-        padding: 0 1.25rem !important;
+    .container, .hero-section, .demo-container, .portfolio-grid, .pricing-container, .modal-drawer, .portal-drawer {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        padding-left: 1.25rem !important;
+        padding-right: 1.25rem !important;
+    }
+
+    .case-card, .tool-card, .sprint-card, .demo-terminal, .demo-sidebar {
+        padding: 1.25rem !important;
+        box-sizing: border-box !important;
+    }
+
+    .case-card h3, .tool-card h3, .sprint-card h3 {
+        font-size: 1.35rem !important;
+    }
+
+    .case-card p, .tool-card p, .sprint-card p {
+        font-size: 0.95rem !important;
+    }
+
+    .demo-container {
+        padding: 1.25rem !important;
+    }
+
+    .terminal-body {
+        padding: 1rem !important;
+        font-size: 0.85rem !important;
+    }
+
+    .terminal-line {
+        word-break: break-all !important;
+        white-space: pre-wrap !important;
+    }
+
+    .section-padding {
+        padding: 3rem 1.25rem !important;
     }
     
     .nav-links {
@@ -1792,10 +1828,25 @@ footer {
     header .logo img {
         height: 28px;
     }
+
+    .hero-section {
+        padding-top: 6rem !important;
+    }
     
     .hero-section h1 {
         font-size: 2rem;
         line-height: 1.2;
+    }
+
+    .hero-logo-centerpiece-container {
+        margin-top: 80px !important;
+        margin-bottom: 2rem !important;
+        height: 50px !important;
+        z-index: 999 !important;
+    }
+
+    .hero-logo-centerpiece {
+        height: 50px !important;
     }
     
     .hero-ctas {
@@ -1816,7 +1867,15 @@ footer {
     }
 
     .hero-watermark {
-        display: none;
+        display: block !important;
+        position: absolute !important;
+        width: 300px !important;
+        opacity: 0.10 !important;
+        left: calc(50% - 150px) !important;
+        top: 12% !important;
+        pointer-events: none !important;
+        z-index: 0 !important;
+        right: auto !important;
     }
     
     .portfolio-grid {

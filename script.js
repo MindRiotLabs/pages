@@ -1376,17 +1376,15 @@ function initApplication() {
     }
 
     // -------------------------------------------------------------
-    // Mobile Case Study Accordion Toggle Handler
+    // Case Study Accordion Toggle Handler (Desktop & Mobile)
     // -------------------------------------------------------------
     const caseCards = document.querySelectorAll('.case-card');
     caseCards.forEach(card => {
         card.addEventListener('click', (e) => {
-            if (window.innerWidth <= 768) {
-                const isExpanded = card.classList.toggle('expanded');
-                const btnSpan = card.querySelector('.case-expand-btn span');
-                if (btnSpan) {
-                    btnSpan.textContent = isExpanded ? 'Hide Details' : 'Expand Case Study';
-                }
+            const isExpanded = card.classList.toggle('expanded');
+            const btnSpan = card.querySelector('.case-expand-btn span');
+            if (btnSpan) {
+                btnSpan.textContent = isExpanded ? 'Hide Details' : 'Expand Case Study';
             }
         });
     });

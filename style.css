@@ -840,10 +840,10 @@ header.nav-scrolled {
 }
 
 .sprint-card {
-    padding: 3rem;
+    padding: 2.5rem 3rem 3rem 3rem;
     display: grid;
     grid-template-columns: 1.2fr 1fr;
-    gap: 3.5rem;
+    gap: 1.5rem 3.5rem;
     position: relative;
     overflow: hidden;
     border: 1px solid rgba(6, 182, 212, 0.2);
@@ -866,16 +866,18 @@ header.nav-scrolled {
 }
 
 .sprint-badge {
-    position: absolute;
-    top: 2rem;
-    right: 2rem;
+    grid-column: 1 / -1;
+    position: static;
+    display: inline-block;
+    width: fit-content;
     background: rgba(16, 185, 129, 0.1);
     border: 1px solid rgba(16, 185, 129, 0.25);
     color: var(--accent-emerald);
-    padding: 0.35rem 0.85rem;
+    padding: 0.4rem 1rem;
     border-radius: 50px;
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     font-weight: 600;
+    margin-bottom: 0.5rem;
 }
 
 .sprint-details h3 {
@@ -1019,12 +1021,14 @@ header.nav-scrolled {
 }
 
 .case-card {
-    padding: 2.5rem;
+    padding: 2rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    height: 100%;
+    height: auto;
     border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: var(--transition-smooth);
 }
 
 .case-badge {
@@ -1051,19 +1055,57 @@ header.nav-scrolled {
     font-size: 0.9rem;
     color: var(--accent-cyan);
     font-weight: 600;
-    margin-bottom: 1.75rem;
-}
-
-.case-expand-btn {
-    display: none !important;
+    margin-bottom: 0.5rem;
 }
 
 .case-body {
-    flex-grow: 1;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin 0.3s ease;
+    margin-top: 0;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     gap: 1.5rem;
+}
+
+.case-card.expanded .case-body {
+    max-height: 800px;
+    opacity: 1;
+    margin-top: 1.25rem;
+}
+
+.case-expand-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 0.75rem;
+    padding: 0.65rem 1rem;
+    background: rgba(6, 182, 212, 0.06);
+    border: 1px solid rgba(6, 182, 212, 0.25);
+    border-radius: 8px;
+    color: var(--accent-cyan);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.case-expand-btn .chevron-icon {
+    transition: transform 0.3s ease;
+}
+
+.case-card.expanded .case-expand-btn .chevron-icon {
+    transform: rotate(180deg);
+}
+
+.case-card.expanded .case-expand-btn {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--border-color);
+    color: var(--text-secondary);
 }
 
 .case-block {
@@ -2003,62 +2045,9 @@ footer {
         gap: 0.35rem !important;
     }
     
-    /* Mobile Case Study Accordion Cards */
+    /* Mobile Case Study Card Padding */
     .case-card {
-        cursor: pointer;
         padding: 1.25rem !important;
-        height: auto !important;
-    }
-
-    .case-sub {
-        margin-bottom: 0.5rem !important;
-    }
-
-    .case-body {
-        max-height: 0;
-        opacity: 0;
-        overflow: hidden;
-        transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin 0.3s ease;
-        margin-top: 0;
-        display: flex !important;
-    }
-
-    .case-card.expanded .case-body {
-        max-height: 800px;
-        opacity: 1;
-        margin-top: 1.25rem;
-    }
-
-    .case-expand-btn {
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        width: 100%;
-        margin-top: 0.75rem;
-        padding: 0.65rem 1rem;
-        background: rgba(6, 182, 212, 0.06);
-        border: 1px solid rgba(6, 182, 212, 0.25);
-        border-radius: 8px;
-        color: var(--accent-cyan);
-        font-size: 0.85rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: var(--transition-smooth);
-    }
-
-    .case-expand-btn .chevron-icon {
-        transition: transform 0.3s ease;
-    }
-
-    .case-card.expanded .case-expand-btn .chevron-icon {
-        transform: rotate(180deg);
-    }
-
-    .case-card.expanded .case-expand-btn {
-        background: rgba(255, 255, 255, 0.03);
-        border-color: var(--border-color);
-        color: var(--text-secondary);
     }
 }
 

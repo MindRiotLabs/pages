@@ -268,32 +268,13 @@ function initApplication() {
     if (mobileToggle) {
         mobileToggle.addEventListener('click', () => {
             navLinksContainer.classList.toggle('mobile-active');
-            
-            if (navLinksContainer.classList.contains('mobile-active')) {
-                navLinksContainer.style.display = 'flex';
-                navLinksContainer.style.flexDirection = 'column';
-                navLinksContainer.style.position = 'absolute';
-                navLinksContainer.style.top = '80px';
-                navLinksContainer.style.left = '0';
-                navLinksContainer.style.right = '0';
-                navLinksContainer.style.background = 'rgba(9, 9, 11, 0.95)';
-                navLinksContainer.style.borderBottom = '1px solid var(--border-color)';
-                navLinksContainer.style.padding = '2rem';
-                navLinksContainer.style.gap = '1.5rem';
-                navLinksContainer.style.backdropFilter = 'var(--backdrop-blur)';
-            } else {
-                navLinksContainer.style.display = '';
-            }
         });
     }
 
     // Close mobile menu when clicking nav links
     navLinks.forEach(link => {
         link.addEventListener('click', () => {
-            if (navLinksContainer.classList.contains('mobile-active')) {
-                navLinksContainer.classList.remove('mobile-active');
-                navLinksContainer.style.display = '';
-            }
+            navLinksContainer.classList.remove('mobile-active');
         });
     });
 

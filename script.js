@@ -1277,8 +1277,9 @@ function initApplication() {
     });
 
     // -------------------------------------------------------------
-    // Split-Logo Scroll Transition + Synchronized Parallax Watermark
+    // Header Nav Entrance + Split-Logo Transition + Parallax Watermark
     // -------------------------------------------------------------
+    const headerElement = document.querySelector('header');
     const headerLogo = document.getElementById('headerLogo');
     const centerpieceLogo = document.getElementById('heroCenterpieceLogo');
     const heroWatermark = document.getElementById('heroWatermark') || document.querySelector('.hero-watermark');
@@ -1288,7 +1289,7 @@ function initApplication() {
         let startLeft = 0;
         let targetTop = 0;
         let targetLeft = 0;
-        let startHeight = 180;
+        let startHeight = 360;
         let targetHeight = 46;
         let threshold = 250;
         let animationFrameId = null;
@@ -1305,13 +1306,13 @@ function initApplication() {
             
             startTop = centerpieceRect.top + window.scrollY;
             startLeft = centerpieceRect.left + window.scrollX;
-            startHeight = centerpieceRect.height;
+            startHeight = centerpieceRect.height || 360;
             
             targetTop = targetLogoRect.top + window.scrollY;
             targetLeft = targetLogoRect.left + window.scrollX;
-            targetHeight = targetLogoRect.height;
+            targetHeight = targetLogoRect.height || 46;
             
-            threshold = Math.max(startTop - targetTop, 150);
+            threshold = Math.max(startTop - targetTop, 180);
             
             // Re-trigger scroll processing
             onScroll();
@@ -1319,6 +1320,16 @@ function initApplication() {
 
         function onScroll() {
             const scrollY = window.scrollY;
+            
+            // --- Header Entrance (Hide until scroll > 25px) ---
+            if (headerElement) {
+                if (scrollY > 25) {
+                    headerElement.classList.add('nav-scrolled');
+                } else {
+                    headerElement.classList.remove('nav-scrolled');
+                }
+            }
+
             const ratio = Math.min(scrollY / threshold, 1);
             
             // --- Centerpiece Fade Out + Scale Down ---
@@ -1345,7 +1356,6 @@ function initApplication() {
                 heroWatermark.style.opacity = String(ratio * watermarkMaxOpacity);
                 
                 // Continuous parallax: eye drifts slowly relative to scroll
-                // Using a gentle multiplier so it stays in view as ambient backdrop
                 const parallaxOffset = scrollY * 0.08;
                 heroWatermark.style.transform = `translateY(${parallaxOffset}px)`;
             }
@@ -1364,6 +1374,22 @@ function initApplication() {
             animationFrameId = requestAnimationFrame(onScroll);
         }, { passive: true });
     }
+
+    // -------------------------------------------------------------
+    // Mobile Case Study Accordion Toggle Handler
+    // -------------------------------------------------------------
+    const caseCards = document.querySelectorAll('.case-card');
+    caseCards.forEach(card => {
+        card.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                const isExpanded = card.classList.toggle('expanded');
+                const btnSpan = card.querySelector('.case-expand-btn span');
+                if (btnSpan) {
+                    btnSpan.textContent = isExpanded ? 'Hide Details' : 'Expand Case Study';
+                }
+            }
+        });
+    });
 }
 
 if (document.readyState === 'loading') {

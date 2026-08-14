@@ -52,7 +52,10 @@ body {
     font-family: var(--font-body);
     color: var(--text-secondary);
     line-height: 1.6;
-    overflow-x: hidden;
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    position: relative;
 }
 
 /* Ambient glow blobs in background */
@@ -206,7 +209,16 @@ header {
     backdrop-filter: var(--backdrop-blur);
     -webkit-backdrop-filter: var(--backdrop-blur);
     border-bottom: 1px solid var(--border-color);
-    transition: var(--transition-smooth);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-10px);
+    transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
+}
+
+header.nav-scrolled {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
 }
 
 .nav-wrapper {
@@ -305,13 +317,13 @@ header {
     display: flex;
     justify-content: center;
     margin-bottom: 2.5rem;
-    height: 180px;
+    height: 360px;
     position: relative;
     z-index: 999;
 }
 
 .hero-logo-centerpiece {
-    height: 180px;
+    height: 360px;
     width: auto;
     display: block;
     object-fit: contain;
@@ -321,7 +333,7 @@ header {
 
 .hero-section {
     position: relative;
-    padding-top: 14rem;
+    padding-top: 5rem;
     padding-bottom: 8rem;
     text-align: center;
 }
@@ -1042,6 +1054,10 @@ header {
     margin-bottom: 1.75rem;
 }
 
+.case-expand-btn {
+    display: none !important;
+}
+
 .case-body {
     flex-grow: 1;
     display: flex;
@@ -1720,6 +1736,14 @@ footer {
 }
 
 @media (max-width: 768px) {
+    html, body {
+        overflow-x: hidden !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        position: relative;
+        touch-action: pan-y;
+    }
+
     body, main {
         overflow-x: hidden !important;
         max-width: 100% !important;
@@ -1835,7 +1859,7 @@ footer {
     }
 
     .hero-section {
-        padding-top: 8rem !important;
+        padding-top: 3.5rem !important;
     }
     
     .hero-section h1 {
@@ -1844,14 +1868,14 @@ footer {
     }
 
     .hero-logo-centerpiece-container {
-        margin-top: 20px !important;
+        margin-top: 10px !important;
         margin-bottom: 2rem !important;
-        height: 120px !important;
+        height: 230px !important;
         z-index: 999 !important;
     }
 
     .hero-logo-centerpiece {
-        height: 120px !important;
+        height: 230px !important;
     }
     
     .hero-ctas {
@@ -1979,6 +2003,65 @@ footer {
         gap: 0.35rem !important;
     }
     
+    /* Mobile Case Study Accordion Cards */
+    .case-card {
+        cursor: pointer;
+        padding: 1.25rem !important;
+        height: auto !important;
+    }
+
+    .case-sub {
+        margin-bottom: 0.5rem !important;
+    }
+
+    .case-body {
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+        transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin 0.3s ease;
+        margin-top: 0;
+        display: flex !important;
+    }
+
+    .case-card.expanded .case-body {
+        max-height: 800px;
+        opacity: 1;
+        margin-top: 1.25rem;
+    }
+
+    .case-expand-btn {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        margin-top: 0.75rem;
+        padding: 0.65rem 1rem;
+        background: rgba(6, 182, 212, 0.06);
+        border: 1px solid rgba(6, 182, 212, 0.25);
+        border-radius: 8px;
+        color: var(--accent-cyan);
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition-smooth);
+    }
+
+    .case-expand-btn .chevron-icon {
+        transition: transform 0.3s ease;
+    }
+
+    .case-card.expanded .case-expand-btn .chevron-icon {
+        transform: rotate(180deg);
+    }
+
+    .case-card.expanded .case-expand-btn {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: var(--border-color);
+        color: var(--text-secondary);
+    }
+}
+
     .portfolio-grid {
         grid-template-columns: 1fr;
     }

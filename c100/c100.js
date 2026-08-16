@@ -162,4 +162,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // 7. Background Parallax Watermark Eye (faded eye icon that follows user on scroll)
+    const heroWatermark = document.getElementById('heroWatermark') || document.querySelector('.hero-watermark');
+    if (heroWatermark) {
+        heroWatermark.style.opacity = '0.12';
+        window.addEventListener('scroll', () => {
+            const scrollY = window.scrollY;
+            const parallaxOffset = scrollY * 0.08;
+            heroWatermark.style.transform = `translateY(${parallaxOffset}px)`;
+        }, { passive: true });
+    }
 });

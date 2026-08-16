@@ -1,0 +1,23 @@
+# Environment variables & local secrets
+.env
+.env.local
+.env.*.local
+env.local
+*.local
+
+# Node & dependencies
+node_modules/
+dist/
+.wrangler/
+
+# Scratch & build artifacts
+scratch/
+*.docx
+generate_resume.py
+images/build_cards.py
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

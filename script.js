@@ -386,6 +386,32 @@ function initApplication() {
             return;
         }
 
+        // Helper: Toast Notifications
+        function showFormToast(message, isError = false) {
+            const toast = document.getElementById('formToast');
+            const toastText = document.getElementById('formToastText');
+            const toastIcon = document.getElementById('formToastIcon');
+            if (!toast || !toastText) return;
+
+            toastText.textContent = message;
+            if (isError) {
+                toast.classList.add('error');
+                if (toastIcon) {
+                    toastIcon.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>';
+                }
+            } else {
+                toast.classList.remove('error');
+                if (toastIcon) {
+                    toastIcon.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+                }
+            }
+
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 4500);
+        }
+
         // If form is valid, prepare payload
         let finalIndustry = industry;
         if (industry.toLowerCase() === 'other') {
@@ -404,55 +430,78 @@ function initApplication() {
             source: 'Opportunity Audit Lead Form'
         };
 
-        // Try inserting into Supabase audit_leads table
-        if (supabaseClient) {
-            try {
-                const { error } = await supabaseClient
-                    .from('audit_leads')
-                    .insert([
-                        {
-                            business_name: company,
-                            industry: finalIndustry,
-                            revenue_size: size,
-                            bottleneck: bottleneck,
-                            email: email
-                        }
-                    ]);
-                if (error) {
-                    console.error('[Supabase Error] Insert failed:', error.message);
-                } else {
-                    console.log('[Supabase Success] Lead inserted successfully.');
-                }
-            } catch (err) {
-                console.error('[Supabase Catch] Error submitting to database:', err);
-            }
-        } else {
-            console.warn('[Supabase Warning] Client not initialized. Data logged locally only.');
+        const submitBtn = leadForm.querySelector('button[type="submit"]');
+        const originalBtnHTML = submitBtn ? submitBtn.innerHTML : 'Request Audit Session';
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="btn-spinner"></span> Sending...';
         }
 
-        // Save payload locally for audit trail
         try {
-            const submissions = JSON.parse(localStorage.getItem('mindriot_leads') || '[]');
-            submissions.push(leadPayload);
-            localStorage.setItem('mindriot_leads', JSON.stringify(submissions));
-        } catch (err) {
-            console.warn('LocalStorage unavailable for lead backup.');
+            // 1. Dispatch Email via /api/contact (Resend Backend Handler)
+            const response = await fetch('/api/contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(leadPayload)
+            });
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                console.error('[API Contact Error]', response.status, errData);
+                throw new Error(errData.error || 'Failed to dispatch email notification');
+            }
+
+            console.log('[API Contact Success] Notification email successfully sent via Resend.');
+
+            // 2. Insert into Supabase audit_leads table if client initialized
+            if (supabaseClient) {
+                try {
+                    const { error } = await supabaseClient
+                        .from('audit_leads')
+                        .insert([
+                            {
+                                business_name: company,
+                                industry: finalIndustry,
+                                revenue_size: size,
+                                bottleneck: bottleneck,
+                                email: email
+                            }
+                        ]);
+                    if (error) {
+                        console.error('[Supabase Error] Insert failed:', error.message);
+                    }
+                } catch (err) {
+                    console.error('[Supabase Catch] Error submitting to database:', err);
+                }
+            }
+
+            // 3. Save payload locally for audit trail
+            try {
+                const submissions = JSON.parse(localStorage.getItem('mindriot_leads') || '[]');
+                submissions.push(leadPayload);
+                localStorage.setItem('mindriot_leads', JSON.stringify(submissions));
+            } catch (err) {
+                console.warn('LocalStorage unavailable for lead backup.');
+            }
+
+            // 4. Success State UI Transition & Toast
+            showFormToast("Message sent. We'll be in touch shortly.", false);
+            formState.style.display = 'none';
+            successState.style.display = 'flex';
+
+        } catch (error) {
+            console.error('[Lead Form Submission Error]', error);
+            showFormToast("Failed to send message. Please contact jvh@mindriotlabs.com directly.", true);
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnHTML;
+            }
         }
-
-        // Log Simulated Webhook Submission
-        console.log('%c[MindRiot Lead Handler] Webhook Dispatched:', 'color: #06B6D4; font-weight: bold;', leadPayload);
-
-        // Fetch simulation
-        simulateWebhookPost(leadPayload);
-
-        // Show Success Transition State
-        formState.style.display = 'none';
-        successState.style.display = 'flex';
     });
-
-    function simulateWebhookPost(payload) {
-        console.log('[Webhook Simulation] Posting payload to database...', payload);
-    }
 
     // -------------------------------------------------------------
     // SOP Search Micro-Demo Handler

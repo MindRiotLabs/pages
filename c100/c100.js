@@ -150,7 +150,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 5. Smooth scroll link
+    // 5. Mobile Navigation Toggle
+    const mobileToggle = document.querySelector('.nav-mobile-toggle');
+    const navLinksContainer = document.querySelector('.nav-links');
+    if (mobileToggle && navLinksContainer) {
+        mobileToggle.addEventListener('click', () => {
+            navLinksContainer.classList.toggle('mobile-active');
+        });
+    }
+
+    // 6. Smooth scroll link
     const scrollLinks = document.querySelectorAll('a[href^="#"]');
     scrollLinks.forEach(anchor => {
         anchor.addEventListener('click', function (e) {

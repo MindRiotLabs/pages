@@ -7,17 +7,17 @@
 
 :root {
     /* Color System */
-    --c100-bg-base: #070a11;
-    --c100-bg-deep: #03060a;
-    --c100-bg-card: rgba(18, 22, 31, 0.72);
-    --c100-bg-card-hover: rgba(26, 32, 44, 0.85);
+    --c100-bg-base: #09090B;
+    --c100-bg-deep: #050507;
+    --c100-bg-card: rgba(20, 20, 23, 0.75);
+    --c100-bg-card-hover: rgba(29, 29, 34, 0.88);
     
     --c100-border: rgba(255, 255, 255, 0.08);
     --c100-border-hover: rgba(0, 229, 153, 0.3);
     
-    --c100-text-primary: #ffffff;
-    --c100-text-secondary: #94a3b8;
-    --c100-text-muted: #64748b;
+    --c100-text-primary: #FAFAFA;
+    --c100-text-secondary: #A1A1AA;
+    --c100-text-muted: #71717A;
     
     /* Neon Lime to Teal/Cyan Gradient */
     --c100-lime: #00e599;
@@ -58,7 +58,7 @@ html {
 }
 
 body {
-    background: radial-gradient(circle at 50% 0%, #0c121e 0%, var(--c100-bg-base) 45%, var(--c100-bg-deep) 100%);
+    background-color: var(--c100-bg-base);
     min-height: 100vh;
     color: var(--c100-text-secondary);
     line-height: 1.55;
@@ -66,100 +66,209 @@ body {
     position: relative;
 }
 
-/* Atmosphere & Background Watermarks */
-.c100-ambient-wrap {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    overflow: hidden;
-    z-index: 0;
-}
-
-.c100-glow-top {
+/* Ambient glow blobs in background (matching homepage) */
+.ambient-glow-1 {
     position: absolute;
-    top: -150px;
-    left: 50%;
-    transform: translateX(-50%);
     width: 600px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(0, 229, 153, 0.12) 0%, rgba(0, 210, 255, 0.06) 40%, transparent 70%);
-    filter: blur(40px);
-}
-
-.c100-glow-mid {
-    position: absolute;
-    top: 55%;
-    right: -120px;
-    width: 450px;
-    height: 450px;
-    background: radial-gradient(circle, rgba(192, 132, 252, 0.08) 0%, transparent 70%);
-    filter: blur(50px);
-}
-
-.c100-watermark-neural {
-    position: absolute;
-    width: 400px;
-    height: 400px;
-    top: 260px;
-    right: -110px;
-    opacity: 0.10;
-    filter: drop-shadow(0 0 40px rgba(0, 229, 153, 0.4));
-    user-select: none;
-    pointer-events: none;
-    transform: rotate(-10deg);
-}
-
-.c100-watermark-bottom {
-    position: absolute;
-    width: 440px;
-    height: 440px;
-    bottom: 50px;
-    left: -130px;
-    opacity: 0.09;
-    filter: drop-shadow(0 0 40px rgba(0, 229, 153, 0.4));
-    user-select: none;
+    height: 600px;
+    top: -200px;
+    left: -100px;
+    background: radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, rgba(0,0,0,0) 70%);
+    z-index: 0;
     pointer-events: none;
 }
 
-/* Layout Container */
+.ambient-glow-2 {
+    position: absolute;
+    width: 650px;
+    height: 650px;
+    top: 800px;
+    right: -200px;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, rgba(0,0,0,0) 70%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+.ambient-glow-3 {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    bottom: 200px;
+    left: 20%;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, rgba(0,0,0,0) 70%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* ==========================================================================
+   GLOBAL NAVBAR (100% Matching Main Site)
+   ========================================================================== */
+header {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: rgba(9, 9, 11, 0.85);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid var(--c100-border);
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.nav-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 80px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .nav-wrapper {
+        height: 90px;
+        padding: 0 2rem;
+    }
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.logo img {
+    height: 52px;
+    width: auto;
+    display: block;
+    object-fit: contain;
+    transition: var(--transition);
+}
+
+.logo:hover img {
+    opacity: 0.9;
+}
+
+.nav-links {
+    display: none;
+    align-items: center;
+    gap: 2rem;
+    list-style: none;
+}
+
+@media (min-width: 900px) {
+    .nav-links {
+        display: flex;
+    }
+}
+
+.nav-links a {
+    color: var(--c100-text-secondary);
+    text-decoration: none;
+    font-size: 0.92rem;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.nav-links a:hover {
+    color: var(--c100-text-primary);
+}
+
+.nav-links .open-portal-btn {
+    color: var(--c100-cyan);
+}
+
+.nav-wrapper .btn-primary {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+    background: var(--c100-gradient-accent);
+    color: #070a11;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+@media (min-width: 768px) {
+    .nav-wrapper .btn-primary {
+        display: inline-flex;
+    }
+}
+
+.nav-wrapper .btn-primary:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 4px 16px rgba(0, 229, 153, 0.3);
+}
+
+.nav-wrapper .btn-icon {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    fill: none;
+}
+
+.nav-mobile-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--c100-text-primary);
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+@media (min-width: 900px) {
+    .nav-mobile-toggle {
+        display: none;
+    }
+}
+
+/* Mobile Dropdown */
+.nav-links.mobile-active {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(14, 14, 18, 0.98);
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--c100-border);
+    backdrop-filter: blur(20px);
+    gap: 1.25rem;
+}
+
+/* ==========================================================================
+   LAYOUT CONTAINER
+   ========================================================================== */
 .c100-container {
     width: 100%;
     max-width: 580px;
     margin: 0 auto;
-    padding: 1.5rem 1.25rem 3.5rem;
+    padding: 2rem 1.25rem 3.5rem;
     position: relative;
     z-index: 1;
 }
 
 @media (min-width: 640px) {
     .c100-container {
-        padding: 2.5rem 1.5rem 5rem;
+        padding: 3rem 1.5rem 5rem;
     }
 }
 
-/* Top Branding Bar */
-.c100-header {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    padding-bottom: 1.25rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    margin-bottom: 1.75rem;
-}
-
-.c100-brand-logo {
-    display: inline-flex;
-    align-items: center;
-    text-decoration: none;
-}
-
-.c100-brand-logo img {
-    height: 52px;
-    width: auto;
-    display: block;
-    filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.5));
-}
-
+/* Section Eyebrow (Positioned directly above purple credential pill) */
 .c100-eyebrow {
     color: var(--c100-text-muted);
     font-size: 11px;
@@ -555,7 +664,7 @@ body {
    SECTION 4: CIO 100 PROOF POINT (PROFAI SPOTLIGHT)
    ========================================================================== */
 .c100-spotlight-card {
-    background: linear-gradient(135deg, rgba(192, 132, 252, 0.08) 0%, rgba(18, 22, 31, 0.85) 60%, rgba(0, 229, 153, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(192, 132, 252, 0.08) 0%, rgba(20, 20, 23, 0.85) 60%, rgba(0, 229, 153, 0.05) 100%);
     border: 1px solid var(--c100-purple-border);
     border-radius: 16px;
     padding: 1.5rem;
@@ -644,7 +753,7 @@ body {
 }
 
 /* ==========================================================================
-   SECTION 6: MINDRIOT LABS PLATFORM FOOTPRINT
+   SECTION 6: "WHAT IS MINDRIOT LABS?" PLATFORM FOOTPRINT
    ========================================================================== */
 .c100-platform-card {
     background: var(--c100-bg-card);
@@ -663,16 +772,16 @@ body {
 .c100-platform-card::after {
     content: '';
     position: absolute;
-    right: -35px;
-    bottom: -35px;
-    width: 180px;
-    height: 180px;
+    right: -25px;
+    bottom: -25px;
+    width: 210px;
+    height: 210px;
     background-image: url('/images/MRL-logo-icon-only-01-alpha.png');
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
-    opacity: 0.12;
-    filter: drop-shadow(0 0 25px rgba(0, 229, 153, 0.35));
+    opacity: 0.14;
+    filter: blur(1.5px) drop-shadow(0 0 25px rgba(0, 229, 153, 0.35));
     pointer-events: none;
     z-index: 0;
 }

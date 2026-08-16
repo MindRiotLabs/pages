@@ -235,7 +235,7 @@ header.nav-scrolled {
 }
 
 .logo img {
-    height: 46px;
+    height: 52px;
     width: auto;
     display: block;
     object-fit: contain;
@@ -1917,7 +1917,7 @@ footer {
     }
 
     header .logo img {
-        height: 34px;
+        height: 44px;
     }
 
     .nav-wrapper {

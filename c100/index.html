@@ -28,28 +28,50 @@
     <!-- Favicon -->
     <link rel="icon" href="/images/MRL-logo-icon-only-01-alpha.png" type="image/png">
     
-    <!-- Stylesheet -->
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/c100/c100.css">
 </head>
 <body>
 
-    <!-- Ambient Glow & Watermarks -->
-    <div class="c100-ambient-wrap" aria-hidden="true">
-        <div class="c100-glow-top"></div>
-        <div class="c100-glow-mid"></div>
-        <img src="/images/MRL-logo-icon-only-01-alpha.png" class="c100-watermark-neural" alt="">
-        <img src="/images/MRL-logo-icon-only-01-alpha.png" class="c100-watermark-bottom" alt="">
-    </div>
+    <!-- Ambient Glow Blobs (Inherited from Main Site) -->
+    <div class="ambient-glow-1"></div>
+    <div class="ambient-glow-2"></div>
+    <div class="ambient-glow-3"></div>
+
+    <!-- Header / Navigation (Global Sitewide Parity) -->
+    <header>
+        <div class="container nav-wrapper">
+            <a href="/#home" class="logo" id="headerLogo">
+                <img src="/images/MRL-logo-horizontal-alpha-01.png" alt="MindRiot Labs">
+            </a>
+            <ul class="nav-links">
+                <li><a href="/#home">Home</a></li>
+                <li><a href="/#about">About</a></li>
+                <li><a href="/#pricing">Services</a></li>
+                <li><a href="/#cases">Case Studies</a></li>
+                <!-- <li><a href="#tools">AI Tools</a></li> -->
+                <li><a href="/#portal" class="open-portal-btn">Client Login</a></li>
+            </ul>
+            <button class="btn btn-primary open-audit-modal" onclick="window.location.href='/#pricing'">
+                Book Audit
+                <svg class="btn-icon" viewBox="0 0 24 24">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </button>
+            <button class="nav-mobile-toggle" aria-label="Toggle Menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+    </header>
 
     <!-- Main Container (Mobile First) -->
     <div class="c100-container">
-        
-        <!-- Top Brand Header -->
-        <header class="c100-header">
-            <a href="/" class="c100-brand-logo action-site" aria-label="MindRiot Labs Home">
-                <img src="/images/MRL-logo-horizontal-alpha-01.png" alt="MindRiot Labs">
-            </a>
-        </header>
 
         <!-- Main Content -->
         <main>
@@ -301,7 +323,7 @@
                 </div>
             </section>
 
-            <!-- SECTION 6: LIGHTWEIGHT MINDRIOT PLATFORM FOOTPRINT -->
+            <!-- SECTION 6: "WHAT IS MINDRIOT LABS?" PLATFORM FOOTPRINT -->
             <section class="c100-section" id="platform">
                 <div class="c100-platform-card">
                     <div class="c100-platform-header">

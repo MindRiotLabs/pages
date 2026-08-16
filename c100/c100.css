@@ -142,7 +142,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: 1.5rem;
+    padding-bottom: 1.25rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     margin-bottom: 1.5rem;
 }
@@ -154,10 +154,10 @@ body {
 }
 
 .c100-brand-logo img {
-    height: 28px;
+    height: 52px;
     width: auto;
     display: block;
-    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+    filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.5));
 }
 
 .c100-brand-sub {
@@ -166,6 +166,8 @@ body {
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--c100-text-muted);
+    display: inline-flex;
+    align-items: center;
 }
 
 /* Section Spacing */
@@ -250,7 +252,7 @@ body {
 }
 
 .c100-credential-pill .pill-star {
-    color: #c084fc;
+    color: var(--c100-lime);
     font-size: 0.85rem;
     line-height: 1;
 }

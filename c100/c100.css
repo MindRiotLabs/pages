@@ -270,12 +270,12 @@ header {
 
 /* Section Eyebrow (Positioned directly above purple credential pill) */
 .c100-eyebrow {
-    color: var(--c100-text-muted);
+    color: var(--c100-text-muted, #64748b);
     font-size: 11px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
     font-weight: 700;
-    margin-bottom: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
     display: block;
 }
 
@@ -772,23 +772,24 @@ header {
 .c100-platform-card::after {
     content: '';
     position: absolute;
-    right: -25px;
-    bottom: -25px;
-    width: 210px;
-    height: 210px;
+    right: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 180px;
+    height: 180px;
     background-image: url('/images/MRL-logo-icon-only-01-alpha.png');
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
-    opacity: 0.14;
-    filter: blur(1.5px) drop-shadow(0 0 25px rgba(0, 229, 153, 0.35));
     pointer-events: none;
-    z-index: 0;
+    z-index: 1;
+    opacity: 0.12;
+    filter: blur(1.5px);
 }
 
 .c100-platform-card > * {
     position: relative;
-    z-index: 1;
+    z-index: 2;
 }
 
 .c100-platform-header {

@@ -7,7 +7,13 @@
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
-    <!-- CIO 100 Executive Landing Page -->
+    <!-- CIO 100 Executive Landing Page (/cio100 and /c100 alias) -->
+    <url>
+        <loc>https://mindriotlabs.com/cio100</loc>
+        <lastmod>2026-08-16</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.9</priority>
+    </url>
     <url>
         <loc>https://mindriotlabs.com/c100</loc>
         <lastmod>2026-08-16</lastmod>

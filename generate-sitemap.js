@@ -18,6 +18,13 @@ const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
+    <!-- CIO 100 Executive Landing Page -->
+    <url>
+        <loc>${DOMAIN}/c100</loc>
+        <lastmod>${lastModDate}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.9</priority>
+    </url>
     <!-- Anchor sections for quick indexing support -->
     <url>
         <loc>${DOMAIN}/#home</loc>

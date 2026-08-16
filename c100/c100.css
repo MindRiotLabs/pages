@@ -1,0 +1,816 @@
+/* 
+   MindRiot Labs - CIO 100 Mobile-First Executive Landing Page
+   Route: /c100
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
+:root {
+    /* Color System */
+    --c100-bg-base: #070a11;
+    --c100-bg-deep: #03060a;
+    --c100-bg-card: rgba(18, 22, 31, 0.72);
+    --c100-bg-card-hover: rgba(26, 32, 44, 0.85);
+    
+    --c100-border: rgba(255, 255, 255, 0.08);
+    --c100-border-hover: rgba(0, 229, 153, 0.3);
+    
+    --c100-text-primary: #ffffff;
+    --c100-text-secondary: #94a3b8;
+    --c100-text-muted: #64748b;
+    
+    /* Neon Lime to Teal/Cyan Gradient */
+    --c100-lime: #00e599;
+    --c100-cyan: #00d2ff;
+    --c100-gradient-accent: linear-gradient(135deg, #00e599 0%, #00d2ff 100%);
+    --c100-gradient-subtle: linear-gradient(180deg, rgba(0, 229, 153, 0.15) 0%, rgba(0, 210, 255, 0) 100%);
+    
+    /* Credential Tier (Purple Badge) */
+    --c100-purple-bg: rgba(192, 132, 252, 0.12);
+    --c100-purple-text: #c084fc;
+    --c100-purple-border: rgba(192, 132, 252, 0.38);
+    --c100-purple-glow: rgba(192, 132, 252, 0.2);
+
+    /* Typography */
+    --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+    /* Effects */
+    --glass-blur: blur(20px);
+    --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Reset & Box Sizing */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+    background-color: var(--c100-bg-base);
+    color: var(--c100-text-secondary);
+    font-family: var(--font-body);
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    background: radial-gradient(circle at 50% 0%, #0c121e 0%, var(--c100-bg-base) 45%, var(--c100-bg-deep) 100%);
+    min-height: 100vh;
+    color: var(--c100-text-secondary);
+    line-height: 1.55;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Atmosphere & Background Watermarks */
+.c100-ambient-wrap {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+}
+
+.c100-glow-top {
+    position: absolute;
+    top: -150px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(0, 229, 153, 0.12) 0%, rgba(0, 210, 255, 0.06) 40%, transparent 70%);
+    filter: blur(40px);
+}
+
+.c100-glow-mid {
+    position: absolute;
+    top: 55%;
+    right: -120px;
+    width: 450px;
+    height: 450px;
+    background: radial-gradient(circle, rgba(192, 132, 252, 0.08) 0%, transparent 70%);
+    filter: blur(50px);
+}
+
+.c100-watermark-neural {
+    position: absolute;
+    width: 380px;
+    height: 380px;
+    top: 280px;
+    right: -100px;
+    opacity: 0.07;
+    filter: drop-shadow(0 0 30px rgba(0, 229, 153, 0.3));
+    user-select: none;
+    pointer-events: none;
+    transform: rotate(-10deg);
+}
+
+.c100-watermark-bottom {
+    position: absolute;
+    width: 420px;
+    height: 420px;
+    bottom: 50px;
+    left: -120px;
+    opacity: 0.06;
+    filter: drop-shadow(0 0 40px rgba(0, 210, 255, 0.25));
+    user-select: none;
+    pointer-events: none;
+}
+
+/* Layout Container */
+.c100-container {
+    width: 100%;
+    max-width: 580px;
+    margin: 0 auto;
+    padding: 1.5rem 1.25rem 3.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+@media (min-width: 640px) {
+    .c100-container {
+        padding: 2.5rem 1.5rem 5rem;
+    }
+}
+
+/* Top Branding Bar */
+.c100-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 1.5rem;
+}
+
+.c100-brand-logo {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.c100-brand-logo img {
+    height: 28px;
+    width: auto;
+    display: block;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+}
+
+.c100-brand-sub {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--c100-text-muted);
+}
+
+/* Section Spacing */
+.c100-section {
+    margin-bottom: 2.75rem;
+}
+
+/* Typography Helpers */
+.gradient-text {
+    background: var(--c100-gradient-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+    display: inline-block;
+}
+
+.section-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--c100-lime);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.section-heading {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--c100-text-primary);
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.85rem;
+}
+
+@media (min-width: 640px) {
+    .section-heading {
+        font-size: 1.75rem;
+    }
+}
+
+.section-body {
+    font-size: 0.98rem;
+    color: var(--c100-text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.section-body:last-child {
+    margin-bottom: 0;
+}
+
+/* ==========================================================================
+   SECTION 1: HERO LOCKUP (Optimized for 0 - 400px Viewport)
+   ========================================================================== */
+.c100-hero {
+    margin-bottom: 2.5rem;
+    padding-top: 0.25rem;
+}
+
+/* Purple Pill Credential Badge */
+.c100-credential-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: var(--c100-purple-bg);
+    color: var(--c100-purple-text);
+    border: 1px solid var(--c100-purple-border);
+    padding: 0.4rem 0.85rem;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 0 16px var(--c100-purple-glow);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.c100-credential-pill .pill-star {
+    color: #c084fc;
+    font-size: 0.85rem;
+    line-height: 1;
+}
+
+/* Hero Titles */
+.c100-hero-title {
+    font-family: var(--font-heading);
+    font-size: 1.95rem;
+    font-weight: 800;
+    color: var(--c100-text-primary);
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.35rem;
+}
+
+@media (min-width: 640px) {
+    .c100-hero-title {
+        font-size: 2.35rem;
+    }
+}
+
+.c100-hero-subtitle {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--c100-text-secondary);
+    line-height: 1.35;
+    margin-bottom: 1.35rem;
+}
+
+/* Profile Executive Card */
+.c100-profile-card {
+    background: var(--c100-bg-card);
+    border: 1px solid var(--c100-border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    position: relative;
+    overflow: hidden;
+}
+
+.c100-profile-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--c100-gradient-subtle);
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.c100-avatar-wrap {
+    flex-shrink: 0;
+    position: relative;
+}
+
+.c100-avatar {
+    width: 68px;
+    height: 68px;
+    border-radius: 14px;
+    object-fit: cover;
+    display: block;
+    border: 1.5px solid rgba(0, 229, 153, 0.4);
+    box-shadow: 0 4px 16px rgba(0, 229, 153, 0.2);
+}
+
+.c100-profile-info {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.c100-name {
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--c100-text-primary);
+    margin-bottom: 0.15rem;
+    letter-spacing: -0.01em;
+}
+
+.c100-roles {
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.35;
+    margin-bottom: 0.25rem;
+}
+
+.c100-role-lime {
+    color: var(--c100-lime);
+}
+
+.c100-role-cyan {
+    color: var(--c100-cyan);
+}
+
+.c100-institution {
+    font-size: 0.76rem;
+    color: var(--c100-text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.c100-inst-divider {
+    color: var(--c100-text-muted);
+}
+
+/* Primary Quick Action Buttons */
+.c100-quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.c100-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    width: 100%;
+    min-height: 52px;
+    padding: 0.85rem 1.25rem;
+    border-radius: 12px;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: var(--transition);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.c100-btn:active {
+    transform: scale(0.98);
+}
+
+.c100-btn-primary {
+    background: var(--c100-gradient-accent);
+    color: #070a11;
+    box-shadow: 0 4px 20px rgba(0, 229, 153, 0.28);
+}
+
+.c100-btn-primary:hover {
+    box-shadow: 0 6px 28px rgba(0, 229, 153, 0.4);
+    filter: brightness(1.06);
+}
+
+.c100-btn-secondary {
+    background: var(--c100-bg-card);
+    color: var(--c100-text-primary);
+    border: 1px solid var(--c100-border);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.c100-btn-secondary:hover {
+    background: var(--c100-bg-card-hover);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.c100-btn-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.c100-quiet-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    width: 100%;
+    padding: 0.5rem 0;
+    font-size: 0.84rem;
+    font-weight: 500;
+    color: var(--c100-text-muted);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.c100-quiet-link:hover {
+    color: var(--c100-text-secondary);
+}
+
+.c100-quiet-link svg {
+    width: 14px;
+    height: 14px;
+    transition: transform 0.2s ease;
+}
+
+.c100-quiet-link:hover svg {
+    transform: translateY(2px);
+}
+
+/* ==========================================================================
+   SECTION 2: PHILOSOPHY CALLOUT
+   ========================================================================== */
+.c100-philosophy-card {
+    background: var(--c100-bg-card);
+    border: 1px solid var(--c100-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    position: relative;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.c100-quote-accent {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    color: var(--c100-lime);
+    opacity: 0.15;
+    font-family: serif;
+    font-size: 4rem;
+    line-height: 1;
+    pointer-events: none;
+}
+
+/* ==========================================================================
+   SECTION 3: WHAT I'M BUILDING (EXECUTION GRID)
+   ========================================================================== */
+.c100-build-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+.c100-build-card {
+    background: var(--c100-bg-card);
+    border: 1px solid var(--c100-border);
+    border-radius: 14px;
+    padding: 1.25rem;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.c100-build-card:hover {
+    border-color: var(--c100-border-hover);
+    background: var(--c100-bg-card-hover);
+    transform: translateY(-2px);
+}
+
+.c100-build-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--c100-cyan);
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.c100-build-title {
+    font-family: var(--font-heading);
+    font-size: 1.12rem;
+    font-weight: 700;
+    color: var(--c100-text-primary);
+    margin-bottom: 0.65rem;
+}
+
+.c100-build-item {
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+}
+
+.c100-build-item:last-child {
+    margin-bottom: 0;
+}
+
+.c100-build-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--c100-text-muted);
+    display: block;
+    margin-bottom: 0.15rem;
+}
+
+.c100-build-solution {
+    color: var(--c100-text-primary);
+}
+
+/* ==========================================================================
+   SECTION 4: CIO 100 PROOF POINT (PROFAI SPOTLIGHT)
+   ========================================================================== */
+.c100-spotlight-card {
+    background: linear-gradient(135deg, rgba(192, 132, 252, 0.08) 0%, rgba(18, 22, 31, 0.85) 60%, rgba(0, 229, 153, 0.05) 100%);
+    border: 1px solid var(--c100-purple-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.c100-spotlight-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #c084fc 0%, #00e599 100%);
+}
+
+.c100-award-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--c100-purple-text);
+    margin-bottom: 0.6rem;
+}
+
+/* ==========================================================================
+   SECTION 5: HIGH-LEVERAGE OPPORTUNITY MATRIX
+   ========================================================================== */
+.c100-matrix-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+}
+
+@media (min-width: 480px) {
+    .c100-matrix-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.c100-matrix-card {
+    background: var(--c100-bg-card);
+    border: 1px solid var(--c100-border);
+    border-radius: 14px;
+    padding: 1.15rem;
+    transition: var(--transition);
+}
+
+.c100-matrix-card:hover {
+    border-color: rgba(0, 210, 255, 0.35);
+    background: var(--c100-bg-card-hover);
+}
+
+.c100-matrix-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.45rem;
+}
+
+.c100-matrix-icon {
+    width: 22px;
+    height: 22px;
+    color: var(--c100-lime);
+    flex-shrink: 0;
+}
+
+.c100-matrix-title {
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--c100-text-primary);
+}
+
+.c100-matrix-desc {
+    font-size: 0.84rem;
+    color: var(--c100-text-secondary);
+    line-height: 1.45;
+}
+
+/* ==========================================================================
+   SECTION 6: MINDRIOT LABS PLATFORM FOOTPRINT
+   ========================================================================== */
+.c100-platform-card {
+    background: var(--c100-bg-card);
+    border: 1px solid var(--c100-border);
+    border-radius: 16px;
+    padding: 1.35rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.c100-platform-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.c100-platform-title {
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--c100-text-primary);
+}
+
+.c100-platform-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--c100-cyan);
+    text-decoration: none;
+    transition: var(--transition);
+    align-self: flex-start;
+}
+
+.c100-platform-link:hover {
+    color: var(--c100-lime);
+    transform: translateX(3px);
+}
+
+/* ==========================================================================
+   SECTION 7: DIRECT CONNECTION & VCARD
+   ========================================================================== */
+.c100-connect-card {
+    background: var(--c100-bg-card);
+    border: 1px solid var(--c100-border);
+    border-radius: 18px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+}
+
+.c100-channels-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    margin: 1.25rem 0 1.5rem;
+}
+
+.c100-channel-item {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.75rem 0.95rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--c100-text-primary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: var(--transition);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.c100-channel-item:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(0, 229, 153, 0.3);
+    transform: translateX(2px);
+}
+
+.c100-channel-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--c100-lime);
+    flex-shrink: 0;
+}
+
+.c100-channel-label {
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.c100-channel-action-hint {
+    font-size: 0.75rem;
+    color: var(--c100-text-muted);
+    font-weight: 500;
+}
+
+.c100-location-tag {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: var(--c100-text-muted);
+    margin-top: 1.25rem;
+    text-align: center;
+}
+
+/* Footer / Signature */
+.c100-footer {
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.78rem;
+    color: var(--c100-text-muted);
+}
+
+.c100-footer-motto {
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+    font-size: 0.72rem;
+    color: var(--c100-text-secondary);
+    margin-bottom: 0.35rem;
+}
+
+/* Toast Notification for vCard Download Feedback */
+.c100-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(18, 22, 31, 0.95);
+    color: #ffffff;
+    border: 1px solid var(--c100-lime);
+    border-radius: 9999px;
+    padding: 0.65rem 1.25rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 9999;
+}
+
+.c100-toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.c100-toast-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--c100-lime);
+}

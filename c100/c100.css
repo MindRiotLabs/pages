@@ -20,6 +20,18 @@ header {
     transition: background 0.3s ease, border-color 0.3s ease;
 }
 
+#headerLogo,
+.logo {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+.logo img {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+}
+
 /* Ambient glow container */
 .ambient-glow-wrap {
     position: fixed;

@@ -58,8 +58,9 @@ export async function onRequestPost(context) {
 
         const resendApiKey = (env && env.RESEND_API_KEY) || (typeof process !== 'undefined' && process.env ? process.env.RESEND_API_KEY : '');
         if (!resendApiKey) {
+            console.error('[Contact Error] RESEND_API_KEY missing in context.env. Available env keys:', Object.keys(env || {}));
             return new Response(
-                JSON.stringify({ error: 'RESEND_API_KEY environment variable is not configured.' }),
+                JSON.stringify({ error: 'RESEND_API_KEY environment variable is not configured in Cloudflare Pages settings.' }),
                 { status: 500, headers: corsHeaders }
             );
         }

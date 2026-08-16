@@ -429,10 +429,11 @@ header.nav-scrolled {
     font-weight: 600;
 }
 
-.badge-icon {
-    width: 18px;
-    height: 18px;
+.cio-badge-star {
     color: #00e599;
+    font-size: 1rem;
+    line-height: 1;
+    margin-right: 0.15rem;
 }
 
 .spotlight-content p {

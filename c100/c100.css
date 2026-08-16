@@ -1,75 +1,26 @@
 /* 
-   MindRiot Labs - CIO 100 Mobile-First Executive Landing Page
-   Route: /c100
+   MindRiot Labs - CIO 100 Executive Landing Page (/c100)
+   Inherits base design system from /style.css
 */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
-
-:root {
-    /* Color System */
-    --c100-bg-base: #09090B;
-    --c100-bg-deep: #050507;
-    --c100-bg-card: rgba(20, 20, 23, 0.75);
-    --c100-bg-card-hover: rgba(29, 29, 34, 0.88);
-    
-    --c100-border: rgba(255, 255, 255, 0.08);
-    --c100-border-hover: rgba(0, 229, 153, 0.3);
-    
-    --c100-text-primary: #FAFAFA;
-    --c100-text-secondary: #A1A1AA;
-    --c100-text-muted: #71717A;
-    
-    /* Neon Lime to Teal/Cyan Gradient */
-    --c100-lime: #00e599;
-    --c100-cyan: #00d2ff;
-    --c100-gradient-accent: linear-gradient(135deg, #00e599 0%, #00d2ff 100%);
-    --c100-gradient-subtle: linear-gradient(180deg, rgba(0, 229, 153, 0.15) 0%, rgba(0, 210, 255, 0) 100%);
-    
-    /* Credential Tier (Purple Badge) */
-    --c100-purple-bg: rgba(192, 132, 252, 0.12);
-    --c100-purple-text: #c084fc;
-    --c100-purple-border: rgba(192, 132, 252, 0.38);
-    --c100-purple-glow: rgba(192, 132, 252, 0.2);
-
-    /* Typography */
-    --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-
-    /* Effects */
-    --glass-blur: blur(20px);
-    --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+/* Header override for /c100: always visible sticky header */
+header {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: rgba(9, 9, 11, 0.85);
+    backdrop-filter: var(--backdrop-blur, blur(16px));
+    -webkit-backdrop-filter: var(--backdrop-blur, blur(16px));
+    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
-/* Reset & Box Sizing */
-*, *::before, *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-html {
-    scroll-behavior: smooth;
-    background-color: var(--c100-bg-base);
-    color: var(--c100-text-secondary);
-    font-family: var(--font-body);
-    font-size: 16px;
-    -webkit-text-size-adjust: 100%;
-    -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
-    max-width: 100vw;
-}
-
-body {
-    background-color: var(--c100-bg-base);
-    min-height: 100vh;
-    color: var(--c100-text-secondary);
-    line-height: 1.55;
-    overflow-x: hidden;
-    max-width: 100vw;
-    position: relative;
-}
-
-/* Ambient glow blobs in background */
+/* Ambient glow container */
 .ambient-glow-wrap {
     position: fixed;
     inset: 0;
@@ -78,210 +29,30 @@ body {
     z-index: 0;
 }
 
-.ambient-glow-1 {
-    position: absolute;
-    width: 600px;
-    height: 600px;
-    top: -200px;
-    left: -100px;
-    background: radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, rgba(0,0,0,0) 70%);
-    z-index: 0;
-    pointer-events: none;
-}
-
-.ambient-glow-2 {
-    position: absolute;
-    width: 650px;
-    height: 650px;
-    top: 800px;
-    right: -200px;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, rgba(0,0,0,0) 70%);
-    z-index: 0;
-    pointer-events: none;
-}
-
-.ambient-glow-3 {
-    position: absolute;
-    width: 500px;
-    height: 500px;
-    bottom: 200px;
-    left: 20%;
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, rgba(0,0,0,0) 70%);
-    z-index: 0;
-    pointer-events: none;
-}
-
-/* ==========================================================================
-   GLOBAL NAVBAR (100% Matching Main Site)
-   ========================================================================== */
-header {
-    position: sticky;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    background: rgba(9, 9, 11, 0.85);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border-bottom: 1px solid var(--c100-border);
-    opacity: 1;
-    pointer-events: auto;
-    transform: none;
-    transition: background 0.3s ease, border-color 0.3s ease;
-}
-
-.nav-wrapper {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 80px;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1.5rem;
-}
-
-@media (min-width: 768px) {
-    .nav-wrapper {
-        height: 90px;
-        padding: 0 2rem;
-    }
-}
-
-.logo {
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-}
-
-.logo img {
-    height: 52px;
-    width: auto;
-    display: block;
-    object-fit: contain;
-    transition: var(--transition);
-}
-
-.logo:hover img {
-    opacity: 0.9;
-}
-
-.nav-links {
-    display: none;
-    align-items: center;
-    gap: 2rem;
-    list-style: none;
-}
-
-@media (min-width: 900px) {
-    .nav-links {
-        display: flex;
-    }
-}
-
-.nav-links a {
-    color: var(--c100-text-secondary);
-    text-decoration: none;
-    font-size: 0.92rem;
-    font-weight: 500;
-    transition: var(--transition);
-}
-
-.nav-links a:hover {
-    color: var(--c100-text-primary);
-}
-
-.nav-links .open-portal-btn {
-    color: var(--c100-cyan);
-}
-
-.nav-wrapper .btn-primary {
-    display: none;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.65rem 1.25rem;
-    border-radius: 8px;
-    font-size: 0.88rem;
-    font-weight: 600;
-    text-decoration: none;
-    background: var(--c100-gradient-accent);
-    color: #070a11;
-    border: none;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-@media (min-width: 768px) {
-    .nav-wrapper .btn-primary {
-        display: inline-flex;
-    }
-}
-
-.nav-wrapper .btn-primary:hover {
-    filter: brightness(1.08);
-    box-shadow: 0 4px 16px rgba(0, 229, 153, 0.3);
-}
-
-.nav-wrapper .btn-icon {
-    width: 16px;
-    height: 16px;
-    stroke: currentColor;
-    stroke-width: 2.5;
-    fill: none;
-}
-
-.nav-mobile-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: none;
-    border: none;
-    color: var(--c100-text-primary);
-    cursor: pointer;
-    padding: 0.5rem;
-}
-
-@media (min-width: 900px) {
-    .nav-mobile-toggle {
-        display: none;
-    }
-}
-
-/* Mobile Dropdown */
-.nav-links.mobile-active {
-    display: flex;
-    flex-direction: column;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: rgba(14, 14, 18, 0.98);
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--c100-border);
-    backdrop-filter: blur(20px);
-    gap: 1.25rem;
-}
-
-/* ==========================================================================
-   LAYOUT CONTAINER
-   ========================================================================== */
+/* Page Container (Mobile-first centered column, max-width 680px for executive brief flow) */
 .c100-container {
     width: 100%;
-    max-width: 580px;
+    max-width: 680px;
     margin: 0 auto;
-    padding: 2rem 1.25rem 3.5rem;
+    padding: 2.5rem 1.25rem 4rem;
     position: relative;
     z-index: 1;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 768px) {
     .c100-container {
-        padding: 3rem 1.5rem 5rem;
+        padding: 3.5rem 1.5rem 5rem;
     }
+}
+
+/* Section Spacing */
+.c100-section {
+    margin-bottom: 3rem;
 }
 
 /* Section Eyebrow (Positioned directly above purple credential pill) */
 .c100-eyebrow {
-    color: var(--c100-text-muted, #64748b);
+    color: var(--text-muted, #71717A);
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 2px;
@@ -290,99 +61,56 @@ header {
     display: block;
 }
 
-/* Section Spacing */
-.c100-section {
-    margin-bottom: 2.75rem;
-}
-
-/* Typography Helpers */
-.gradient-text {
-    background: var(--c100-gradient-accent);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-fill-color: transparent;
-    display: inline-block;
-}
-
-.section-label {
-    font-size: 0.72rem;
+/* Section Labels */
+.c100-section-label {
+    font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--c100-lime);
+    color: var(--accent-emerald, #00e599);
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
     gap: 0.4rem;
 }
 
-.section-heading {
-    font-family: var(--font-heading);
+.c100-section-heading {
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--c100-text-primary);
+    color: var(--text-primary, #FAFAFA);
     line-height: 1.25;
     letter-spacing: -0.02em;
     margin-bottom: 0.85rem;
 }
 
 @media (min-width: 640px) {
-    .section-heading {
+    .c100-section-heading {
         font-size: 1.75rem;
     }
 }
 
-.section-body {
+.c100-section-body {
     font-size: 0.98rem;
-    color: var(--c100-text-secondary);
+    color: var(--text-secondary, #A1A1AA);
     line-height: 1.6;
     margin-bottom: 1rem;
 }
 
-.section-body:last-child {
+.c100-section-body:last-child {
     margin-bottom: 0;
 }
 
-/* ==========================================================================
-   SECTION 1: HERO LOCKUP (Optimized for 0 - 400px Viewport)
-   ========================================================================== */
+/* Hero Section Specifics */
 .c100-hero {
-    margin-bottom: 2.5rem;
-    padding-top: 0.25rem;
+    margin-bottom: 2.75rem;
 }
 
-/* Purple Pill Credential Badge */
-.c100-credential-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    background: var(--c100-purple-bg);
-    color: var(--c100-purple-text);
-    border: 1px solid var(--c100-purple-border);
-    padding: 0.4rem 0.85rem;
-    border-radius: 9999px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    margin-bottom: 1.25rem;
-    box-shadow: 0 0 16px var(--c100-purple-glow);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-}
-
-.c100-credential-pill .pill-star {
-    color: var(--c100-lime);
-    font-size: 0.85rem;
-    line-height: 1;
-}
-
-/* Hero Titles */
 .c100-hero-title {
-    font-family: var(--font-heading);
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
     font-size: 1.95rem;
     font-weight: 800;
-    color: var(--c100-text-primary);
+    color: var(--text-primary, #FAFAFA);
     line-height: 1.15;
     letter-spacing: -0.03em;
     margin-bottom: 0.35rem;
@@ -395,43 +123,27 @@ header {
 }
 
 .c100-hero-subtitle {
-    font-family: var(--font-heading);
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
     font-size: 1.25rem;
     font-weight: 600;
-    color: var(--c100-text-secondary);
+    color: var(--text-secondary, #A1A1AA);
     line-height: 1.35;
-    margin-bottom: 1.35rem;
+    margin-bottom: 1.5rem;
 }
 
-/* Profile Executive Card */
+/* Executive Identifier Profile Card */
 .c100-profile-card {
-    background: var(--c100-bg-card);
-    border: 1px solid var(--c100-border);
-    border-radius: 16px;
-    padding: 1.25rem;
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.15rem;
+    padding: 1.25rem;
     margin-bottom: 1.5rem;
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
     position: relative;
     overflow: hidden;
 }
 
-.c100-profile-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: var(--c100-gradient-subtle);
-    opacity: 0.4;
-    pointer-events: none;
-}
-
 .c100-avatar-wrap {
     flex-shrink: 0;
-    position: relative;
 }
 
 .c100-avatar {
@@ -450,39 +162,39 @@ header {
 }
 
 .c100-name {
-    font-family: var(--font-heading);
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
     font-size: 1.2rem;
     font-weight: 700;
-    color: var(--c100-text-primary);
-    margin-bottom: 0.15rem;
+    color: var(--text-primary, #FAFAFA);
+    margin-bottom: 0.2rem;
     letter-spacing: -0.01em;
 }
 
 .c100-roles {
-    font-size: 0.82rem;
+    font-size: 0.84rem;
     font-weight: 600;
     line-height: 1.35;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.3rem;
 }
 
 .c100-role-lime {
-    color: var(--c100-lime);
+    color: var(--accent-emerald, #00e599);
 }
 
 .c100-role-cyan {
-    color: var(--c100-cyan);
+    color: var(--accent-cyan, #06B6D4);
 }
 
 .c100-institution {
-    font-size: 0.76rem;
-    color: var(--c100-text-secondary);
+    font-size: 0.78rem;
+    color: var(--text-secondary, #A1A1AA);
     display: flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.4rem;
 }
 
 .c100-inst-divider {
-    color: var(--c100-text-muted);
+    color: var(--text-muted, #71717A);
 }
 
 /* Primary Quick Action Buttons */
@@ -494,21 +206,21 @@ header {
 }
 
 .c100-btn {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.65rem;
     width: 100%;
     min-height: 52px;
-    padding: 0.85rem 1.25rem;
-    border-radius: 12px;
-    font-family: var(--font-body);
+    padding: 0.85rem 1.5rem;
+    border-radius: 9999px;
+    font-family: var(--font-body, 'Inter', sans-serif);
     font-size: 0.95rem;
     font-weight: 600;
     text-decoration: none;
     cursor: pointer;
     border: none;
-    transition: var(--transition);
+    transition: var(--transition-smooth, all 0.25s ease);
     -webkit-tap-highlight-color: transparent;
 }
 
@@ -517,7 +229,7 @@ header {
 }
 
 .c100-btn-primary {
-    background: var(--c100-gradient-accent);
+    background: var(--accent-gradient, linear-gradient(135deg, #00e599 0%, #00d2ff 100%));
     color: #070a11;
     box-shadow: 0 4px 20px rgba(0, 229, 153, 0.28);
 }
@@ -528,15 +240,15 @@ header {
 }
 
 .c100-btn-secondary {
-    background: var(--c100-bg-card);
-    color: var(--c100-text-primary);
-    border: 1px solid var(--c100-border);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
+    background: var(--bg-card, #141417);
+    color: var(--text-primary, #FAFAFA);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+    backdrop-filter: var(--backdrop-blur, blur(16px));
+    -webkit-backdrop-filter: var(--backdrop-blur, blur(16px));
 }
 
 .c100-btn-secondary:hover {
-    background: var(--c100-bg-card-hover);
+    background: var(--bg-card-hover, #1a1a1f);
     border-color: rgba(255, 255, 255, 0.2);
     color: #ffffff;
 }
@@ -554,15 +266,15 @@ header {
     gap: 0.4rem;
     width: 100%;
     padding: 0.5rem 0;
-    font-size: 0.84rem;
+    font-size: 0.86rem;
     font-weight: 500;
-    color: var(--c100-text-muted);
+    color: var(--text-muted, #71717A);
     text-decoration: none;
-    transition: var(--transition);
+    transition: var(--transition-smooth, all 0.25s ease);
 }
 
 .c100-quiet-link:hover {
-    color: var(--c100-text-secondary);
+    color: var(--text-secondary, #A1A1AA);
 }
 
 .c100-quiet-link svg {
@@ -575,24 +287,17 @@ header {
     transform: translateY(2px);
 }
 
-/* ==========================================================================
-   SECTION 2: PHILOSOPHY CALLOUT
-   ========================================================================== */
+/* Philosophy Card */
 .c100-philosophy-card {
-    background: var(--c100-bg-card);
-    border: 1px solid var(--c100-border);
-    border-radius: 16px;
-    padding: 1.5rem;
+    padding: 1.75rem;
     position: relative;
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
 }
 
 .c100-quote-accent {
     position: absolute;
     top: 1.25rem;
     right: 1.25rem;
-    color: var(--c100-lime);
+    color: var(--accent-emerald, #00e599);
     opacity: 0.15;
     font-family: serif;
     font-size: 4rem;
@@ -600,9 +305,7 @@ header {
     pointer-events: none;
 }
 
-/* ==========================================================================
-   SECTION 3: WHAT I'M BUILDING (EXECUTION GRID)
-   ========================================================================== */
+/* Solution Build Cards Grid */
 .c100-build-grid {
     display: grid;
     grid-template-columns: 1fr;
@@ -610,20 +313,14 @@ header {
 }
 
 .c100-build-card {
-    background: var(--c100-bg-card);
-    border: 1px solid var(--c100-border);
-    border-radius: 14px;
-    padding: 1.25rem;
-    transition: var(--transition);
+    padding: 1.35rem;
+    transition: var(--transition-smooth, all 0.25s ease);
     position: relative;
     overflow: hidden;
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
 }
 
 .c100-build-card:hover {
-    border-color: var(--c100-border-hover);
-    background: var(--c100-bg-card-hover);
+    border-color: rgba(0, 229, 153, 0.35);
     transform: translateY(-2px);
 }
 
@@ -632,7 +329,7 @@ header {
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--c100-cyan);
+    color: var(--accent-cyan, #06B6D4);
     margin-bottom: 0.4rem;
     display: flex;
     align-items: center;
@@ -640,15 +337,15 @@ header {
 }
 
 .c100-build-title {
-    font-family: var(--font-heading);
-    font-size: 1.12rem;
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+    font-size: 1.15rem;
     font-weight: 700;
-    color: var(--c100-text-primary);
+    color: var(--text-primary, #FAFAFA);
     margin-bottom: 0.65rem;
 }
 
 .c100-build-item {
-    font-size: 0.88rem;
+    font-size: 0.9rem;
     line-height: 1.5;
     margin-bottom: 0.5rem;
 }
@@ -662,28 +359,20 @@ header {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--c100-text-muted);
+    color: var(--text-muted, #71717A);
     display: block;
     margin-bottom: 0.15rem;
 }
 
 .c100-build-solution {
-    color: var(--c100-text-primary);
+    color: var(--text-primary, #FAFAFA);
 }
 
-/* ==========================================================================
-   SECTION 4: CIO 100 PROOF POINT (PROFAI SPOTLIGHT)
-   ========================================================================== */
+/* Spotlight Card (ProfAI Track Record) */
 .c100-spotlight-card {
-    background: linear-gradient(135deg, rgba(192, 132, 252, 0.08) 0%, rgba(20, 20, 23, 0.85) 60%, rgba(0, 229, 153, 0.05) 100%);
-    border: 1px solid var(--c100-purple-border);
-    border-radius: 16px;
-    padding: 1.5rem;
+    padding: 1.75rem;
     position: relative;
     overflow: hidden;
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
 .c100-spotlight-card::before {
@@ -700,17 +389,15 @@ header {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: var(--c100-purple-text);
-    margin-bottom: 0.6rem;
+    color: var(--accent-violet, #8B5CF6);
+    margin-bottom: 0.65rem;
 }
 
-/* ==========================================================================
-   SECTION 5: HIGH-LEVERAGE OPPORTUNITY MATRIX
-   ========================================================================== */
+/* Opportunity Matrix Grid */
 .c100-matrix-grid {
     display: grid;
     grid-template-columns: 1fr;
@@ -724,16 +411,13 @@ header {
 }
 
 .c100-matrix-card {
-    background: var(--c100-bg-card);
-    border: 1px solid var(--c100-border);
-    border-radius: 14px;
-    padding: 1.15rem;
-    transition: var(--transition);
+    padding: 1.25rem;
+    transition: var(--transition-smooth, all 0.25s ease);
 }
 
 .c100-matrix-card:hover {
-    border-color: rgba(0, 210, 255, 0.35);
-    background: var(--c100-bg-card-hover);
+    border-color: rgba(6, 182, 212, 0.4);
+    transform: translateY(-2px);
 }
 
 .c100-matrix-header {
@@ -746,36 +430,29 @@ header {
 .c100-matrix-icon {
     width: 22px;
     height: 22px;
-    color: var(--c100-lime);
+    color: var(--accent-emerald, #00e599);
     flex-shrink: 0;
 }
 
 .c100-matrix-title {
-    font-family: var(--font-heading);
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
     font-size: 1.05rem;
     font-weight: 700;
-    color: var(--c100-text-primary);
+    color: var(--text-primary, #FAFAFA);
 }
 
 .c100-matrix-desc {
-    font-size: 0.84rem;
-    color: var(--c100-text-secondary);
+    font-size: 0.86rem;
+    color: var(--text-secondary, #A1A1AA);
     line-height: 1.45;
 }
 
-/* ==========================================================================
-   SECTION 6: "WHAT IS MINDRIOT LABS?" PLATFORM FOOTPRINT
-   ========================================================================== */
+/* "What is MindRiot Labs?" Platform Card with atmospheric watermark */
 .c100-platform-card {
-    background: var(--c100-bg-card);
-    border: 1px solid var(--c100-border);
-    border-radius: 16px;
-    padding: 1.5rem;
+    padding: 1.75rem;
     display: flex;
     flex-direction: column;
     gap: 0.85rem;
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
     position: relative;
     overflow: hidden;
 }
@@ -803,17 +480,11 @@ header {
     z-index: 2;
 }
 
-.c100-platform-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
 .c100-platform-title {
-    font-family: var(--font-heading);
-    font-size: 1.25rem;
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+    font-size: 1.3rem;
     font-weight: 700;
-    color: var(--c100-text-primary);
+    color: var(--text-primary, #FAFAFA);
 }
 
 .c100-platform-link {
@@ -822,30 +493,22 @@ header {
     gap: 0.4rem;
     font-size: 0.88rem;
     font-weight: 600;
-    color: var(--c100-cyan);
+    color: var(--accent-cyan, #06B6D4);
     text-decoration: none;
-    transition: var(--transition);
+    transition: var(--transition-smooth, all 0.25s ease);
     align-self: flex-start;
 }
 
 .c100-platform-link:hover {
-    color: var(--c100-lime);
+    color: var(--accent-emerald, #00e599);
     transform: translateX(3px);
 }
 
-/* ==========================================================================
-   SECTION 7: DIRECT CONNECTION & VCARD
-   ========================================================================== */
+/* Direct Connection Card */
 .c100-connect-card {
-    background: var(--c100-bg-card);
-    border: 1px solid var(--c100-border);
-    border-radius: 18px;
-    padding: 1.5rem;
+    padding: 1.75rem;
     position: relative;
     overflow: hidden;
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
 }
 
 .c100-channels-grid {
@@ -859,28 +522,25 @@ header {
     display: flex;
     align-items: center;
     gap: 0.85rem;
-    padding: 0.75rem 0.95rem;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-md, 10px);
     text-decoration: none;
-    color: var(--c100-text-primary);
+    color: var(--text-primary, #FAFAFA);
     font-size: 0.9rem;
     font-weight: 500;
-    transition: var(--transition);
+    transition: var(--transition-smooth, all 0.25s ease);
     -webkit-tap-highlight-color: transparent;
 }
 
 .c100-channel-item:hover {
-    background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(0, 229, 153, 0.3);
+    border-color: rgba(0, 229, 153, 0.4);
     transform: translateX(2px);
 }
 
 .c100-channel-icon {
     width: 20px;
     height: 20px;
-    color: var(--c100-lime);
+    color: var(--accent-emerald, #00e599);
     flex-shrink: 0;
 }
 
@@ -893,7 +553,7 @@ header {
 
 .c100-channel-action-hint {
     font-size: 0.75rem;
-    color: var(--c100-text-muted);
+    color: var(--text-muted, #71717A);
     font-weight: 500;
 }
 
@@ -902,28 +562,10 @@ header {
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
-    font-size: 0.78rem;
-    color: var(--c100-text-muted);
+    font-size: 0.8rem;
+    color: var(--text-muted, #71717A);
     margin-top: 1.25rem;
     text-align: center;
-}
-
-/* Footer / Signature */
-.c100-footer {
-    text-align: center;
-    padding-top: 2rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    font-size: 0.78rem;
-    color: var(--c100-text-muted);
-}
-
-.c100-footer-motto {
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    font-weight: 600;
-    font-size: 0.72rem;
-    color: var(--c100-text-secondary);
-    margin-bottom: 0.35rem;
 }
 
 /* Toast Notification for vCard Download Feedback */
@@ -932,12 +574,12 @@ header {
     bottom: 24px;
     left: 50%;
     transform: translateX(-50%) translateY(100px);
-    background: rgba(18, 22, 31, 0.95);
+    background: rgba(20, 20, 23, 0.95);
     color: #ffffff;
-    border: 1px solid var(--c100-lime);
+    border: 1px solid var(--accent-emerald, #00e599);
     border-radius: 9999px;
-    padding: 0.65rem 1.25rem;
-    font-size: 0.85rem;
+    padding: 0.65rem 1.35rem;
+    font-size: 0.86rem;
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -959,5 +601,5 @@ header {
 .c100-toast-icon {
     width: 16px;
     height: 16px;
-    color: var(--c100-lime);
+    color: var(--accent-emerald, #00e599);
 }

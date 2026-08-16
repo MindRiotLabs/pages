@@ -28,7 +28,7 @@
     <!-- Favicon -->
     <link rel="icon" href="/images/MRL-logo-icon-only-01-alpha.png" type="image/png">
     
-    <!-- Stylesheets -->
+    <!-- Stylesheets (Core Main Site CSS + Lightweight /c100 Component Extensions) -->
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/c100/c100.css">
 </head>
@@ -72,356 +72,386 @@
         </div>
     </header>
 
-    <!-- Main Container (Mobile First) -->
-    <div class="c100-container">
+    <!-- Main Container (Mobile-First Executive Brief) -->
+    <main class="c100-container">
 
-        <!-- Main Content -->
-        <main>
+        <!-- SECTION 1: HERO (0 - 400px Viewport Focus) -->
+        <section class="c100-hero" id="hero">
+            
+            <!-- Section Eyebrow -->
+            <span class="c100-eyebrow">EXECUTIVE BRIEF</span>
 
-            <!-- SECTION 1: HERO (0 - 400px Viewport Focus) -->
-            <section class="c100-hero" id="hero">
+            <!-- Purple Credential Pill Badge (Matching Main Site .cio-badge) -->
+            <div class="cio-badge c100-credential-pill" style="margin-bottom: 1.25rem;">
+                <span class="cio-badge-star pill-star">★</span>
+                <span>2026 CIO 100 Award Winner for AI Innovation</span>
+            </div>
+
+            <!-- Primary Lockup -->
+            <h1 class="c100-hero-title">We met at CIO 100.</h1>
+            <p class="c100-hero-subtitle">I'm Joe. <span class="gradient-text">I build what's next.</span></p>
+
+            <!-- Identifier Profile Card (Glass Panel) -->
+            <div class="c100-profile-card glass-panel">
+                <div class="c100-avatar-wrap">
+                    <img src="/images/JVH-headshot-sq-cropped-AIsharpened.png" alt="Joseph Van Harken" class="c100-avatar">
+                </div>
+                <div class="c100-profile-info">
+                    <div class="c100-name">Joseph Van Harken</div>
+                    <div class="c100-roles">
+                        <span class="c100-role-lime">Founder • Fractional CAIO</span><br>
+                        <span class="c100-role-cyan">AI & Innovation Strategist</span>
+                    </div>
+                    <div class="c100-institution">
+                        <span>Innovator-in-Residence</span>
+                        <span class="c100-inst-divider">|</span>
+                        <span>GVSU</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div class="c100-quick-actions">
+                <a href="https://linkedin.com/in/vanharken" target="_blank" rel="noopener noreferrer" class="c100-btn c100-btn-primary action-linkedin" id="heroLinkedInBtn">
+                    <svg class="c100-btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.25c-.91 0-1.64.73-1.64 1.64s.73 1.64 1.64 1.64 1.64-.73 1.64-1.64-.73-1.64-1.64-1.64Z"/>
+                    </svg>
+                    Connect on LinkedIn
+                </a>
                 
-                <!-- Section Eyebrow -->
-                <span class="c100-eyebrow">EXECUTIVE BRIEF</span>
+                <button type="button" class="c100-btn c100-btn-secondary action-download-vcard" id="heroVcardBtn">
+                    <svg class="c100-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <polyline points="17 11 19 13 23 9"></polyline>
+                    </svg>
+                    Save Contact (.vcf)
+                </button>
 
-                <!-- Purple Credential Pill Badge -->
-                <div class="c100-credential-pill">
-                    <span class="pill-star">★</span>
-                    <span>2026 CIO 100 Award Winner for AI Innovation</span>
+                <a href="#philosophy" class="c100-quiet-link">
+                    <span>See What I'm Building</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <polyline points="19 12 12 19 5 12"></polyline>
+                    </svg>
+                </a>
+            </div>
+
+        </section>
+
+        <!-- SECTION 2: PERSONAL POSITIONING & PHILOSOPHY -->
+        <section class="c100-section" id="philosophy">
+            <div class="c100-philosophy-card glass-panel">
+                <span class="c100-quote-accent" aria-hidden="true">“</span>
+                <div class="c100-section-label section-label">Core Philosophy</div>
+                <h2 class="c100-section-heading section-heading">Strategy matters.<br><span class="gradient-text">I like building the thing.</span></h2>
+                
+                <p class="c100-section-body section-body">
+                    Most enterprise AI discussions stall in theoretical slide decks and endless steering committees. I work directly at the convergence of high-level executive strategy and rapid engineering execution—turning complex operational friction into secure, production-grade automated systems.
+                </p>
+                <p class="c100-section-body section-body">
+                    From supervised agentic workflows and role-gated private RAG architectures to bespoke software platforms, my work bridges institutional rigor with venture-backed velocity. I partner with leadership teams to cut overhead, elevate workforce capabilities, and unlock compound operating leverage.
+                </p>
+                <p class="c100-section-body section-body">
+                    Open to consequential ventures, fractional CAIO leadership, strategic advisory board seats, and high-impact enterprise partnerships.
+                </p>
+            </div>
+        </section>
+
+        <!-- SECTION 3: WHAT I'M BUILDING (EXECUTION GRID) -->
+        <section class="c100-section" id="building">
+            <div class="c100-section-label section-label">Execution Footprint</div>
+            <h2 class="c100-section-heading section-heading">What I'm Building</h2>
+            <p class="c100-section-body section-body" style="margin-bottom: 1.25rem;">
+                Bespoke AI architectures and working software solving real operational bottlenecks.
+            </p>
+
+            <div class="c100-build-grid">
+                
+                <!-- Card 1: AI Education & Learning Analytics -->
+                <div class="c100-build-card glass-panel">
+                    <div class="c100-build-badge">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                        Education & Analytics
+                    </div>
+                    <h3 class="c100-build-title">AI-Powered Learning Systems</h3>
+                    <div class="c100-build-item">
+                        <span class="c100-build-label">Problem</span>
+                        <span>Traditional grading, rubric evaluations, and feedback cycles are slow and unscalable.</span>
+                    </div>
+                    <div class="c100-build-item">
+                        <span class="c100-build-label">Build Solution</span>
+                        <span class="c100-build-solution">Scaled multi-modal AI feedback engines delivering instant, contextualized coaching and analytics.</span>
+                    </div>
                 </div>
 
-                <!-- Primary Lockup -->
-                <h1 class="c100-hero-title">We met at CIO 100.</h1>
-                <p class="c100-hero-subtitle">I'm Joe. <span class="gradient-text">I build what's next.</span></p>
-
-                <!-- Identifier Profile Card -->
-                <div class="c100-profile-card">
-                    <div class="c100-avatar-wrap">
-                        <img src="/images/JVH-headshot-sq-cropped-AIsharpened.png" alt="Joseph Van Harken" class="c100-avatar">
+                <!-- Card 2: Private Enterprise Knowledge & RAG -->
+                <div class="c100-build-card glass-panel">
+                    <div class="c100-build-badge">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        Enterprise Data
                     </div>
-                    <div class="c100-profile-info">
-                        <div class="c100-name">Joseph Van Harken</div>
-                        <div class="c100-roles">
-                            <span class="c100-role-lime">Founder • Fractional CAIO</span><br>
-                            <span class="c100-role-cyan">AI & Innovation Strategist</span>
-                        </div>
-                        <div class="c100-institution">
-                            <span>Innovator-in-Residence</span>
-                            <span class="c100-inst-divider">|</span>
-                            <span>GVSU</span>
-                        </div>
+                    <h3 class="c100-build-title">Private Enterprise Knowledge & RAG</h3>
+                    <div class="c100-build-item">
+                        <span class="c100-build-label">Problem</span>
+                        <span>Staff waste hours hunting through scattered SOPs while management worries about data leaks.</span>
+                    </div>
+                    <div class="c100-build-item">
+                        <span class="c100-build-label">Build Solution</span>
+                        <span class="c100-build-solution">Secure, role-gated internal data search complying strictly with enterprise permission boundaries.</span>
                     </div>
                 </div>
 
-                <!-- Quick Action Buttons -->
-                <div class="c100-quick-actions">
-                    <a href="https://linkedin.com/in/vanharken" target="_blank" rel="noopener noreferrer" class="c100-btn c100-btn-primary action-linkedin" id="heroLinkedInBtn">
-                        <svg class="c100-btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                <!-- Card 3: Supervised Agentic Workflows -->
+                <div class="c100-build-card glass-panel">
+                    <div class="c100-build-badge">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        Autonomous Systems
+                    </div>
+                    <h3 class="c100-build-title">Supervised Agentic Workflows</h3>
+                    <div class="c100-build-item">
+                        <span class="c100-build-label">Problem</span>
+                        <span>Repetitive administrative routines drain high-value executive and operational attention.</span>
+                    </div>
+                    <div class="c100-build-item">
+                        <span class="c100-build-label">Build Solution</span>
+                        <span class="c100-build-solution">Autonomous digital colleagues and background orchestration engines with human-in-the-loop oversight.</span>
+                    </div>
+                </div>
+
+                <!-- Card 4: Operational Automation & SaaS -->
+                <div class="c100-build-card glass-panel">
+                    <div class="c100-build-badge">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                        Operational Automation
+                    </div>
+                    <h3 class="c100-build-title">Operational Automation & SaaS</h3>
+                    <div class="c100-build-item">
+                        <span class="c100-build-label">Problem</span>
+                        <span>Field operations and regional businesses struggle with manual dispatching, clipboards, and spreadsheets.</span>
+                    </div>
+                    <div class="c100-build-item">
+                        <span class="c100-build-label">Build Solution</span>
+                        <span class="c100-build-solution">Rapid deployment of bespoke software infrastructure that cuts manual administration by over 60%.</span>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- SECTION 4: CIO 100 PROOF POINT (PROFAI SPOTLIGHT) -->
+        <section class="c100-section" id="proof">
+            <div class="c100-spotlight-card glass-panel">
+                <div class="c100-award-tag">
+                    <span>★</span>
+                    <span>Award-Winning Track Record</span>
+                </div>
+                <h2 class="c100-section-heading section-heading">One experiment became a <span class="gradient-text">CIO 100 winner</span>.</h2>
+                <p class="c100-section-body section-body">
+                    Leading the architecture and deployment of ProfAI at Grand Valley State University proved how fast an experimental vision can mature into nationally recognized enterprise infrastructure.
+                </p>
+                <p class="c100-section-body section-body" style="color: var(--text-primary, #FAFAFA); font-weight: 500;">
+                    Earning the <strong>2026 CIO 100 Award for AI Innovation</strong> validated our approach: pairing institutional reliability and governance with the velocity of an agile venture studio.
+                </p>
+            </div>
+        </section>
+
+        <!-- SECTION 5: HIGH-LEVERAGE OPPORTUNITY MATRIX -->
+        <section class="c100-section" id="opportunities">
+            <div class="c100-section-label section-label">Collaboration Focus</div>
+            <h2 class="c100-section-heading section-heading">High-Impact AI &gt; <span class="gradient-text">Theoretical Roadmaps</span>.</h2>
+            <p class="c100-section-body section-body" style="margin-bottom: 1.25rem;">
+                Where I create the highest leverage for founders, executives, and enterprise teams:
+            </p>
+
+            <div class="c100-matrix-grid">
+                
+                <div class="c100-matrix-card glass-panel">
+                    <div class="c100-matrix-header">
+                        <svg class="c100-matrix-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 18 22 12 16 6"></polyline>
+                            <polyline points="8 6 2 12 8 18"></polyline>
+                        </svg>
+                        <span class="c100-matrix-title">Build</span>
+                    </div>
+                    <p class="c100-matrix-desc">
+                        New AI products, autonomous systems, and scalable venture blueprints.
+                    </p>
+                </div>
+
+                <div class="c100-matrix-card glass-panel">
+                    <div class="c100-matrix-header">
+                        <svg class="c100-matrix-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <span class="c100-matrix-title">Partner</span>
+                    </div>
+                    <p class="c100-matrix-desc">
+                        Strategic intersections where enterprise technology, product design, and distribution meet.
+                    </p>
+                </div>
+
+                <div class="c100-matrix-card glass-panel">
+                    <div class="c100-matrix-header">
+                        <svg class="c100-matrix-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                        </svg>
+                        <span class="c100-matrix-title">Transform</span>
+                    </div>
+                    <p class="c100-matrix-desc">
+                        High-friction legacy enterprise workflows requiring private agentic automation.
+                    </p>
+                </div>
+
+                <div class="c100-matrix-card glass-panel">
+                    <div class="c100-matrix-header">
+                        <svg class="c100-matrix-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                        </svg>
+                        <span class="c100-matrix-title">Explore</span>
+                    </div>
+                    <p class="c100-matrix-desc">
+                        High-leverage, greenfield AI initiatives with non-obvious applications.
+                    </p>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- SECTION 6: "WHAT IS MINDRIOT LABS?" PLATFORM FOOTPRINT -->
+        <section class="c100-section" id="platform">
+            <div class="c100-platform-card glass-panel">
+                <div class="c100-platform-header">
+                    <h2 class="c100-platform-title">What is MindRiot Labs?</h2>
+                </div>
+                <p class="c100-section-body section-body">
+                    It’s the vehicle that lets our brains explode, explore, experiment, and envision the perfect future-forward solution—then actually make it work. From idea to impact in one rapid development cycle.
+                </p>
+                <a href="/" class="c100-platform-link action-site">
+                    <span>Explore MindRiot Labs</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </a>
+            </div>
+        </section>
+
+        <!-- SECTION 7: DIRECT CONNECTION & VCARD -->
+        <section class="c100-section" id="connect">
+            <div class="c100-connect-card glass-panel">
+                <div class="c100-section-label section-label">Direct Line</div>
+                <h2 class="c100-section-heading section-heading">Let's build something <span class="gradient-text">impactful</span>.</h2>
+                <p class="c100-section-body section-body">
+                    Reach out directly to discuss fractional CAIO leadership, advisory, or consequential AI builds.
+                </p>
+
+                <!-- Contact Channels -->
+                <div class="c100-channels-grid">
+                    
+                    <!-- Email -->
+                    <a href="mailto:jvh@mindriotlabs.com" class="c100-channel-item glass-panel action-email">
+                        <svg class="c100-channel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        <span class="c100-channel-label">jvh@mindriotlabs.com</span>
+                        <span class="c100-channel-action-hint">Email ↗</span>
+                    </a>
+
+                    <!-- Phone -->
+                    <a href="tel:+16168431153" class="c100-channel-item glass-panel action-phone">
+                        <svg class="c100-channel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                        </svg>
+                        <span class="c100-channel-label">+1 (616) 843-1153</span>
+                        <span class="c100-channel-action-hint">Call / Text ↗</span>
+                    </a>
+
+                    <!-- Website -->
+                    <a href="https://mindriotlabs.com" class="c100-channel-item glass-panel c100-channel-site action-site">
+                        <svg class="c100-channel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                        </svg>
+                        <span class="c100-channel-label">mindriotlabs.com</span>
+                        <span class="c100-channel-action-hint">Visit ↗</span>
+                    </a>
+
+                    <!-- LinkedIn -->
+                    <a href="https://linkedin.com/in/vanharken" target="_blank" rel="noopener noreferrer" class="c100-channel-item glass-panel c100-channel-linkedin action-linkedin">
+                        <svg class="c100-channel-icon" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.25c-.91 0-1.64.73-1.64 1.64s.73 1.64 1.64 1.64 1.64-.73 1.64-1.64-.73-1.64-1.64-1.64Z"/>
                         </svg>
-                        Connect on LinkedIn
+                        <span class="c100-channel-label">linkedin.com/in/vanharken</span>
+                        <span class="c100-channel-action-hint">Profile ↗</span>
                     </a>
-                    
-                    <button type="button" class="c100-btn c100-btn-secondary action-download-vcard" id="heroVcardBtn">
-                        <svg class="c100-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="8.5" cy="7" r="4"></circle>
-                            <polyline points="17 11 19 13 23 9"></polyline>
-                        </svg>
-                        Save Contact (.vcf)
-                    </button>
 
-                    <a href="#philosophy" class="c100-quiet-link">
-                        <span>See What I'm Building</span>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <polyline points="19 12 12 19 5 12"></polyline>
-                        </svg>
+                </div>
+
+                <!-- Primary vCard Action -->
+                <button type="button" class="c100-btn c100-btn-primary action-download-vcard" id="footerVcardBtn">
+                    <svg class="c100-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Save Contact Card (.vcf)
+                </button>
+
+                <!-- Location Footnote -->
+                <div class="c100-location-tag">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    <span>MindRiot Labs • Spring Lake, MI</span>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Global Footer (Sitewide Parity with Main Site) -->
+    <footer>
+        <div class="container">
+            <div class="footer-top">
+                <div>
+                    <a href="/#home" class="logo footer-logo">
+                        <img src="/images/MRL-logo-vertical-alpha.png" alt="MindRiot Labs">
                     </a>
+                    <p class="footer-desc">Hybrid pro-code &amp; low-code architectures, governed enterprise data orchestration, and supervised agentic workflows built to scale growing businesses. Led by Joseph Van Harken.</p>
                 </div>
-
-            </section>
-
-            <!-- SECTION 2: PERSONAL POSITIONING & PHILOSOPHY -->
-            <section class="c100-section" id="philosophy">
-                <div class="c100-philosophy-card">
-                    <span class="c100-quote-accent" aria-hidden="true">“</span>
-                    <div class="section-label">Core Philosophy</div>
-                    <h2 class="section-heading">Strategy matters.<br><span class="gradient-text">I like building the thing.</span></h2>
-                    
-                    <p class="section-body">
-                        Most enterprise AI discussions stall in theoretical slide decks and endless steering committees. I work directly at the convergence of high-level executive strategy and rapid engineering execution—turning complex operational friction into secure, production-grade automated systems.
-                    </p>
-                    <p class="section-body">
-                        From supervised agentic workflows and role-gated private RAG architectures to bespoke software platforms, my work bridges institutional rigor with venture-backed velocity. I partner with leadership teams to cut overhead, elevate workforce capabilities, and unlock compound operating leverage.
-                    </p>
-                    <p class="section-body">
-                        Open to consequential ventures, fractional CAIO leadership, strategic advisory board seats, and high-impact enterprise partnerships.
-                    </p>
+                <div class="footer-links-grid">
+                    <div class="footer-col">
+                        <h4>Navigation</h4>
+                        <ul>
+                            <li><a href="/#home">Home</a></li>
+                            <li><a href="/#about">About</a></li>
+                            <li><a href="/#pricing">Services</a></li>
+                            <li><a href="/#cases">Case Studies</a></li>
+                            <li><a href="/#portal" class="open-portal-btn">Client Login</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Resources</h4>
+                        <ul>
+                            <li><a href="/#pricing" class="open-audit-modal">Book an Audit</a></li>
+                            <li><a href="/sitemap.xml">Sitemap</a></li>
+                        </ul>
+                    </div>
                 </div>
-            </section>
-
-            <!-- SECTION 3: WHAT I'M BUILDING (EXECUTION GRID) -->
-            <section class="c100-section" id="building">
-                <div class="section-label">Execution Footprint</div>
-                <h2 class="section-heading">What I'm Building</h2>
-                <p class="section-body" style="margin-bottom: 1.25rem;">
-                    Bespoke AI architectures and working software solving real operational bottlenecks.
-                </p>
-
-                <div class="c100-build-grid">
-                    
-                    <!-- Card 1: AI Education & Learning Analytics -->
-                    <div class="c100-build-card">
-                        <div class="c100-build-badge">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
-                            Education & Analytics
-                        </div>
-                        <h3 class="c100-build-title">AI-Powered Learning Systems</h3>
-                        <div class="c100-build-item">
-                            <span class="c100-build-label">Problem</span>
-                            <span>Traditional grading, rubric evaluations, and feedback cycles are slow and unscalable.</span>
-                        </div>
-                        <div class="c100-build-item">
-                            <span class="c100-build-label">Build Solution</span>
-                            <span class="c100-build-solution">Scaled multi-modal AI feedback engines delivering instant, contextualized coaching and analytics.</span>
-                        </div>
-                    </div>
-
-                    <!-- Card 2: Private Enterprise Knowledge & RAG -->
-                    <div class="c100-build-card">
-                        <div class="c100-build-badge">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                            Enterprise Data
-                        </div>
-                        <h3 class="c100-build-title">Private Enterprise Knowledge & RAG</h3>
-                        <div class="c100-build-item">
-                            <span class="c100-build-label">Problem</span>
-                            <span>Staff waste hours hunting through scattered SOPs while management worries about data leaks.</span>
-                        </div>
-                        <div class="c100-build-item">
-                            <span class="c100-build-label">Build Solution</span>
-                            <span class="c100-build-solution">Secure, role-gated internal data search complying strictly with enterprise permission boundaries.</span>
-                        </div>
-                    </div>
-
-                    <!-- Card 3: Supervised Agentic Workflows -->
-                    <div class="c100-build-card">
-                        <div class="c100-build-badge">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                            Autonomous Systems
-                        </div>
-                        <h3 class="c100-build-title">Supervised Agentic Workflows</h3>
-                        <div class="c100-build-item">
-                            <span class="c100-build-label">Problem</span>
-                            <span>Repetitive administrative routines drain high-value executive and operational attention.</span>
-                        </div>
-                        <div class="c100-build-item">
-                            <span class="c100-build-label">Build Solution</span>
-                            <span class="c100-build-solution">Autonomous digital colleagues and background orchestration engines with human-in-the-loop oversight.</span>
-                        </div>
-                    </div>
-
-                    <!-- Card 4: Operational Automation & SaaS -->
-                    <div class="c100-build-card">
-                        <div class="c100-build-badge">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
-                            Operational Automation
-                        </div>
-                        <h3 class="c100-build-title">Operational Automation & SaaS</h3>
-                        <div class="c100-build-item">
-                            <span class="c100-build-label">Problem</span>
-                            <span>Field operations and regional businesses struggle with manual dispatching, clipboards, and spreadsheets.</span>
-                        </div>
-                        <div class="c100-build-item">
-                            <span class="c100-build-label">Build Solution</span>
-                            <span class="c100-build-solution">Rapid deployment of bespoke software infrastructure that cuts manual administration by over 60%.</span>
-                        </div>
-                    </div>
-
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2026 MindRiot Labs. All rights reserved. MindRiot Labs is a DBA of Third Coast Films, LLC.</p>
+                <div class="footer-bottom-links">
+                    <a href="/#home">Privacy Policy</a>
+                    <a href="/#home">Terms of Service</a>
                 </div>
-            </section>
-
-            <!-- SECTION 4: CIO 100 PROOF POINT (PROFAI SPOTLIGHT) -->
-            <section class="c100-section" id="proof">
-                <div class="c100-spotlight-card">
-                    <div class="c100-award-tag">
-                        <span>★</span>
-                        <span>Award-Winning Track Record</span>
-                    </div>
-                    <h2 class="section-heading">One experiment became a <span class="gradient-text">CIO 100 winner</span>.</h2>
-                    <p class="section-body">
-                        Leading the architecture and deployment of ProfAI at Grand Valley State University proved how fast an experimental vision can mature into nationally recognized enterprise infrastructure.
-                    </p>
-                    <p class="section-body" style="color: var(--c100-text-primary); font-weight: 500;">
-                        Earning the <strong>2026 CIO 100 Award for AI Innovation</strong> validated our approach: pairing institutional reliability and governance with the velocity of an agile venture studio.
-                    </p>
-                </div>
-            </section>
-
-            <!-- SECTION 5: HIGH-LEVERAGE OPPORTUNITY MATRIX -->
-            <section class="c100-section" id="opportunities">
-                <div class="section-label">Collaboration Focus</div>
-                <h2 class="section-heading">High-Impact AI &gt; <span class="gradient-text">Theoretical Roadmaps</span>.</h2>
-                <p class="section-body" style="margin-bottom: 1.25rem;">
-                    Where I create the highest leverage for founders, executives, and enterprise teams:
-                </p>
-
-                <div class="c100-matrix-grid">
-                    
-                    <div class="c100-matrix-card">
-                        <div class="c100-matrix-header">
-                            <svg class="c100-matrix-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="16 18 22 12 16 6"></polyline>
-                                <polyline points="8 6 2 12 8 18"></polyline>
-                            </svg>
-                            <span class="c100-matrix-title">Build</span>
-                        </div>
-                        <p class="c100-matrix-desc">
-                            New AI products, autonomous systems, and scalable venture blueprints.
-                        </p>
-                    </div>
-
-                    <div class="c100-matrix-card">
-                        <div class="c100-matrix-header">
-                            <svg class="c100-matrix-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="9" cy="7" r="4"></circle>
-                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                            </svg>
-                            <span class="c100-matrix-title">Partner</span>
-                        </div>
-                        <p class="c100-matrix-desc">
-                            Strategic intersections where enterprise technology, product design, and distribution meet.
-                        </p>
-                    </div>
-
-                    <div class="c100-matrix-card">
-                        <div class="c100-matrix-header">
-                            <svg class="c100-matrix-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-                            </svg>
-                            <span class="c100-matrix-title">Transform</span>
-                        </div>
-                        <p class="c100-matrix-desc">
-                            High-friction legacy enterprise workflows requiring private agentic automation.
-                        </p>
-                    </div>
-
-                    <div class="c100-matrix-card">
-                        <div class="c100-matrix-header">
-                            <svg class="c100-matrix-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
-                            </svg>
-                            <span class="c100-matrix-title">Explore</span>
-                        </div>
-                        <p class="c100-matrix-desc">
-                            High-leverage, greenfield AI initiatives with non-obvious applications.
-                        </p>
-                    </div>
-
-                </div>
-            </section>
-
-            <!-- SECTION 6: "WHAT IS MINDRIOT LABS?" PLATFORM FOOTPRINT -->
-            <section class="c100-section" id="platform">
-                <div class="c100-platform-card">
-                    <div class="c100-platform-header">
-                        <h2 class="c100-platform-title">What is MindRiot Labs?</h2>
-                    </div>
-                    <p class="section-body">
-                        It’s the vehicle that lets our brains explode, explore, experiment, and envision the perfect future-forward solution—then actually make it work. From idea to impact in one rapid development cycle.
-                    </p>
-                    <a href="/" class="c100-platform-link action-site">
-                        <span>Explore MindRiot Labs</span>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                    </a>
-                </div>
-            </section>
-
-            <!-- SECTION 7: DIRECT CONNECTION & VCARD -->
-            <section class="c100-section" id="connect">
-                <div class="c100-connect-card">
-                    <div class="section-label">Direct Line</div>
-                    <h2 class="section-heading">Let's build something <span class="gradient-text">impactful</span>.</h2>
-                    <p class="section-body">
-                        Reach out directly to discuss fractional CAIO leadership, advisory, or consequential AI builds.
-                    </p>
-
-                    <!-- Contact Channels -->
-                    <div class="c100-channels-grid">
-                        
-                        <!-- Email -->
-                        <a href="mailto:jvh@mindriotlabs.com" class="c100-channel-item action-email">
-                            <svg class="c100-channel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                                <polyline points="22,6 12,13 2,6"></polyline>
-                            </svg>
-                            <span class="c100-channel-label">jvh@mindriotlabs.com</span>
-                            <span class="c100-channel-action-hint">Email ↗</span>
-                        </a>
-
-                        <!-- Phone -->
-                        <a href="tel:+16168431153" class="c100-channel-item action-phone">
-                            <svg class="c100-channel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                            </svg>
-                            <span class="c100-channel-label">+1 (616) 843-1153</span>
-                            <span class="c100-channel-action-hint">Call / Text ↗</span>
-                        </a>
-
-                        <!-- Website -->
-                        <a href="https://mindriotlabs.com" class="c100-channel-item action-site">
-                            <svg class="c100-channel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="2" y1="12" x2="22" y2="12"></line>
-                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                            </svg>
-                            <span class="c100-channel-label">mindriotlabs.com</span>
-                            <span class="c100-channel-action-hint">Visit ↗</span>
-                        </a>
-
-                        <!-- LinkedIn -->
-                        <a href="https://linkedin.com/in/vanharken" target="_blank" rel="noopener noreferrer" class="c100-channel-item action-linkedin">
-                            <svg class="c100-channel-icon" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.25c-.91 0-1.64.73-1.64 1.64s.73 1.64 1.64 1.64 1.64-.73 1.64-1.64-.73-1.64-1.64-1.64Z"/>
-                            </svg>
-                            <span class="c100-channel-label">linkedin.com/in/vanharken</span>
-                            <span class="c100-channel-action-hint">Profile ↗</span>
-                        </a>
-
-                    </div>
-
-                    <!-- Primary vCard Action -->
-                    <button type="button" class="c100-btn c100-btn-primary action-download-vcard" id="footerVcardBtn">
-                        <svg class="c100-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="7 10 12 15 17 10"></polyline>
-                            <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                        Save Contact Card (.vcf)
-                    </button>
-
-                    <!-- Location Footnote -->
-                    <div class="c100-location-tag">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                        <span>MindRiot Labs • Spring Lake, MI</span>
-                    </div>
-
-                </div>
-            </section>
-
-        </main>
-
-        <!-- Footer -->
-        <footer class="c100-footer">
-            <div class="c100-footer-motto">Innovation &nbsp;/&nbsp; Intelligence &nbsp;/&nbsp; Impact</div>
-            <div>&copy; 2026 MindRiot Labs LLC. All rights reserved.</div>
-        </footer>
-
-    </div>
+            </div>
+        </div>
+    </footer>
 
     <!-- Feedback Toast -->
     <div class="c100-toast" id="c100Toast" role="status" aria-live="polite">

@@ -64,10 +64,16 @@ function downloadVCard(e) {
     const link = document.createElement('a');
     link.href = url;
     link.setAttribute('download', 'Joseph_Van_Harken.vcf');
+    link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+
+    setTimeout(() => {
+        if (link.parentNode) {
+            link.parentNode.removeChild(link);
+        }
+        URL.revokeObjectURL(url);
+    }, 2000);
 
     showToast('Contact card downloaded');
 }

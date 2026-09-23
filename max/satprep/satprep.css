@@ -1,0 +1,989 @@
+/* ==========================================================================
+   Max's SAT Reading & Writing Prep (/max/satprep)
+   MindRiot Labs - Mobile-First Personal Student Resource Styling
+   Inherits design tokens and base styles from /style.css
+   ========================================================================== */
+
+:root {
+    --sat-navy: #0b1f33;
+    --sat-navy-light: #132a42;
+    --sat-blue: #0d6efd;
+    --sat-cyan: #00c49f;
+    --sat-orange: #ff9f1c;
+    --sat-orange-soft: rgba(255, 159, 28, 0.15);
+    --sat-teal-soft: rgba(0, 196, 159, 0.15);
+    --sat-surface: #141417;
+    --sat-surface-hover: #1c1c21;
+    --sat-surface-elevated: #1f2026;
+    --sat-border: rgba(255, 255, 255, 0.1);
+    --sat-border-focus: rgba(0, 196, 159, 0.5);
+    --sat-text-main: #fafafa;
+    --sat-text-muted: #a1a1aa;
+    --sat-text-subtle: #71717a;
+    --sat-radius-sm: 8px;
+    --sat-radius-md: 14px;
+    --sat-radius-lg: 20px;
+    --sat-radius-full: 9999px;
+    --sat-touch-target: 48px;
+}
+
+/* --------------------------------------------------------------------------
+   Document & Shell Resets for iPhone & Mobile Viewports
+   -------------------------------------------------------------------------- */
+html, body {
+    overflow-x: hidden;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-dark, #09090b);
+    color: var(--sat-text-muted);
+    font-family: var(--font-body, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* Respect iOS Safe Areas */
+.sat-page-wrap {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding-top: max(68px, env(safe-area-inset-top));
+    padding-bottom: max(32px, env(safe-area-inset-bottom));
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+}
+
+/* --------------------------------------------------------------------------
+   Minimal, High-Focus Student Header
+   -------------------------------------------------------------------------- */
+.sat-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: rgba(9, 9, 11, 0.94);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--sat-border);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+}
+
+.sat-header-inner {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sat-logo-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    min-height: var(--sat-touch-target);
+    min-width: var(--sat-touch-target);
+}
+
+.sat-logo-img {
+    height: 28px;
+    width: auto;
+    display: block;
+}
+
+.sat-badge-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--sat-cyan);
+    background: rgba(0, 196, 159, 0.12);
+    border: 1px solid rgba(0, 196, 159, 0.3);
+    padding: 5px 10px;
+    border-radius: var(--sat-radius-full);
+}
+
+/* --------------------------------------------------------------------------
+   Mobile-First Main Layout Container (Centered, readable column)
+   -------------------------------------------------------------------------- */
+.sat-main {
+    width: 100%;
+    max-width: 680px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+@media (min-width: 768px) {
+    .sat-main {
+        max-width: 720px;
+        gap: 2.5rem;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Typography & Shared Section Styles
+   -------------------------------------------------------------------------- */
+.sat-section {
+    background: var(--sat-surface);
+    border: 1px solid var(--sat-border);
+    border-radius: var(--sat-radius-lg);
+    padding: 1.5rem 1.25rem;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+@media (min-width: 560px) {
+    .sat-section {
+        padding: 2rem 1.75rem;
+    }
+}
+
+.sat-section-title {
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--sat-text-main);
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    letter-spacing: -0.02em;
+}
+
+.sat-section-desc {
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--sat-text-muted);
+    margin: 0 0 1.25rem 0;
+}
+
+/* --------------------------------------------------------------------------
+   A. Compact Hero Section
+   -------------------------------------------------------------------------- */
+.sat-hero {
+    background: linear-gradient(180deg, rgba(20, 20, 23, 0.9) 0%, rgba(11, 31, 51, 0.6) 100%);
+    border: 1px solid rgba(0, 196, 159, 0.25);
+    border-radius: var(--sat-radius-lg);
+    padding: 1.75rem 1.25rem;
+    position: relative;
+    overflow: hidden;
+}
+
+@media (min-width: 560px) {
+    .sat-hero {
+        padding: 2.25rem 2rem;
+    }
+}
+
+.sat-hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sat-orange);
+    background: var(--sat-orange-soft);
+    border: 1px solid rgba(255, 159, 28, 0.35);
+    padding: 4px 10px;
+    border-radius: var(--sat-radius-full);
+    margin-bottom: 0.85rem;
+}
+
+.sat-hero-title {
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+    font-size: clamp(1.65rem, 5.2vw, 2.25rem);
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--sat-text-main);
+    letter-spacing: -0.025em;
+    margin: 0 0 0.5rem 0;
+}
+
+.sat-hero-subtitle {
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+    font-size: clamp(1.05rem, 3.8vw, 1.3rem);
+    font-weight: 700;
+    color: var(--sat-cyan);
+    margin: 0 0 1rem 0;
+    letter-spacing: -0.01em;
+}
+
+.sat-hero-intro {
+    font-size: 1rem;
+    line-height: 1.55;
+    color: #e4e4e7;
+    margin: 0 0 1.5rem 0;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.9rem 1.1rem;
+    border-radius: var(--sat-radius-md);
+    border-left: 3px solid var(--sat-cyan);
+}
+
+.sat-hero-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+@media (min-width: 480px) {
+    .sat-hero-actions {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Buttons & Interactive Touch Targets (Minimum 48px height)
+   -------------------------------------------------------------------------- */
+.sat-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: var(--sat-touch-target);
+    padding: 0.8rem 1.25rem;
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+    border-radius: var(--sat-radius-md);
+    border: none;
+    cursor: pointer;
+    transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    text-align: center;
+    user-select: none;
+}
+
+.sat-btn:active {
+    transform: scale(0.98);
+}
+
+.sat-btn:focus-visible {
+    outline: 2px solid var(--sat-cyan);
+    outline-offset: 2px;
+}
+
+.sat-btn-primary {
+    background: var(--accent-gradient, linear-gradient(135deg, #82C43C 0%, #00C49F 100%));
+    color: #09090b;
+    box-shadow: 0 4px 16px rgba(0, 196, 159, 0.3);
+}
+
+.sat-btn-primary:hover {
+    box-shadow: 0 6px 22px rgba(0, 196, 159, 0.45);
+}
+
+.sat-btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--sat-text-main);
+    border: 1px solid var(--sat-border);
+}
+
+.sat-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.sat-btn-orange {
+    background: var(--sat-orange);
+    color: #09090b;
+}
+
+.sat-btn-orange:hover {
+    background: #f5930b;
+}
+
+.sat-btn-ghost {
+    background: transparent;
+    color: var(--sat-cyan);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.88rem;
+}
+
+.sat-btn-ghost:hover {
+    text-decoration: underline;
+}
+
+.sat-btn-block {
+    width: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   B. Recommended Study Sequence (Stacked Mobile Checklist)
+   -------------------------------------------------------------------------- */
+.sat-sequence-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.sat-sequence-count {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--sat-cyan);
+    background: rgba(0, 196, 159, 0.12);
+    padding: 4px 10px;
+    border-radius: var(--sat-radius-full);
+}
+
+.sat-reset-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--sat-text-subtle);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: var(--sat-radius-sm);
+    cursor: pointer;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.sat-reset-btn:hover {
+    color: var(--sat-text-main);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.sat-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sat-step-card {
+    background: var(--sat-surface-hover);
+    border: 1px solid var(--sat-border);
+    border-radius: var(--sat-radius-md);
+    padding: 1rem 1.1rem;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.9rem;
+    align-items: flex-start;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.sat-step-card:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.sat-step-card.completed {
+    background: rgba(0, 196, 159, 0.06);
+    border-color: rgba(0, 196, 159, 0.35);
+}
+
+.sat-step-card.completed .sat-step-title {
+    color: #a1a1aa;
+    text-decoration: line-through;
+}
+
+.sat-checkbox-wrap {
+    min-width: 28px;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+}
+
+.sat-custom-check {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    color: transparent;
+}
+
+.sat-step-card.completed .sat-custom-check {
+    background: var(--sat-cyan);
+    border-color: var(--sat-cyan);
+    color: #09090b;
+}
+
+.sat-step-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.sat-step-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--sat-cyan);
+}
+
+.sat-step-title {
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: var(--sat-text-main);
+    margin: 0;
+}
+
+.sat-step-desc {
+    font-size: 0.88rem;
+    color: var(--sat-text-muted);
+    margin: 0;
+    line-height: 1.45;
+}
+
+.sat-step-meta {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--sat-orange);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 0.2rem;
+}
+
+/* --------------------------------------------------------------------------
+   Section 1: Learn the strategy (Slide Deck Viewer)
+   -------------------------------------------------------------------------- */
+.sat-slide-viewer {
+    background: #000;
+    border-radius: var(--sat-radius-md);
+    overflow: hidden;
+    border: 1px solid var(--sat-border);
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.sat-slide-viewport {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #0b1f33;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    touch-action: pan-y pinch-zoom;
+}
+
+.sat-slide-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    transition: opacity 0.2s ease;
+}
+
+.sat-slide-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    background: var(--sat-surface-hover);
+    border-top: 1px solid var(--sat-border);
+    gap: 0.5rem;
+}
+
+.sat-slide-nav-btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0 1rem;
+    border-radius: var(--sat-radius-sm);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--sat-text-main);
+    border: 1px solid var(--sat-border);
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.2s ease;
+}
+
+.sat-slide-nav-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.sat-slide-nav-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.sat-slide-indicator {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--sat-text-main);
+}
+
+/* --------------------------------------------------------------------------
+   Section 2: Drill the rules (Interactive Flashcards)
+   -------------------------------------------------------------------------- */
+.sat-flashcard-module {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sat-flashcard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.sat-flashcard-score {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--sat-cyan);
+}
+
+.sat-progress-bar-wrap {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: var(--sat-radius-full);
+    overflow: hidden;
+}
+
+.sat-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--sat-blue), var(--sat-cyan));
+    width: 4%;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 3D Flip Card */
+.sat-card-container {
+    perspective: 1200px;
+    width: 100%;
+    height: 310px;
+    cursor: pointer;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+@media (min-width: 480px) {
+    .sat-card-container {
+        height: 330px;
+    }
+}
+
+.sat-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+}
+
+.sat-card-container.flipped .sat-card-inner {
+    transform: rotateY(180deg);
+}
+
+.sat-card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: var(--sat-radius-lg);
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.4rem 1.25rem;
+    text-align: center;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+}
+
+@media (min-width: 560px) {
+    .sat-card-face {
+        padding: 1.8rem 1.6rem;
+    }
+}
+
+.sat-card-front {
+    background: linear-gradient(145deg, #0d1e31 0%, #14283e 100%);
+    border-color: rgba(13, 110, 253, 0.35);
+}
+
+.sat-card-back {
+    background: linear-gradient(145deg, #112824 0%, #0d2020 100%);
+    border-color: rgba(0, 196, 159, 0.4);
+    transform: rotateY(180deg);
+}
+
+.sat-card-tag {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--sat-cyan);
+    align-self: flex-start;
+}
+
+.sat-card-back .sat-card-tag {
+    color: #82c43c;
+}
+
+.sat-card-body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 0;
+}
+
+.sat-card-front-text {
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+    font-size: clamp(1.4rem, 4.8vw, 1.85rem);
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+}
+
+.sat-card-back-text {
+    font-size: clamp(1.05rem, 3.8vw, 1.25rem);
+    line-height: 1.45;
+    color: #e4e4e7;
+    font-weight: 500;
+}
+
+.sat-card-hint {
+    font-size: 0.8rem;
+    color: var(--sat-text-subtle);
+    align-self: center;
+}
+
+/* Flashcard Action Buttons (Thumb friendly, large targets) */
+.sat-flashcard-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.sat-btn-flip {
+    grid-column: 1 / -1;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--sat-text-main);
+    border: 1px solid var(--sat-border);
+}
+
+.sat-btn-again {
+    background: rgba(255, 159, 28, 0.16);
+    color: #ffb74d;
+    border: 1px solid rgba(255, 159, 28, 0.35);
+}
+
+.sat-btn-again:hover {
+    background: rgba(255, 159, 28, 0.25);
+}
+
+.sat-btn-got {
+    background: rgba(0, 196, 159, 0.16);
+    color: #34d399;
+    border: 1px solid rgba(0, 196, 159, 0.35);
+}
+
+.sat-btn-got:hover {
+    background: rgba(0, 196, 159, 0.25);
+}
+
+.sat-flashcard-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--sat-text-subtle);
+    margin-top: 0.35rem;
+}
+
+/* Completion Celebration Banner */
+.sat-celebration {
+    display: none;
+    background: linear-gradient(135deg, rgba(0, 196, 159, 0.15) 0%, rgba(13, 110, 253, 0.15) 100%);
+    border: 1px solid rgba(0, 196, 159, 0.4);
+    border-radius: var(--sat-radius-md);
+    padding: 1.5rem;
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.sat-celebration.active {
+    display: block;
+}
+
+.sat-celebration-title {
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--sat-cyan);
+    margin: 0 0 0.5rem 0;
+}
+
+.sat-celebration-text {
+    font-size: 0.95rem;
+    color: var(--sat-text-main);
+    margin: 0 0 1rem 0;
+}
+
+/* --------------------------------------------------------------------------
+   Section 3: Take the targeted practice
+   -------------------------------------------------------------------------- */
+.sat-timer-callout {
+    background: rgba(255, 159, 28, 0.12);
+    border: 1px solid rgba(255, 159, 28, 0.35);
+    border-left: 4px solid var(--sat-orange);
+    border-radius: var(--sat-radius-md);
+    padding: 1rem 1.15rem;
+    margin-bottom: 1.25rem;
+}
+
+.sat-timer-callout-text {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: #ffedd5;
+    margin: 0;
+    line-height: 1.45;
+}
+
+.sat-doc-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    background: var(--sat-surface-hover);
+    border: 1px solid var(--sat-border);
+    border-radius: var(--sat-radius-md);
+    padding: 1.25rem;
+}
+
+@media (min-width: 600px) {
+    .sat-doc-card {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+.sat-doc-thumb-wrap {
+    width: 100%;
+    max-width: 170px;
+    aspect-ratio: 8.5 / 11;
+    border-radius: var(--sat-radius-sm);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: #ffffff;
+    align-self: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.sat-doc-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.sat-doc-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.sat-doc-name {
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--sat-text-main);
+    margin: 0;
+}
+
+.sat-doc-desc {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--sat-text-muted);
+    margin: 0;
+}
+
+.sat-doc-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin-top: 0.5rem;
+}
+
+@media (min-width: 440px) {
+    .sat-doc-actions {
+        flex-direction: row;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Section 4: Test-day playbook
+   -------------------------------------------------------------------------- */
+.sat-playbook-reminder {
+    background: rgba(13, 110, 253, 0.12);
+    border: 1px solid rgba(13, 110, 253, 0.35);
+    border-left: 4px solid var(--sat-blue);
+    border-radius: var(--sat-radius-md);
+    padding: 1rem 1.15rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.sat-reminder-line {
+    font-size: 0.95rem;
+    color: var(--sat-text-main);
+    line-height: 1.4;
+}
+
+.sat-reminder-line strong {
+    color: #60a5fa;
+}
+
+/* --------------------------------------------------------------------------
+   Section 5: Individual downloads
+   -------------------------------------------------------------------------- */
+.sat-downloads-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sat-download-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--sat-surface-hover);
+    border: 1px solid var(--sat-border);
+    border-radius: var(--sat-radius-md);
+    padding: 0.9rem 1.1rem;
+    gap: 1rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.sat-download-item:hover {
+    border-color: rgba(0, 196, 159, 0.4);
+    background: var(--sat-surface-elevated);
+}
+
+.sat-download-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.sat-download-label {
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--sat-text-main);
+}
+
+.sat-download-sub {
+    font-size: 0.8rem;
+    color: var(--sat-text-subtle);
+}
+
+.sat-download-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(0, 196, 159, 0.1);
+    color: var(--sat-cyan);
+    flex-shrink: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Student Page Footer
+   -------------------------------------------------------------------------- */
+.sat-footer {
+    width: 100%;
+    max-width: 680px;
+    margin: 2rem auto 0;
+    padding: 1.5rem 1rem 0;
+    border-top: 1px solid var(--sat-border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    align-items: center;
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--sat-text-subtle);
+}
+
+@media (min-width: 500px) {
+    .sat-footer {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+}
+
+.sat-footer-links {
+    display: flex;
+    gap: 1.25rem;
+}
+
+.sat-footer-link {
+    color: var(--sat-text-muted);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.sat-footer-link:hover {
+    color: var(--sat-cyan);
+}
+
+/* --------------------------------------------------------------------------
+   Accessibility & Reduced Motion
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    .sat-card-inner {
+        transition: none !important;
+    }
+}

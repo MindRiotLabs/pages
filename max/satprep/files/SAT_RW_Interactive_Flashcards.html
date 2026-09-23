@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SAT Reading and Writing Flashcards</title>
+<style>
+:root{--navy:#0b1f33;--blue:#0d6efd;--cyan:#15b8a6;--orange:#ff9f1c;--ink:#18212b;--muted:#687684;--pale:#eef4f8;}
+*{box-sizing:border-box} body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#eef4f8,#e7f8f5);color:var(--ink);min-height:100vh;display:grid;place-items:center;padding:24px}
+.app{width:min(760px,100%);background:white;border-radius:24px;box-shadow:0 20px 70px #0b1f3326;padding:28px}
+header{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:22px} h1{margin:0;color:var(--navy);font-size:clamp(22px,4vw,34px)}
+.sub{color:var(--muted);margin-top:6px} .score{font-weight:700;color:var(--blue);white-space:nowrap}
+.progress{height:8px;background:var(--pale);border-radius:9px;overflow:hidden;margin-bottom:18px} .bar{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));width:4%;transition:.25s}
+.card{height:360px;perspective:1000px;cursor:pointer;outline:none} .inner{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.card.flipped .inner{transform:rotateY(180deg)} .face{position:absolute;inset:0;backface-visibility:hidden;border:2px solid #d6e0e8;border-radius:20px;display:grid;place-items:center;padding:42px;text-align:center;background:white}
+.back{transform:rotateY(180deg);background:#f9fcfd} .label{position:absolute;top:20px;left:22px;font-size:12px;font-weight:700;color:var(--blue);letter-spacing:.08em}
+.frontText{font-size:clamp(26px,5vw,42px);font-weight:800;color:var(--navy)} .backText{font-size:clamp(19px,3.6vw,28px);line-height:1.35}
+.hint{position:absolute;bottom:18px;color:var(--muted);font-size:13px}
+.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:18px} button{border:0;border-radius:12px;padding:14px 12px;font-weight:700;font-size:15px;cursor:pointer}
+.again{background:#fff2df;color:#9a5a00} .flip{background:var(--navy);color:white} .got{background:#e7f8f5;color:#087b6d} .footer{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin-top:16px}
+@media(max-width:560px){.app{padding:18px}.card{height:330px}.face{padding:28px}.controls{grid-template-columns:1fr 1fr}.flip{grid-column:1/-1;grid-row:1}}
+</style></head><body><main class="app">
+<header><div><h1>SAT RW Flashcards</h1><div class="sub">25 tactical rules. Tap the card to reveal the answer.</div></div><div class="score" id="score">0 mastered</div></header>
+<div class="progress"><div class="bar" id="bar"></div></div>
+<section class="card" id="card" tabindex="0" aria-label="Flashcard"><div class="inner">
+<div class="face front"><div class="label" id="num">CARD 01</div><div class="frontText" id="front"></div><div class="hint">Tap to reveal</div></div>
+<div class="face back"><div class="label">ANSWER</div><div class="backText" id="back"></div><div class="hint">Mark it and continue</div></div>
+</div></section>
+<div class="controls"><button class="again" id="again">Review again</button><button class="flip" id="flip">Flip card</button><button class="got" id="got">Got it</button></div>
+<div class="footer"><span id="status">Card 1 of 25</span><span>Keyboard: space to flip, ← review, → got it</span></div>
+</main><script>
+const cards=[{front:'Boundary check',back:'Ask: Is the left side a complete sentence? Is the right side a complete sentence?'},
+{front:'Two complete sentences',back:'Use a period, semicolon, or comma + FANBOYS. A comma alone creates a comma splice.'},
+{front:'Semicolon test',back:'Replace the semicolon with a period. If the period works, the semicolon can work.'},
+{front:'Colon test',back:'The words before a colon must form a complete sentence. The colon introduces an explanation, example, or list.'},
+{front:'Paired dashes',back:'Treat paired dashes like parentheses. Remove the interruption and test the base sentence.'},
+{front:'Single dash',back:'A single dash can introduce an explanation or sharp elaboration after a complete thought.'},
+{front:'Subject–verb agreement',back:'Strip away phrases between the subject and verb. Match the verb to the true subject.'},
+{front:'Modifier check',back:'Ask who is doing the opening action. That person or thing should appear immediately after the comma.'},
+{front:'Verb tense',back:'Find the timeline anchor: previously, since, by the time, currently, later, or a date.'},
+{front:'Parallel structure',back:'Items in a series should use the same grammatical form: running, swimming, and cycling.'},
+{front:'Pronoun check',back:'Identify the exact noun the pronoun replaces. Confirm number and clarity.'},
+{front:'Transition question',back:'Name the relationship first: same direction, contrast, cause, example, or sequence.'},
+{front:'Rhetorical synthesis',back:'Read the goal first. Use only the notes that accomplish that exact goal.'},
+{front:'Provable beats plausible',back:'Choose what the passage supports, not what sounds reasonable or matches outside knowledge.'},
+{front:'Down to two',back:'Find the exact word that makes one choice wrong.'},
+{front:'Extreme language',back:'Treat all, never, proves, must, and entirely with suspicion unless the passage supports that strength.'},
+{front:'Cause vs. correlation',back:'An association does not prove that one factor caused the other.'},
+{front:'Inference',back:'Choose the smallest defensible conclusion, often phrased with may, suggests, or is consistent with.'},
+{front:'Command of evidence',back:'State the claim first. Then predict the result that would support or weaken it.'},
+{front:'Graph or table',back:'Read title, axes, units, groups, and trend before interpreting the surrounding passage.'},
+{front:'Words in context',back:'Predict a simple replacement before reading the choices.'},
+{front:'Function question',back:'Ask why the author placed the sentence there, not merely what the sentence says.'},
+{front:'Two-text question',back:'Reduce Text 1 and Text 2 to one sentence each. Then decide agree, disagree, qualify, or support.'},
+{front:'90-second rule',back:'At about 90 seconds: choose the best answer, flag it, and protect the rest of the module.'},
+{front:'Hard Module 2',back:'If it suddenly feels difficult, stay calm. Simplify the passage and harvest every available point.'}]; let queue=cards.map((_,i)=>i), pos=0, mastered=new Set();
+const $=id=>document.getElementById(id); const card=$('card');
+function show(){if(!queue.length)queue=cards.map((_,i)=>i);pos=Math.min(pos,queue.length-1);const i=queue[pos];card.classList.remove('flipped');$('front').textContent=cards[i].front;$('back').textContent=cards[i].back;$('num').textContent='CARD '+String(i+1).padStart(2,'0');$('status').textContent=`Card ${pos+1} of ${queue.length}`;$('score').textContent=`${mastered.size} mastered`;$('bar').style.width=`${Math.max(4,(mastered.size/cards.length)*100)}%`;}
+function flip(){card.classList.toggle('flipped')} function next(got){const i=queue[pos];if(got)mastered.add(i);else{mastered.delete(i);queue.push(i)}pos++;if(pos>=queue.length){queue=queue.filter(i=>!mastered.has(i));pos=0;if(!queue.length){alert('You mastered all 25 cards. Nice work.');queue=cards.map((_,i)=>i);}}show();}
+card.onclick=flip;$('flip').onclick=flip;$('again').onclick=()=>next(false);$('got').onclick=()=>next(true);document.addEventListener('keydown',e=>{if(e.key===' '){e.preventDefault();flip()}if(e.key==='ArrowLeft')next(false);if(e.key==='ArrowRight')next(true)});show();
+</script></body></html>

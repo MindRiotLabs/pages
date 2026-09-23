@@ -102,6 +102,18 @@ body#portfolioPage {
   );
 }
 
+@media (min-width: 769px) and (max-width: 819px) {
+  .portfolio-hero {
+    padding-top: 5.25rem;
+  }
+}
+
+@media (min-width: 820px) {
+  .portfolio-hero {
+    padding-top: 6.85rem;
+  }
+}
+
 .portfolio-eyebrow {
   display: inline-flex;
   align-items: center;
@@ -653,8 +665,9 @@ body#portfolioPage {
 
 .portfolio-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 1.5rem;
+  align-items: start;
 }
 
 /* --- Project Card Styling --- */
@@ -665,6 +678,8 @@ body#portfolioPage {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  align-self: start;
+  height: auto;
   transition:
     transform 0.2s ease,
     border-color 0.2s ease,

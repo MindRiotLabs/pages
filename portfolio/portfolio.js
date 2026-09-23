@@ -71,7 +71,7 @@ function renderProjects(projects) {
     card.dataset.beachhead = p.beachhead ? "1" : "0";
 
     const liveLinkHtml = p.url
-      ? `<a class="project-live-link" href="${p.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
+      ? `<a class="project-live-link" href="${p.url}" target="_blank" rel="noopener noreferrer" aria-label="Visit ${p.name} website at ${p.url.replace(/^https?:\/\//, "")} (opens in a new tab)" onclick="event.stopPropagation()">
           <span class="live-dot" aria-hidden="true"></span>
           <span>${p.url.replace(/^https?:\/\//, "")}</span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">

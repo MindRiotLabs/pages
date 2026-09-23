@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=5.0"
+    />
+    <title>Portfolio and Pipeline | MindRiot Labs</title>
+
+    <!-- Unlisted Direct-Share Metadata -->
+    <meta name="robots" content="noindex, nofollow" />
+    <meta
+      name="description"
+      content="Private portfolio and pipeline brief for selected partners, collaborators, and prospects. Explore live platforms, active builds, and foundational architectures."
+    />
+    <meta name="author" content="MindRiot Labs" />
+
+    <!-- OpenGraph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mindriotlabs.com/portfolio" />
+    <meta
+      property="og:title"
+      content="Portfolio and Pipeline | MindRiot Labs"
+    />
+    <meta
+      property="og:description"
+      content="Private portfolio and pipeline brief for selected partners, collaborators, and prospects."
+    />
+    <meta
+      property="og:image"
+      content="https://mindriotlabs.com/images/og-share-card.png"
+    />
+
+    <!-- Favicon -->
+    <link
+      rel="icon"
+      href="/images/MRL-logo-icon-only-01-alpha.png"
+      type="image/png"
+    />
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/style.css?v=2.2" />
+    <link rel="stylesheet" href="/portfolio/portfolio.css?v=1.0" />
+  </head>
+  <body id="portfolioPage">
+    <!-- Ambient Glow Background Blobs -->
+    <div class="ambient-glow-wrap" aria-hidden="true">
+      <div class="ambient-glow-1"></div>
+      <div class="ambient-glow-2"></div>
+      <div class="ambient-glow-3"></div>
+    </div>
+
+    <!-- Background Parallax Watermark Eye -->
+    <img
+      src="/images/MRL-logo-icon-only-01-alpha.png"
+      class="hero-watermark"
+      id="heroWatermark"
+      alt=""
+      aria-hidden="true"
+    />
+
+    <!-- Top Restrained Notice Banner -->
+    <aside class="portfolio-notice-banner" aria-label="Distribution notice">
+      <div class="notice-inner">
+        <div class="notice-badge">
+          <span class="notice-dot" aria-hidden="true"></span>
+          <span>Private portfolio brief · Shared directly</span>
+        </div>
+        <div class="notice-disclaimer">
+          Commercial estimates are directional planning scenarios, not forecasts
+          or guarantees.
+        </div>
+      </div>
+    </aside>
+
+    <!-- Header / Navigation (Consistent with MindRiot Labs Shell) -->
+    <header class="nav-scrolled" role="banner">
+      <div class="container nav-wrapper">
+        <a
+          href="/"
+          class="logo docked"
+          id="headerLogo"
+          aria-label="MindRiot Labs Home"
+        >
+          <img
+            src="/images/MRL-logo-horizontal-alpha-01.png"
+            alt="MindRiot Labs"
+          />
+        </a>
+        <ul class="nav-links" aria-label="Main Navigation">
+          <li><a href="/#home">Home</a></li>
+          <li><a href="/#about">About</a></li>
+          <li><a href="/#pricing">Services</a></li>
+          <li><a href="/#cases">Case Studies</a></li>
+          <li><a href="/#portal" class="open-portal-btn">Client Login</a></li>
+        </ul>
+        <a
+          class="btn btn-primary"
+          href="mailto:jvh@mindriotlabs.com?subject=Partner%20Pipeline%20Inquiry%20-%20MindRiot%20Labs"
+        >
+          Contact Partner Desk
+          <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+      </div>
+    </header>
+
+    <main id="mainContent">
+      <!-- ================================================================
+             1. HERO SECTION & DYNAMIC STATS BAR
+             ================================================================ -->
+      <section class="portfolio-hero" aria-labelledby="heroTitle">
+        <div class="portfolio-eyebrow">
+          <span>MindRiot Labs · Third Coast Films, LLC · 2026</span>
+        </div>
+
+        <h1 id="heroTitle">Portfolio and <em>Pipeline</em></h1>
+
+        <p class="portfolio-hero-sub">
+          Products at every stage—from live platforms and validated
+          institutional systems to high-ceiling concepts being prepared for the
+          right market and GTM partners.
+        </p>
+
+        <!-- Dynamic Stats Bar -->
+        <div class="stats-bar-wrapper">
+          <div
+            class="stats-bar"
+            role="region"
+            aria-label="Portfolio metrics overview"
+          >
+            <div class="stat-item">
+              <span class="stat-num" id="statLiveCount">--</span>
+              <span class="stat-label">Live &amp; Institutional</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-num" id="statMvpCount">--</span>
+              <span class="stat-label">Pilot &amp; MVP</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-num" id="statBuildCount">--</span>
+              <span class="stat-label">Active Builds</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-num" id="statPipelineCount">--</span>
+              <span class="stat-label">Research &amp; Pipeline</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-num" id="statTotalCount">--</span>
+              <span class="stat-label">Total Portfolio</span>
+            </div>
+          </div>
+          <p class="stats-subnote">
+            Multiple commercial pathways across diverse SMB, institutional, and
+            consumer vertical markets.
+          </p>
+        </div>
+      </section>
+
+      <!-- ================================================================
+             2. THE BEACHHEAD STRATEGY
+             ================================================================ -->
+      <section
+        class="portfolio-section"
+        style="padding-top: 1rem; padding-bottom: 2rem"
+        aria-labelledby="stratTitle"
+      >
+        <div class="strategy-card">
+          <div class="strategy-header">
+            <span class="strategy-icon" aria-hidden="true">🎯</span>
+            <h2 class="strategy-title" id="stratTitle">
+              The Beachhead Strategy
+            </h2>
+          </div>
+          <p class="strategy-body">
+            <strong
+              >Identify the fastest responsible path to recurring revenue from
+              live and near-market products, then use those results to fund
+              higher-ceiling opportunities.</strong
+            >
+            MindRiot Labs brings the systems, product architecture, and
+            technical depth. The right GTM partners bring domain access,
+            distribution, and repeatable sales motion.
+          </p>
+        </div>
+      </section>
+
+      <!-- ================================================================
+             3. OWEN / MRL: THE INTELLIGENCE & GOVERNANCE LAYER
+             ================================================================ -->
+      <section class="owen-foundation-section" aria-labelledby="owenTitle">
+        <div class="owen-container">
+          <div class="owen-card">
+            <div class="owen-header-lockup">
+              <div>
+                <span class="owen-badge">Foundational Architecture</span>
+                <h2 class="owen-title" id="owenTitle">
+                  The Intelligence and Governance Layer
+                </h2>
+                <p class="owen-framing">
+                  <strong>OWEN / MRL:</strong> Turning organizational reality
+                  into experience, experience into wisdom, and wisdom into
+                  better human decisions.
+                </p>
+              </div>
+            </div>
+
+            <p class="owen-intro">
+              OWEN/MRL is the shared intelligence, evidence, memory, and
+              governance architecture that supports multiple vertical products
+              across the MindRiot Labs ecosystem without becoming locked inside
+              any one AI model, agent, tool, or application. Vertical systems
+              integrate through stable contracts rather than embedding isolated,
+              frozen copies of OWEN.
+            </p>
+
+            <!-- Core Non-Negotiable Invariants -->
+            <div class="owen-principles-title">
+              Non-Negotiable Architecture Principles
+            </div>
+            <div class="owen-principles-grid">
+              <div class="principle-item">
+                <span class="principle-icon" aria-hidden="true">✓</span>
+                <div class="principle-text">
+                  <strong>Human Authority is Non-Transferable:</strong> AI
+                  provides intelligence, evidence, synthesis, and
+                  recommendations; it never silently acquires decision rights.
+                </div>
+              </div>
+              <div class="principle-item">
+                <span class="principle-icon" aria-hidden="true">✓</span>
+                <div class="principle-text">
+                  <strong>Distinguishable Perspectives:</strong> Individual
+                  perspectives and minority viewpoints remain distinguishable
+                  rather than being flattened into one synthetic organizational
+                  voice.
+                </div>
+              </div>
+              <div class="principle-item">
+                <span class="principle-icon" aria-hidden="true">✓</span>
+                <div class="principle-text">
+                  <strong>Enduring Institutional Memory:</strong> Institutional
+                  experience, procedural rationale, and domain reasoning survive
+                  personnel transitions.
+                </div>
+              </div>
+              <div class="principle-item">
+                <span class="principle-icon" aria-hidden="true">✓</span>
+                <div class="principle-text">
+                  <strong>Sovereignty Over Tools:</strong> OWEN sits above
+                  individual models, agents, and vertical apps, preventing
+                  vendor lock-in.
+                </div>
+              </div>
+              <div class="principle-item">
+                <span class="principle-icon" aria-hidden="true">✓</span>
+                <div class="principle-text">
+                  <strong>Stable Integration Contracts:</strong> Vertical
+                  applications integrate via clean, versioned contracts rather
+                  than hardcoded monoliths.
+                </div>
+              </div>
+              <div class="principle-item">
+                <span class="principle-icon" aria-hidden="true">✓</span>
+                <div class="principle-text">
+                  <strong>Traceable Decision Records:</strong> Every decision
+                  log preserves evidence, preconditions, dissent, uncertainty,
+                  and explicit human sign-off.
+                </div>
+              </div>
+            </div>
+
+            <!-- OWEN Assurance Spotlight -->
+            <div class="owen-assurance-panel">
+              <div class="assurance-header">
+                <span class="assurance-tag">Featured Engine</span>
+                <h3 class="assurance-title">OWEN Assurance</h3>
+              </div>
+              <p class="assurance-body">
+                OWEN Assurance evaluates whether implementation evidence
+                objectively supports a proposed operational decision before
+                execution. By strictly separating machine assessment from human
+                approval, it prevents automated rubber-stamping and provides
+                verifiable oversight.
+              </p>
+              <div class="assurance-findings">
+                <span class="finding-chip finding-supported">● Supported</span>
+                <span class="finding-chip finding-conditions"
+                  >▲ Supported with Conditions</span
+                >
+                <span class="finding-chip finding-unsupported"
+                  >✕ Unsupported</span
+                >
+              </div>
+              <p class="assurance-proof-cite">
+                <strong>Live Validation Proof:</strong> OWEN Assurance was
+                demonstrated manually against real-world software security,
+                waiver immutability, and row-level security (RLS) governance
+                reviews during production deployments.
+              </p>
+            </div>
+
+            <!-- Supported Branches Across the Portfolio -->
+            <div class="owen-branches-title">Supported Portfolio Domains</div>
+            <div class="owen-branches-grid">
+              <div class="branch-card">
+                <div class="branch-domain">Service-Business Platforms</div>
+                <div class="branch-projs">Bilz HQ, PoolzHQ</div>
+                <div class="branch-status-tag">Live Integration</div>
+              </div>
+              <div class="branch-card">
+                <div class="branch-domain">Legal Decision Support</div>
+                <div class="branch-projs">Project Aequitas</div>
+                <div class="branch-status-tag">Integrated Blueprint</div>
+              </div>
+              <div class="branch-card">
+                <div class="branch-domain">Institutional Governance</div>
+                <div class="branch-projs">Continuous Governance Newsroom</div>
+                <div class="branch-status-tag">Framework Design</div>
+              </div>
+              <div class="branch-card">
+                <div class="branch-domain">Event Operations &amp; Commerce</div>
+                <div class="branch-projs">Michigan Mudbowl EMS</div>
+                <div class="branch-status-tag">Production POC</div>
+              </div>
+              <div class="branch-card">
+                <div class="branch-domain">Membership Systems</div>
+                <div class="branch-projs">Member Portal Platform</div>
+                <div class="branch-status-tag">Live Operations</div>
+              </div>
+              <div class="branch-card">
+                <div class="branch-domain">Education &amp; Admissions</div>
+                <div class="branch-projs">
+                  ProfAI, SAT Life, AP Bio Quest, IllumiU
+                </div>
+                <div class="branch-status-tag">Architectural Alignment</div>
+              </div>
+              <div class="branch-card">
+                <div class="branch-domain">Organizational Knowledge</div>
+                <div class="branch-projs">Worker Knowledge Capture</div>
+                <div class="branch-status-tag">Research Blueprint</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+             4. PORTFOLIO EXPLORER & PROJECT GRID
+             ================================================================ -->
+      <section
+        class="portfolio-section"
+        aria-labelledby="portfolioExplorerTitle"
+      >
+        <span class="section-eyebrow">Portfolio Pipeline</span>
+        <h2 class="section-title" id="portfolioExplorerTitle">
+          Explore the Systems
+        </h2>
+        <p class="section-desc">
+          Select any project card below to inspect the full case brief—including
+          operational overview, market differentiation, launch investment, and
+          immediate next steps.
+        </p>
+      </section>
+
+      <!-- Controls: Filter Chips -->
+      <div
+        class="portfolio-controls"
+        role="toolbar"
+        aria-label="Portfolio filters"
+      >
+        <div
+          class="filters-track"
+          role="radiogroup"
+          aria-label="Filter by project stage"
+        >
+          <button
+            class="filter-btn active"
+            data-filter="all"
+            aria-pressed="true"
+          >
+            All Products
+          </button>
+          <button
+            class="filter-btn"
+            data-filter="beachhead"
+            aria-pressed="false"
+          >
+            <span aria-hidden="true">🎯</span> Beachhead Picks
+          </button>
+          <button class="filter-btn" data-filter="live" aria-pressed="false">
+            <span aria-hidden="true">●</span> Live Now
+          </button>
+          <button
+            class="filter-btn"
+            data-filter="nearterm"
+            aria-pressed="false"
+          >
+            <span aria-hidden="true">🔥</span> Near-Term
+          </button>
+          <button
+            class="filter-btn"
+            data-filter="building"
+            aria-pressed="false"
+          >
+            <span aria-hidden="true">◑</span> In Build
+          </button>
+          <button
+            class="filter-btn"
+            data-filter="pipeline"
+            aria-pressed="false"
+          >
+            <span aria-hidden="true">○</span> Pipeline &amp; Research
+          </button>
+        </div>
+        <div
+          class="portfolio-count-info"
+          id="portfolioCountInfo"
+          aria-live="polite"
+        >
+          Showing 25 products
+        </div>
+      </div>
+
+      <!-- Project Grid -->
+      <div class="portfolio-grid-wrap">
+        <div
+          class="portfolio-grid"
+          id="portfolioGrid"
+          role="feed"
+          aria-label="Product briefs"
+        >
+          <!-- Injected dynamically via portfolio.js -->
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="portfolio-footer" role="contentinfo">
+      <div class="portfolio-footer-inner">
+        <div class="footer-brand">
+          <h4>Mind<span>Riot</span> Labs · Third Coast Films, LLC</h4>
+          <p>
+            Private portfolio brief &bull; Grand Haven, MI &bull;
+            jvh@mindriotlabs.com
+          </p>
+        </div>
+        <div class="footer-actions">
+          <a href="https://mindriotlabs.com" class="footer-partner-link"
+            >Return to MindRiotLabs.com &rarr;</a
+          >
+        </div>
+      </div>
+    </footer>
+
+    <!-- Interactive Logic Module -->
+    <script type="module" src="/portfolio/portfolio.js?v=1.0"></script>
+  </body>
+</html>

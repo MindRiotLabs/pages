@@ -133,6 +133,15 @@ function renderProjects(projects) {
         </div>`
       : "";
 
+    const ecosystemTagsHtml =
+      p.ecosystemTags && p.ecosystemTags.length > 0
+        ? `<div class="ecosystem-tags" aria-label="MRL / OWEN system role">
+            ${p.ecosystemTags
+              .map((tag) => `<span class="ecosystem-tag-pill">◈ ${tag}</span>`)
+              .join("")}
+          </div>`
+        : "";
+
     const complexityClass =
       p.gtmComplexity === "Low"
         ? "complexity-low"
@@ -154,6 +163,7 @@ function renderProjects(projects) {
           <span class="card-category">${p.category}</span>
         </div>
         ${beachheadHtml}
+        ${ecosystemTagsHtml}
         <h3 class="project-name">${p.name}</h3>
         <p class="project-tagline">${p.tagline}</p>
         ${liveLinkHtml}
@@ -203,7 +213,7 @@ function renderProjects(projects) {
         </div>
 
         <div>
-          <div class="detail-block-title">OWEN Architecture Alignment</div>
+          <div class="detail-block-title">MRL / OWEN Architecture Alignment</div>
           <span class="owen-align-tag">◈ ${p.owenAlignment}</span>
         </div>
       </div>

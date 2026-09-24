@@ -14,6 +14,7 @@ export const PORTFOLIO_PROJECTS = [
     statusSymbol: "● LIVE",
     speed: 1,
     beachhead: true,
+    ecosystemTags: ["Cross-Vertical Pattern", "Foundry Signal Source"],
     url: "https://bilz-hq.mindriotlabs.com",
     tagline:
       "The original field-service proof: an AI-assisted operational platform built for independent pool & spa operators.",
@@ -43,6 +44,7 @@ export const PORTFOLIO_PROJECTS = [
     statusSymbol: "● LIVE",
     speed: 1,
     beachhead: true,
+    ecosystemTags: ["Cross-Vertical Pattern", "Foundry Signal Source"],
     url: "https://poolzhq.com",
     tagline:
       "White-label route operating system with autonomous marketing agents, architected for pool & spa and adjacent field services.",
@@ -403,6 +405,10 @@ export const PORTFOLIO_PROJECTS = [
     statusSymbol: "◑ ACTIVE BUILD",
     speed: 3,
     beachhead: false,
+    ecosystemTags: [
+      "Decision Support Vertical",
+      "MRL / OWEN Architectural Application",
+    ],
     url: null,
     tagline:
       "Human-authority legal intelligence that turns case evidence and professional experience into traceable decision support.",
@@ -612,6 +618,7 @@ export const PORTFOLIO_PROJECTS = [
     statusSymbol: "● LIVE / EARLY ACCESS",
     speed: 1,
     beachhead: false,
+    ecosystemTags: ["Built on MRL Substrate", "Experience Contributor"],
     url: "https://illumiu.com",
     tagline:
       "A student-first college admissions CRM that brings schools, essays, deadlines, financial aid, and parent updates into one clear application system.",
@@ -641,6 +648,7 @@ export const PORTFOLIO_PROJECTS = [
     statusSymbol: "● LIVE",
     speed: 1,
     beachhead: true,
+    ecosystemTags: ["OWEN Assurance Pilot", "Experience Contributor"],
     url: "https://michiganmudbowl.org",
     tagline:
       "A complete event-management system for teams, athletes, waivers, scoring, fundraising, merchandise, and operational control.",
@@ -701,6 +709,7 @@ export const PORTFOLIO_PROJECTS = [
     statusSymbol: "⬡ FRAMEWORK",
     speed: 4,
     beachhead: false,
+    ecosystemTags: ["Governance Application", "Foundry Signal Source"],
     url: null,
     tagline:
       "A continuous governance system that helps institutions move from periodic policy debates to evidence-based improvement cycles.",
@@ -731,6 +740,7 @@ export const PORTFOLIO_PROJECTS = [
     statusSymbol: "○ CONCEPT",
     speed: 5,
     beachhead: false,
+    ecosystemTags: ["Experience Contributor", "Organizational Knowledge"],
     url: null,
     tagline:
       "A conversational system for preserving how experienced employees actually perform work—not merely what job descriptions say they do.",
@@ -761,6 +771,7 @@ export const PORTFOLIO_PROJECTS = [
     statusSymbol: "● LIVE",
     speed: 1,
     beachhead: false,
+    ecosystemTags: ["Built on MRL Substrate"],
     url: "https://daily5.mindriotlabs.com",
     tagline:
       "Gamified Digital SAT preparation that turns five personalized daily questions into a fast cohort competition, supported by targeted drills and tutor-grade strategic feedback.",

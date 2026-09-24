@@ -11,6 +11,7 @@ dist/
 .wrangler/
 
 # Scratch & build artifacts
+_worker.bundle
 scratch/
 *.docx
 generate_resume.py

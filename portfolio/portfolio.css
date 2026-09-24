@@ -114,22 +114,6 @@ body#portfolioPage {
   }
 }
 
-.portfolio-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--accent-cyan);
-  background: rgba(0, 196, 159, 0.08);
-  border: 1px solid rgba(0, 196, 159, 0.22);
-  padding: 0.35rem 1rem;
-  border-radius: 9999px;
-  margin-bottom: 1.5rem;
-}
-
 .portfolio-hero h1 {
   font-family: var(--font-heading);
   font-size: clamp(2.5rem, 5vw, 4rem);

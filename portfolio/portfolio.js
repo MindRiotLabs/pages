@@ -7,10 +7,55 @@
 import { PORTFOLIO_PROJECTS } from "./portfolio-data.js";
 
 document.addEventListener("DOMContentLoaded", () => {
+  initNav();
   initStats();
   renderProjects(PORTFOLIO_PROJECTS);
   initFilters();
 });
+
+/**
+ * Initializes mobile navigation hamburger toggle and keyboard/click dismiss.
+ */
+function initNav() {
+  const mobileToggle = document.querySelector(".nav-mobile-toggle");
+  const navLinksContainer = document.querySelector(".nav-links");
+  if (!mobileToggle || !navLinksContainer) return;
+
+  mobileToggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = navLinksContainer.classList.toggle("mobile-active");
+    mobileToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  });
+
+  const navLinks = navLinksContainer.querySelectorAll("a");
+  navLinks.forEach((link) => {
+    link.addEventListener("click", () => {
+      navLinksContainer.classList.remove("mobile-active");
+      mobileToggle.setAttribute("aria-expanded", "false");
+    });
+  });
+
+  document.addEventListener("click", (e) => {
+    if (
+      navLinksContainer.classList.contains("mobile-active") &&
+      !navLinksContainer.contains(e.target) &&
+      !mobileToggle.contains(e.target)
+    ) {
+      navLinksContainer.classList.remove("mobile-active");
+      mobileToggle.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (
+      e.key === "Escape" &&
+      navLinksContainer.classList.contains("mobile-active")
+    ) {
+      navLinksContainer.classList.remove("mobile-active");
+      mobileToggle.setAttribute("aria-expanded", "false");
+    }
+  });
+}
 
 /**
  * Derives and updates hero summary counters from real project data.

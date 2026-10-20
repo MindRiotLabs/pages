@@ -9,7 +9,7 @@
     "build": "wrangler pages functions build --compatibility-date 2024-09-23 --compatibility-flag nodejs_compat"
   },
   "dependencies": {
-    "@mrl/owen": "file:../MRL-OWEN"
+    "@mrl/owen": "file:./packages/mrl-owen-0.1.0-a74af67.tgz"
   },
   "devDependencies": {
     "@types/node": "^22.13.0"

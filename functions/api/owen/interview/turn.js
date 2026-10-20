@@ -19,10 +19,11 @@ export async function onRequestOptions() {
 
 export async function onRequestPost(context) {
   const { request, env } = context;
+  const requestStartMs = Date.now();
 
   try {
     const body = await request.json();
-    const { session, agent, voiceAdapter } = await resolveAuthorizedPilotSession(
+    const { session, agent, store, voiceAdapter } = await resolveAuthorizedPilotSession(
       request,
       env,
       body
@@ -51,10 +52,29 @@ export async function onRequestPost(context) {
       }
     }
 
+    const lastTurn = updated.turns[updated.turns.length - 1];
+    const modelMs =
+      typeof lastTurn?.provider_metadata?.latency_ms === 'number'
+        ? lastTurn.provider_metadata.latency_ms
+        : 0;
+
+    const timingMetadata = {
+      total_ms: Date.now() - requestStartMs,
+      db_read_ms: store?.lastReadMs ?? 0,
+      model_ms: modelMs,
+      db_write_ms: store?.lastWriteMs ?? 0,
+      db_reads: store?.readCount ?? 1,
+      db_writes: store?.writeCount ?? 1,
+      evaluation_source: lastTurn?.provider_metadata?.evaluation_source || 'none',
+      model_id: lastTurn?.provider_metadata?.model_id || 'none',
+      token_usage: lastTurn?.provider_metadata?.token_usage || null
+    };
+
     return new Response(
       JSON.stringify(
         sanitizeSessionForClient(updated, {
-          voice_audio: voiceAudio
+          voice_audio: voiceAudio,
+          timing_metadata: timingMetadata
         })
       ),
       { status: 200, headers: corsHeaders }

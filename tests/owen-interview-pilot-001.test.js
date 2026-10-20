@@ -9,7 +9,12 @@ import { onRequestGet as getBrief, onRequestPost as postBrief } from '../functio
 import { onRequestPost as postReview } from '../functions/api/owen/interview/review.js';
 import { onRequestPost as postWebhook } from '../functions/api/owen/interview/webhook.js';
 import {
+  onRequestGet as getVoiceSession,
+  onRequestPost as postVoiceSession
+} from '../functions/api/owen/interview/voice-session.js';
+import {
   resetInterviewServiceForTests,
+  SupabaseRpcInterviewSessionStore,
   DEFAULT_PILOT_001_SESSION_ID,
   DISPOSABLE_UAT_SESSION_ID
 } from '../functions/api/owen/interview/service.js';
@@ -310,14 +315,14 @@ describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Securi
     const path = await import('node:path');
     const { OWEN_BUILD_METADATA } = await import('@mrl/owen');
 
-    // Verify canonical OWEN build provenance matches surgical release commit 03426854f2e1d261ec40e38df5bc99f9098a7a25
+    // Verify canonical OWEN build provenance matches surgical release commit cf086264a25466a0610a54ff2fd6e81276348431
     assert.equal(
       OWEN_BUILD_METADATA.canonical_commit_sha,
-      '03426854f2e1d261ec40e38df5bc99f9098a7a25'
+      'cf086264a25466a0610a54ff2fd6e81276348431'
     );
-    assert.equal(OWEN_BUILD_METADATA.canonical_commit_short, '0342685');
+    assert.equal(OWEN_BUILD_METADATA.canonical_commit_short, 'cf08626');
 
-    const tarballPath = path.resolve(process.cwd(), 'packages/mrl-owen-0.1.0-0342685.tgz');
+    const tarballPath = path.resolve(process.cwd(), 'packages/mrl-owen-0.1.0-cf08626.tgz');
     assert.equal(fs.existsSync(tarballPath), true);
     const actualSha256 = crypto
       .createHash('sha256')
@@ -325,7 +330,7 @@ describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Securi
       .digest('hex');
     assert.equal(
       actualSha256,
-      'd9b35ea47767266db1cc0c4d5e0ffafca352da78f379d9c3cf3ea78df941d9f7'
+      'a01dbf854f6860c599fbc9f03fb5d8c651164759709aebb09d7ceb05b807344b'
     );
 
     // Verify wrangler.toml targets mindriotlabs-production
@@ -360,6 +365,111 @@ describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Securi
         `Expected unrelated path ${excludedPath} to be absent from surgical release`
       );
     }
+  });
+
+  it('7. Caches per-request Supabase reads, emits timing_metadata, and governs ElevenLabs voice-session endpoint', async () => {
+    // 7a. Verify SupabaseRpcInterviewSessionStore performs only 1 RPC read across multiple getSession calls in a single request
+    const origFetch = globalThis.fetch;
+    let rpcGetCalls = 0;
+    try {
+      globalThis.fetch = async url => {
+        if (String(url).includes('owen_get_interview_session')) {
+          rpcGetCalls += 1;
+          return new Response(JSON.stringify({ id: 'ses-cache-test', turns: [] }), { status: 200 });
+        }
+        return new Response(JSON.stringify({ ok: true }), { status: 200 });
+      };
+
+      const rpcStore = new SupabaseRpcInterviewSessionStore({
+        supabaseUrl: 'https://example.supabase.co',
+        supabaseKey: 'anon_test',
+        activeTokenSha256: 'sha256_test'
+      });
+
+      await rpcStore.getSession('ses-cache-test');
+      await rpcStore.getSession('ses-cache-test');
+      await rpcStore.getSession('ses-cache-test');
+      assert.equal(rpcGetCalls, 1, 'Expected per-request cache to coalesce 3 reads into 1 RPC call');
+      assert.equal(rpcStore.readCount, 1);
+    } finally {
+      globalThis.fetch = origFetch;
+    }
+
+    // 7b. Verify /api/owen/interview/turn returns timing_metadata and /api/owen/interview/voice-session enforces consent + no-cloning
+    await postConsent({
+      request: new Request('https://mindriotlabs.com/api/owen/interview/consent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${SYNTHETIC_PILOT_TOKEN}`
+        },
+        body: JSON.stringify({
+          session_id: DEFAULT_PILOT_001_SESSION_ID,
+          transcript_capture_consented: true,
+          audio_recording_consented: true,
+          synthetic_voice_acknowledged: true,
+          attribution_preference: 'ATTRIBUTED'
+        })
+      }),
+      env: testEnv
+    });
+
+    const turnRes = await postTurn({
+      request: new Request('https://mindriotlabs.com/api/owen/interview/turn', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${SYNTHETIC_PILOT_TOKEN}`
+        },
+        body: JSON.stringify({
+          session_id: DEFAULT_PILOT_001_SESSION_ID,
+          participant_text: 'At McKinsey, practice directors curated PD documents and connected teams to experts.',
+          control_action: 'RESPOND',
+          provider_metadata: { client_request_id: 'req-idemp-test-01' }
+        })
+      }),
+      env: testEnv
+    });
+    assert.equal(turnRes.status, 200);
+    const turnBody = await turnRes.json();
+    assert.ok(turnBody.timing_metadata);
+    assert.equal(typeof turnBody.timing_metadata.total_ms, 'number');
+
+    // Verify GET /api/owen/interview/voice-session returns OWEN dynamic agent override & allow_voice_cloning: false
+    const voiceStatusRes = await getVoiceSession({
+      request: new Request(
+        `https://mindriotlabs.com/api/owen/interview/voice-session?session_id=${DEFAULT_PILOT_001_SESSION_ID}`,
+        {
+          headers: { Authorization: `Bearer ${SYNTHETIC_PILOT_TOKEN}` }
+        }
+      ),
+      env: testEnv
+    });
+    assert.equal(voiceStatusRes.status, 200);
+    const voiceStatusBody = await voiceStatusRes.json();
+    assert.equal(voiceStatusBody.allow_voice_cloning, false);
+    assert.equal(voiceStatusBody.consent_ready, true);
+    assert.equal(
+      voiceStatusBody.conversation_override.owen_governance.epistemic_layer_binding,
+      'LAYER_1_VERBATIM_TRANSCRIPT_ONLY'
+    );
+
+    // Verify POST /api/owen/interview/voice-session reports REQUIRES_AGENT_ID when ELEVENLABS_AGENT_ID is not yet set
+    const voiceInitRes = await postVoiceSession({
+      request: new Request('https://mindriotlabs.com/api/owen/interview/voice-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${SYNTHETIC_PILOT_TOKEN}`
+        },
+        body: JSON.stringify({ session_id: DEFAULT_PILOT_001_SESSION_ID })
+      }),
+      env: testEnv
+    });
+    assert.equal(voiceInitRes.status, 200);
+    const voiceInitBody = await voiceInitRes.json();
+    assert.equal(voiceInitBody.status, 'REQUIRES_AGENT_ID');
+    assert.ok(voiceInitBody.missingConfiguration.includes('ELEVENLABS_AGENT_ID'));
   });
 });
 

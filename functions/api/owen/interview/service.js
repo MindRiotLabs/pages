@@ -149,16 +149,26 @@ export class SupabaseRpcInterviewSessionStore {
     this.supabaseKey = supabaseKey || DEFAULT_SUPABASE_ANON_KEY;
     this.activeTokenSha256 = activeTokenSha256;
     this.fallbackMemoryStore = fallbackMemoryStore;
+    this.requestSessionCache = new Map();
+    this.lastReadMs = 0;
+    this.lastWriteMs = 0;
+    this.readCount = 0;
+    this.writeCount = 0;
   }
 
   async saveSession(session) {
     const tokenSha =
       session?.access_control?.invitation_token_sha256 || this.activeTokenSha256;
 
+    if (session && session.id) {
+      this.requestSessionCache.set(session.id, structuredClone(session));
+    }
+
     if (this.fallbackMemoryStore) {
       await this.fallbackMemoryStore.saveSession(session);
     }
 
+    const t0 = Date.now();
     const res = await fetch(
       `${this.supabaseUrl}/rest/v1/rpc/owen_upsert_interview_session`,
       {
@@ -174,6 +184,8 @@ export class SupabaseRpcInterviewSessionStore {
         })
       }
     );
+    this.lastWriteMs = Date.now() - t0;
+    this.writeCount += 1;
 
     if (!res.ok) {
       const errText = await res.text().catch(() => 'Supabase RPC error');
@@ -186,6 +198,11 @@ export class SupabaseRpcInterviewSessionStore {
       return undefined;
     }
 
+    if (this.requestSessionCache.has(sessionId)) {
+      return structuredClone(this.requestSessionCache.get(sessionId));
+    }
+
+    const t0 = Date.now();
     const res = await fetch(
       `${this.supabaseUrl}/rest/v1/rpc/owen_get_interview_session`,
       {
@@ -201,6 +218,8 @@ export class SupabaseRpcInterviewSessionStore {
         })
       }
     );
+    this.lastReadMs = Date.now() - t0;
+    this.readCount += 1;
 
     if (!res.ok) {
       return undefined;
@@ -210,6 +229,7 @@ export class SupabaseRpcInterviewSessionStore {
     if (!data || !data.id) {
       return undefined;
     }
+    this.requestSessionCache.set(sessionId, structuredClone(data));
     return data;
   }
 
@@ -275,6 +295,7 @@ export function createInterviewServiceContext(env = {}, rawInviteToken = '', ses
   const geminiModelId = getEnvValue(env, 'GEMINI_MODEL_ID') || 'gemini-3-flash-preview';
   const elevenLabsApiKey = getEnvValue(env, 'ELEVENLABS_API_KEY');
   const elevenLabsVoiceId = getEnvValue(env, 'ELEVENLABS_VOICE_ID');
+  const elevenLabsAgentId = getEnvValue(env, 'ELEVENLABS_AGENT_ID');
   const elevenLabsWebhookSecret = getEnvValue(env, 'ELEVENLABS_WEBHOOK_SECRET');
 
   if (!cachedMemoryStore) {
@@ -306,6 +327,7 @@ export function createInterviewServiceContext(env = {}, rawInviteToken = '', ses
     cachedWebhookAdapter = new ElevenLabsVoiceAdapter({
       apiKey: elevenLabsApiKey,
       voiceId: elevenLabsVoiceId,
+      agentId: elevenLabsAgentId,
       webhookSecret: elevenLabsWebhookSecret,
       syntheticVoiceOwner: 'Joseph Van Harken'
     });
@@ -347,7 +369,7 @@ export async function resolveAuthorizedPilotSession(request, env = {}, body = nu
     );
   }
 
-  const { agent, voiceAdapter, expectedSessionToken, modelProvider } =
+  const { agent, store, voiceAdapter, expectedSessionToken, modelProvider } =
     createInterviewServiceContext(env, rawToken, sessionId);
 
   // Enforce strict session-specific token binding for Pilot 001 and UAT sessions
@@ -390,6 +412,7 @@ export async function resolveAuthorizedPilotSession(request, env = {}, body = nu
     return {
       session: verifiedSession,
       agent,
+      store,
       voiceAdapter,
       modelProvider
     };

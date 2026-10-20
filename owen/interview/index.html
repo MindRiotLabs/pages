@@ -69,7 +69,7 @@
         <section class="card-panel hidden" id="consentGatePanel" aria-labelledby="consentTitle">
           <div class="panel-eyebrow">Informed Consent &amp; Epistemic Governance</div>
           <h1 id="consentTitle" class="panel-title">
-            Welcome, <span id="consentParticipantName">Russ Richmond</span>
+            Welcome, <span id="consentParticipantName">Participant</span>
           </h1>
           <p class="panel-subtitle" id="consentPurposeText">
             Explore the parallels between OWEN and McKinsey’s human-centered knowledge-management
@@ -148,8 +148,8 @@
                 Preferred Attribution Mode
               </label>
               <select id="initialAttributionSelect" class="select-input">
-                <option value="ATTRIBUTED">
-                  Attributed to Russ Richmond (Internal MRL / OWEN &amp; Approved Brief)
+                <option value="ATTRIBUTED" id="initialAttributedOption">
+                  Attributed to Participant (Internal MRL / OWEN &amp; Approved Brief)
                 </option>
                 <option value="ANONYMIZED_EXTERNAL">
                   Anonymize my name in any external summaries
@@ -176,32 +176,99 @@
         <section class="interview-workspace hidden" id="interviewWorkspace">
           <!-- Left / Top: Conversation Stream & Composer -->
           <div class="conversation-column">
-            <!-- Session Controls Bar -->
+            <!-- Session & Audio Controls Bar -->
             <div class="session-controls-bar">
-              <div class="controls-left">
+              <div class="controls-top-row">
                 <span class="active-objective-pill" id="activeObjectivePill">
                   Objective A · Original Connection
                 </span>
-                <button
-                  type="button"
-                  class="btn btn-ghost btn-sm"
-                  id="toggleTtsBtn"
-                  title="Toggle spoken read-aloud of interviewer prompts"
-                >
-                  Read Aloud: Off
+                <div class="audio-controls-group" role="group" aria-label="Interviewer Audio Controls">
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-touch"
+                    id="toggleTtsBtn"
+                    aria-pressed="false"
+                    title="Automatically read interviewer questions aloud"
+                  >
+                    🔊 Auto-Read: Off
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-touch"
+                    id="playPromptBtn"
+                    title="Play or pause the current interviewer question"
+                  >
+                    ▶️ Play Question
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-touch hidden"
+                    id="stopPromptBtn"
+                    title="Stop spoken playback"
+                  >
+                    ⏹️ Stop
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-touch hidden"
+                    id="toggleRealtimeVoiceBtn"
+                    title="Open ElevenLabs Realtime Voice Mode (PoC)"
+                  >
+                    🎧 Live Voice (PoC)
+                  </button>
+                </div>
+              </div>
+
+              <div class="audio-status-row hidden" id="audioStatusRow" role="status" aria-live="polite">
+                <span class="audio-status-dot" id="audioStatusDot"></span>
+                <span id="audioStatusText">Audio Ready</span>
+              </div>
+
+              <div class="controls-action-row">
+                <div class="controls-session-actions">
+                  <button type="button" class="btn btn-secondary btn-touch" id="pauseResumeBtn">
+                    ⏸️ Pause Session
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-touch" id="skipQuestionBtn">
+                    ⏭️ Skip Topic
+                  </button>
+                </div>
+                <button type="button" class="btn btn-danger btn-touch" id="endInterviewBtn">
+                  ⏹️ End &amp; Review Brief
                 </button>
               </div>
-              <div class="controls-right">
-                <button type="button" class="btn btn-secondary btn-sm" id="skipQuestionBtn">
-                  Skip Topic
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm" id="pauseResumeBtn">
-                  Pause
-                </button>
-                <button type="button" class="btn btn-danger btn-sm" id="endInterviewBtn">
-                  End &amp; Review Brief
+            </div>
+
+            <!-- Workstream B: ElevenLabs Realtime Conversational Voice Mode Drawer (PoC) -->
+            <div class="realtime-voice-drawer hidden" id="realtimeVoiceDrawer" role="region" aria-label="ElevenLabs Realtime Voice Mode">
+              <div class="realtime-voice-header">
+                <div>
+                  <span class="disclosure-badge">ELEVENLABS REALTIME VOICE · OWEN GOVERNED</span>
+                  <h3 class="realtime-voice-title">Conversational Voice Mode (Joseph Van Harken Synthetic Voice)</h3>
+                </div>
+                <button type="button" class="btn btn-ghost btn-sm" id="closeRealtimeVoiceBtn">
+                  Switch to Text Mode
                 </button>
               </div>
+              <p class="realtime-voice-disclosure" id="realtimeVoiceDisclosure">
+                You are interacting with the OWEN AI Interviewer using Joseph Van Harken’s synthetic voice, not speaking directly with Joseph. All spoken turns are captured verbatim as Layer 1 evidence and evaluated by OWEN’s epistemic engine.
+              </p>
+              <div class="realtime-voice-status-bar">
+                <span class="realtime-state-pill" id="realtimeVoiceStateBadge">Checking Configuration…</span>
+                <span class="realtime-meta-text" id="realtimeVoiceMetaText">Voice Cloning: Prohibited (Uses Existing Voice ID Only)</span>
+              </div>
+              <div class="realtime-voice-actions">
+                <button type="button" class="btn btn-primary btn-touch" id="startRealtimeVoiceBtn">
+                  🎙️ Connect Live Voice Session
+                </button>
+                <button type="button" class="btn btn-secondary btn-touch hidden" id="muteRealtimeMicBtn">
+                  🔇 Mute Mic
+                </button>
+                <button type="button" class="btn btn-danger btn-touch hidden" id="stopRealtimeVoiceBtn">
+                  ⏹️ Disconnect Voice
+                </button>
+              </div>
+              <p class="form-error hidden" id="realtimeVoiceErrorMsg" role="alert"></p>
             </div>
 
             <!-- Interrupted / Paused Banner -->
@@ -210,8 +277,8 @@
                 Session is currently paused. All transcript turns and objective progress are safely
                 saved.
               </span>
-              <button type="button" class="btn btn-primary btn-sm" id="resumeBannerBtn">
-                Resume Conversation
+              <button type="button" class="btn btn-primary btn-touch" id="resumeBannerBtn">
+                ▶️ Resume Conversation
               </button>
             </div>
 
@@ -224,13 +291,21 @@
                 <span class="composer-hint" id="composerHint">
                   Share firsthand examples, nuances, or redirect to any topic at any time.
                 </span>
-                <button
-                  type="button"
-                  class="btn btn-secondary btn-sm hidden"
-                  id="voiceDictateBtn"
-                >
-                  🎙️ Dictate Answer
-                </button>
+                <div class="dictation-controls-wrap">
+                  <button
+                    type="button"
+                    class="btn btn-dictate hidden"
+                    id="voiceDictateBtn"
+                    aria-pressed="false"
+                  >
+                    🎙️ Start Speaking
+                  </button>
+                </div>
+              </div>
+
+              <div class="dictation-status-banner hidden" id="dictationStatusBanner" role="status" aria-live="polite">
+                <span class="dictation-pulse-dot" id="dictationPulseDot"></span>
+                <span id="dictationStatusText">Listening… Speak naturally, then tap Stop Speaking when finished.</span>
               </div>
 
               <div class="composer-input-wrap">
@@ -238,7 +313,7 @@
                   id="participantInput"
                   class="composer-textarea"
                   rows="3"
-                  placeholder="Type your response here..."
+                  placeholder="Type or dictate your response here..."
                   required
                 ></textarea>
                 <button type="submit" class="btn btn-primary send-btn" id="sendTurnBtn">
@@ -257,7 +332,7 @@
                 <span class="coverage-counter" id="coverageCounterBadge">0 / 8 Sufficient</span>
               </div>
               <p class="sidebar-card-caption">
-                Click any topic below to redirect the conversation to that area.
+                Tap any topic below to redirect the conversation to that area.
               </p>
               <ul class="objective-list" id="objectiveList"></ul>
             </div>
@@ -278,7 +353,7 @@
               </div>
               <button
                 type="button"
-                class="btn btn-secondary btn-full"
+                class="btn btn-secondary btn-full btn-touch"
                 id="viewDraftBriefBtn"
               >
                 Open OWEN Experience Brief &amp; Review
@@ -298,7 +373,7 @@
               <p class="panel-subtitle" id="briefExecutiveSummary"></p>
             </div>
             <div class="brief-header-actions">
-              <button type="button" class="btn btn-secondary" id="backToConversationBtn">
+              <button type="button" class="btn btn-secondary btn-touch" id="backToConversationBtn">
                 ← Return to Interview
               </button>
             </div>
@@ -333,11 +408,13 @@
                 </label>
                 <div class="input-row">
                   <select id="reviewAttributionSelect" class="select-input">
-                    <option value="ATTRIBUTED">Attributed to Russ Richmond</option>
+                    <option value="ATTRIBUTED" id="reviewAttributedOption">
+                      Attributed to Participant
+                    </option>
                     <option value="ANONYMIZED_EXTERNAL">Anonymized for External Summaries</option>
                     <option value="INTERNAL_ONLY">Internal MRL / OWEN Only</option>
                   </select>
-                  <button type="button" class="btn btn-secondary" id="saveAttributionBtn">
+                  <button type="button" class="btn btn-secondary btn-touch" id="saveAttributionBtn">
                     Update Attribution
                   </button>
                 </div>
@@ -354,7 +431,7 @@
                     class="text-input"
                     placeholder="Add a clarifying point or caveat..."
                   />
-                  <button type="button" class="btn btn-primary" id="addClarificationBtn">
+                  <button type="button" class="btn btn-primary btn-touch" id="addClarificationBtn">
                     Add Clarification
                   </button>
                 </div>

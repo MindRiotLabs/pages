@@ -4,8 +4,12 @@
  * Implements the participant-facing adaptive interview experience:
  * - Private invitation token authentication & interrupted-session recovery
  * - Explicit AI interviewer disclosure & dual consent gate (transcript + separate audio)
- * - Adaptive conversation turn stream, topic redirection, skip, pause/resume, and stop controls
- * - Optional browser voice dictation & spoken audio synthesis (when audio consent granted)
+ * - Dynamic participant attribution labels (never hardcoding participant names)
+ * - Smooth view/scroll transitions across Consent, Interview, Pause/Resume, and Experience Brief
+ * - iOS Safari-compatible Read Aloud controls (user-gesture unlock, Auto-Read toggle + Play/Pause/Stop)
+ * - Prominent voice dictation with live listening states and editable transcript
+ * - Truthful animated AI processing feedback with elapsed timer and idempotent retry recovery
+ * - ElevenLabs Realtime Conversational AI Voice Mode PoC drawer (OWEN-governed)
  * - Interactive OWEN Experience Brief viewer & participant statement amendment/exclusion controls
  */
 
@@ -17,8 +21,24 @@ let activeSessionId = 'ses-pilot-001-russ-richmond';
 let currentSession = null;
 let redirectObjectiveId = null;
 let readAloudEnabled = false;
+let isAudioPlaying = false;
+let isAudioPaused = false;
+let activeHtmlAudio = null;
+let iosAudioUnlocked = false;
+
 let speechRecognition = null;
-let isDictating = false;
+let dictationState = 'IDLE'; // 'IDLE' | 'LISTENING' | 'PROCESSING'
+let usedVoiceDictationForCurrentDraft = false;
+let preDictationText = '';
+
+let isSubmittingTurn = false;
+let activeTurnTimerInterval = null;
+let currentStageView = 'AUTH';
+
+// Workstream B Realtime Voice state
+let realtimeVoiceSocket = null;
+let realtimeAudioStream = null;
+let isRealtimeMicMuted = false;
 
 // DOM Elements
 const sessionStatusBadge = document.getElementById('sessionStatusBadge');
@@ -39,10 +59,28 @@ const ackAiDisclosureCheck = document.getElementById('ackAiDisclosureCheck');
 const consentTranscriptCheck = document.getElementById('consentTranscriptCheck');
 const consentAudioCheck = document.getElementById('consentAudioCheck');
 const initialAttributionSelect = document.getElementById('initialAttributionSelect');
+const initialAttributedOption = document.getElementById('initialAttributedOption');
 const consentErrorMsg = document.getElementById('consentErrorMsg');
 
 const activeObjectivePill = document.getElementById('activeObjectivePill');
 const toggleTtsBtn = document.getElementById('toggleTtsBtn');
+const playPromptBtn = document.getElementById('playPromptBtn');
+const stopPromptBtn = document.getElementById('stopPromptBtn');
+const toggleRealtimeVoiceBtn = document.getElementById('toggleRealtimeVoiceBtn');
+const audioStatusRow = document.getElementById('audioStatusRow');
+const audioStatusDot = document.getElementById('audioStatusDot');
+const audioStatusText = document.getElementById('audioStatusText');
+
+const realtimeVoiceDrawer = document.getElementById('realtimeVoiceDrawer');
+const closeRealtimeVoiceBtn = document.getElementById('closeRealtimeVoiceBtn');
+const realtimeVoiceDisclosure = document.getElementById('realtimeVoiceDisclosure');
+const realtimeVoiceStateBadge = document.getElementById('realtimeVoiceStateBadge');
+const realtimeVoiceMetaText = document.getElementById('realtimeVoiceMetaText');
+const startRealtimeVoiceBtn = document.getElementById('startRealtimeVoiceBtn');
+const muteRealtimeMicBtn = document.getElementById('muteRealtimeMicBtn');
+const stopRealtimeVoiceBtn = document.getElementById('stopRealtimeVoiceBtn');
+const realtimeVoiceErrorMsg = document.getElementById('realtimeVoiceErrorMsg');
+
 const skipQuestionBtn = document.getElementById('skipQuestionBtn');
 const pauseResumeBtn = document.getElementById('pauseResumeBtn');
 const endInterviewBtn = document.getElementById('endInterviewBtn');
@@ -52,6 +90,8 @@ const transcriptFeed = document.getElementById('transcriptFeed');
 const turnComposerForm = document.getElementById('turnComposerForm');
 const composerHint = document.getElementById('composerHint');
 const voiceDictateBtn = document.getElementById('voiceDictateBtn');
+const dictationStatusBanner = document.getElementById('dictationStatusBanner');
+const dictationStatusText = document.getElementById('dictationStatusText');
 const participantInput = document.getElementById('participantInput');
 const sendTurnBtn = document.getElementById('sendTurnBtn');
 const turnErrorMsg = document.getElementById('turnErrorMsg');
@@ -68,6 +108,7 @@ const briefPubStatusText = document.getElementById('briefPubStatusText');
 const briefScopeText = document.getElementById('briefScopeText');
 const briefStewardStatusText = document.getElementById('briefStewardStatusText');
 const reviewAttributionSelect = document.getElementById('reviewAttributionSelect');
+const reviewAttributedOption = document.getElementById('reviewAttributedOption');
 const saveAttributionBtn = document.getElementById('saveAttributionBtn');
 const addClarificationInput = document.getElementById('addClarificationInput');
 const addClarificationBtn = document.getElementById('addClarificationBtn');
@@ -165,7 +206,19 @@ async function loadSession() {
   renderSessionState();
 }
 
-function showStage(stage) {
+function scrollElementToTopSmooth(element) {
+  if (!element) return;
+  requestAnimationFrame(() => {
+    const rect = element.getBoundingClientRect();
+    const topOffset = Math.max(0, window.scrollY + rect.top - 68);
+    window.scrollTo({ top: topOffset, behavior: 'smooth' });
+  });
+}
+
+function showStage(stage, options = {}) {
+  const previousStage = currentStageView;
+  currentStageView = stage;
+
   authGatePanel.classList.add('hidden');
   consentGatePanel.classList.add('hidden');
   interviewWorkspace.classList.add('hidden');
@@ -177,17 +230,40 @@ function showStage(stage) {
   } else if (stage === 'CONSENT') {
     consentGatePanel.classList.remove('hidden');
     sessionStatusBadge.textContent = 'Consent Pending';
+    if (previousStage !== 'CONSENT') {
+      scrollElementToTopSmooth(consentGatePanel);
+    }
   } else if (stage === 'INTERVIEW') {
     interviewWorkspace.classList.remove('hidden');
     sessionStatusBadge.textContent =
       currentSession?.status === 'PAUSED' ? 'Session Paused' : 'Adaptive Interview Active';
+    if (options.scrollToTop || previousStage === 'CONSENT' || previousStage === 'BRIEF') {
+      scrollElementToTopSmooth(interviewWorkspace);
+    }
   } else if (stage === 'BRIEF') {
     experienceBriefPanel.classList.remove('hidden');
     sessionStatusBadge.textContent = 'Experience Brief & Review';
+    if (options.scrollToTop || previousStage !== 'BRIEF') {
+      scrollElementToTopSmooth(experienceBriefPanel);
+    }
   }
 }
 
-function renderSessionState(voiceAudio = null) {
+function updateDynamicAttributionLabels() {
+  const participantName = currentSession?.participant?.name || 'Participant';
+  const roleTitle = currentSession?.participant?.role_title
+    ? ` — ${currentSession.participant.role_title}`
+    : '';
+
+  if (initialAttributedOption) {
+    initialAttributedOption.textContent = `Attributed to ${participantName}${roleTitle} (Internal MRL / OWEN & Approved Brief)`;
+  }
+  if (reviewAttributedOption) {
+    reviewAttributedOption.textContent = `Attributed to ${participantName}${roleTitle}`;
+  }
+}
+
+function renderSessionState(voiceAudio = null, transitionOptions = {}) {
   if (!currentSession) {
     showStage('AUTH');
     return;
@@ -198,16 +274,32 @@ function renderSessionState(voiceAudio = null) {
   aiDisclosureStatement.textContent =
     currentSession.interviewer_identity?.disclosure_statement || '';
 
+  updateDynamicAttributionLabels();
+
+  if (currentSession.consent?.attribution_preference && initialAttributionSelect) {
+    initialAttributionSelect.value = currentSession.consent.attribution_preference;
+  }
+
   if (currentSession.consent?.status !== 'GRANTED') {
     showStage('CONSENT');
     return;
   }
 
-  // Enable microphone dictation button only if participant consented to audio processing AND browser supports SpeechRecognition
-  if (currentSession.consent.audio_recording_consented && speechRecognition) {
+  // Show voice dictation & realtime voice controls when audio consent is granted
+  const audioConsented = Boolean(currentSession.consent.audio_recording_consented);
+  if (audioConsented) {
     voiceDictateBtn.classList.remove('hidden');
+    if (toggleRealtimeVoiceBtn) {
+      toggleRealtimeVoiceBtn.classList.remove('hidden');
+    }
   } else {
     voiceDictateBtn.classList.add('hidden');
+    if (toggleRealtimeVoiceBtn) {
+      toggleRealtimeVoiceBtn.classList.add('hidden');
+    }
+    if (realtimeVoiceDrawer) {
+      realtimeVoiceDrawer.classList.add('hidden');
+    }
   }
 
   renderTranscript();
@@ -215,7 +307,7 @@ function renderSessionState(voiceAudio = null) {
 
   const isPaused = currentSession.status === 'PAUSED';
   pausedBanner.classList.toggle('hidden', !isPaused);
-  pauseResumeBtn.textContent = isPaused ? 'Resume' : 'Pause';
+  pauseResumeBtn.textContent = isPaused ? '▶️ Resume Session' : '⏸️ Pause Session';
 
   if (
     currentSession.status === 'COMPLETED' ||
@@ -225,13 +317,15 @@ function renderSessionState(voiceAudio = null) {
   ) {
     if (currentSession.experience_brief) {
       renderExperienceBrief(currentSession.experience_brief);
-      showStage('BRIEF');
+      showStage('BRIEF', { scrollToTop: true });
       return;
     }
   }
 
-  showStage('INTERVIEW');
-  playInterviewerVoiceIfEnabled(voiceAudio);
+  showStage('INTERVIEW', transitionOptions);
+  if (readAloudEnabled) {
+    playInterviewerPrompt({ voiceAudio, force: false });
+  }
 }
 
 function renderTranscript() {
@@ -275,10 +369,27 @@ function renderTranscript() {
 
     bubble.appendChild(meta);
     bubble.appendChild(textDiv);
+
+    // Direct user-gesture listen button on every interviewer bubble for reliable iOS Safari playback
+    if (turn.speaker === 'INTERVIEWER_AI') {
+      const footer = document.createElement('div');
+      footer.className = 'turn-footer-actions';
+      const listenBtn = document.createElement('button');
+      listenBtn.type = 'button';
+      listenBtn.className = 'turn-listen-btn';
+      listenBtn.textContent = '🔊 Read Question Aloud';
+      listenBtn.addEventListener('click', () => {
+        unlockIosAudioOnUserGesture();
+        speakSpecificText(turn.verbatim_text);
+      });
+      footer.appendChild(listenBtn);
+      bubble.appendChild(footer);
+    }
+
     transcriptFeed.appendChild(bubble);
   }
 
-  transcriptFeed.scrollTop = transcriptFeed.scrollHeight;
+  scrollToLatestTurn();
 
   // Update active objective pill
   const lastInterviewer = [...turns].reverse().find(t => t.speaker === 'INTERVIEWER_AI');
@@ -293,6 +404,12 @@ function renderTranscript() {
   }
 }
 
+function scrollToLatestTurn() {
+  requestAnimationFrame(() => {
+    transcriptFeed.scrollTop = transcriptFeed.scrollHeight;
+  });
+}
+
 function renderObjectivesAndLedger() {
   const objectives = currentSession.objectives || [];
   const sufficientCount = objectives.filter(o => o.coverage_status === 'SUFFICIENT').length;
@@ -302,7 +419,7 @@ function renderObjectivesAndLedger() {
   for (const obj of objectives) {
     const li = document.createElement('li');
     li.className = 'objective-item';
-    li.title = 'Click to redirect conversation to this objective';
+    li.title = 'Tap to redirect conversation to this objective';
 
     const top = document.createElement('div');
     top.className = 'objective-item-top';
@@ -322,6 +439,7 @@ function renderObjectivesAndLedger() {
       redirectObjectiveId = obj.objective_id;
       activeObjectivePill.textContent = `Redirecting to Objective ${obj.code} · ${obj.title}`;
       composerHint.textContent = `Redirected to "${obj.title}": ${obj.seed_questions?.[0] || obj.description}`;
+      scrollElementToTopSmooth(turnComposerForm);
       participantInput.focus();
     });
 
@@ -338,10 +456,115 @@ function renderObjectivesAndLedger() {
 }
 
 // ----------------------------------------------------------------------------
+// Animated AI Processing Feedback & Optimistic Turn Rendering
+// ----------------------------------------------------------------------------
+function appendOptimisticTurnAndProcessingCard(participantText, onRetryCallback) {
+  // 1. Optimistic Participant Bubble
+  const userBubble = document.createElement('div');
+  userBubble.className = 'turn-bubble turn-participant';
+  const meta = document.createElement('div');
+  meta.className = 'turn-meta';
+  const speakerLabel = document.createElement('span');
+  speakerLabel.className = 'turn-speaker';
+  speakerLabel.textContent = currentSession?.participant?.name || 'You';
+  const timeLabel = document.createElement('span');
+  timeLabel.textContent = 'Sending…';
+  meta.appendChild(speakerLabel);
+  meta.appendChild(timeLabel);
+
+  const textDiv = document.createElement('div');
+  textDiv.className = 'turn-text';
+  textDiv.textContent = participantText;
+  userBubble.appendChild(meta);
+  userBubble.appendChild(textDiv);
+  transcriptFeed.appendChild(userBubble);
+
+  // 2. Animated AI Processing Card
+  const aiCard = document.createElement('div');
+  aiCard.className = 'ai-processing-card';
+  aiCard.id = 'activeAiProcessingCard';
+  aiCard.setAttribute('role', 'status');
+  aiCard.setAttribute('aria-live', 'polite');
+
+  aiCard.innerHTML = `
+    <div class="ai-processing-top">
+      <div class="ai-processing-title">
+        <span class="ai-spinner" aria-hidden="true"></span>
+        <span>OWEN AI Interviewer</span>
+      </div>
+      <span class="ai-elapsed-timer" id="aiElapsedTimer">0.0s</span>
+    </div>
+    <p class="ai-processing-stage" id="aiProcessingStageText">
+      Receiving &amp; recording your response…
+    </p>
+    <div class="ai-progress-track">
+      <div class="ai-progress-bar"></div>
+    </div>
+    <div class="ai-slow-retry-bar hidden" id="aiSlowRetryBar">
+      <span>Taking longer than expected on this connection.</span>
+      <button type="button" class="btn btn-secondary btn-sm" id="aiRetryTurnBtn">
+        Retry Turn
+      </button>
+    </div>
+  `;
+
+  transcriptFeed.appendChild(aiCard);
+  scrollToLatestTurn();
+
+  const stageTextEl = aiCard.querySelector('#aiProcessingStageText');
+  const timerEl = aiCard.querySelector('#aiElapsedTimer');
+  const slowRetryBar = aiCard.querySelector('#aiSlowRetryBar');
+  const retryBtn = aiCard.querySelector('#aiRetryTurnBtn');
+
+  if (retryBtn && typeof onRetryCallback === 'function') {
+    retryBtn.addEventListener('click', () => {
+      onRetryCallback();
+    });
+  }
+
+  const startMs = Date.now();
+  if (activeTurnTimerInterval) {
+    clearInterval(activeTurnTimerInterval);
+  }
+
+  activeTurnTimerInterval = setInterval(() => {
+    const elapsedSec = (Date.now() - startMs) / 1000;
+    if (timerEl) {
+      timerEl.textContent = `${elapsedSec.toFixed(1)}s`;
+    }
+    if (stageTextEl) {
+      if (elapsedSec < 1.1) {
+        stageTextEl.textContent = 'Receiving & recording your response…';
+      } else if (elapsedSec < 4.5) {
+        stageTextEl.textContent = 'Evaluating insights & preparing next question…';
+      } else {
+        stageTextEl.textContent = 'Synthesizing adaptive follow-up question…';
+      }
+    }
+    if (slowRetryBar && elapsedSec >= 11.5) {
+      slowRetryBar.classList.remove('hidden');
+    }
+  }, 200);
+}
+
+function clearProcessingCardTimer() {
+  if (activeTurnTimerInterval) {
+    clearInterval(activeTurnTimerInterval);
+    activeTurnTimerInterval = null;
+  }
+  const existingCard = document.getElementById('activeAiProcessingCard');
+  if (existingCard) {
+    existingCard.remove();
+  }
+}
+
+// ----------------------------------------------------------------------------
 // Render OWEN Experience Brief & Participant Review Controls
 // ----------------------------------------------------------------------------
 function renderExperienceBrief(brief) {
   if (!brief) return;
+
+  updateDynamicAttributionLabels();
 
   briefExecutiveSummary.textContent = brief.interview_overview?.executive_summary || '';
   const pub = brief.review_and_publication_status || {};
@@ -368,7 +591,7 @@ function renderExperienceBrief(brief) {
 
       const meta = document.createElement('div');
       meta.className = 'statement-meta';
-      meta.innerHTML = `<span><strong>${stmt.statement_id}</strong> · Source Turn: <code>${stmt.turn_id}</code> · Epistemic Type: <code>${stmt.epistemic_type}</code></span><span>Status: <strong>${stmt.participant_review_status}</strong></span>`;
+      meta.innerHTML = `<span><strong>${escapeHtml(stmt.statement_id)}</strong> · Source Turn: <code>${escapeHtml(stmt.turn_id)}</code> · Epistemic Type: <code>${escapeHtml(stmt.epistemic_type)}</code></span><span>Status: <strong>${escapeHtml(stmt.participant_review_status)}</strong></span>`;
 
       const claimP = document.createElement('p');
       claimP.style.margin = '4px 0';
@@ -384,14 +607,14 @@ function renderExperienceBrief(brief) {
 
       const amendBtn = document.createElement('button');
       amendBtn.type = 'button';
-      amendBtn.className = 'btn btn-secondary btn-sm';
-      amendBtn.textContent = 'Amend Statement';
+      amendBtn.className = 'btn btn-secondary btn-touch';
+      amendBtn.textContent = '✏️ Amend Statement';
       amendBtn.addEventListener('click', () => handleAmendStatement(stmt));
 
       const excludeBtn = document.createElement('button');
       excludeBtn.type = 'button';
-      excludeBtn.className = 'btn btn-danger btn-sm';
-      excludeBtn.textContent = 'Exclude from Brief';
+      excludeBtn.className = 'btn btn-danger btn-touch';
+      excludeBtn.textContent = '🗑️ Exclude from Brief';
       excludeBtn.addEventListener('click', () => handleExcludeStatement(stmt));
 
       actions.appendChild(amendBtn);
@@ -413,8 +636,8 @@ function renderExperienceBrief(brief) {
     card.className = 'lesson-card';
     card.innerHTML = `
       <div class="statement-meta">
-        <span><strong>${les.lesson_id}</strong> · Origin: <code>${les.author_origin}</code> · Supporting Turns: <code>${(les.supporting_turn_ids || []).join(', ')}</code></span>
-        <span>Confidence: <strong>${les.confidence}</strong></span>
+        <span><strong>${escapeHtml(les.lesson_id)}</strong> · Origin: <code>${escapeHtml(les.author_origin)}</code> · Supporting Turns: <code>${escapeHtml((les.supporting_turn_ids || []).join(', '))}</code></span>
+        <span>Confidence: <strong>${escapeHtml(les.confidence)}</strong></span>
       </div>
       <p style="margin: 4px 0;"><strong>Observed Pattern:</strong> ${escapeHtml(les.lesson)}</p>
       <p style="margin: 4px 0; color: #38bdf8;"><strong>OWEN Architectural Implication:</strong> ${escapeHtml(les.design_implication)}</p>
@@ -497,6 +720,17 @@ consentForm.addEventListener('submit', async e => {
   e.preventDefault();
   consentErrorMsg.classList.add('hidden');
 
+  // Unlock iOS Safari speech synthesis synchronously on user gesture if audio consent is checked
+  if (consentAudioCheck.checked) {
+    unlockIosAudioOnUserGesture();
+  }
+
+  const submitBtn = document.getElementById('startInterviewBtn');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Recording Consent & Starting Interview…';
+  }
+
   try {
     const data = await apiFetch('/api/owen/interview/consent', {
       method: 'POST',
@@ -509,29 +743,52 @@ consentForm.addEventListener('submit', async e => {
       })
     });
     currentSession = data.session;
-    renderSessionState(data.voice_audio);
+    renderSessionState(data.voice_audio, { scrollToTop: true });
   } catch (err) {
     consentErrorMsg.textContent = err.message;
     consentErrorMsg.classList.remove('hidden');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Grant Consent & Begin Adaptive Interview';
+    }
   }
 });
 
-turnComposerForm.addEventListener('submit', async e => {
-  e.preventDefault();
+async function submitParticipantResponse(textToSubmit, clientRequestId, modalityToSubmit) {
+  if (isSubmittingTurn) return;
+  isSubmittingTurn = true;
   turnErrorMsg.classList.add('hidden');
-  const text = participantInput.value.trim();
-  if (!text) return;
+
+  // Stop active dictation if user hit Send while microphone was still open
+  if (dictationState === 'LISTENING' && speechRecognition) {
+    try {
+      speechRecognition.stop();
+    } catch {}
+    setDictationUiState('IDLE');
+  }
 
   sendTurnBtn.disabled = true;
-  sendTurnBtn.textContent = 'Analyzing...';
+  sendTurnBtn.textContent = 'Processing…';
+  participantInput.disabled = true;
+
+  appendOptimisticTurnAndProcessingCard(textToSubmit, () => {
+    isSubmittingTurn = false;
+    clearProcessingCardTimer();
+    renderTranscript();
+    submitParticipantResponse(textToSubmit, clientRequestId, modalityToSubmit);
+  });
 
   try {
     const payload = {
       session_id: activeSessionId,
-      participant_text: text,
-      modality: isDictating ? 'VOICE_TRANSCRIPT' : 'TEXT',
+      participant_text: textToSubmit,
+      modality: modalityToSubmit,
       control_action: 'RESPOND',
-      redirect_objective_id: redirectObjectiveId || undefined
+      redirect_objective_id: redirectObjectiveId || undefined,
+      provider_metadata: {
+        client_request_id: clientRequestId
+      }
     };
 
     const data = await apiFetch('/api/owen/interview/turn', {
@@ -539,23 +796,45 @@ turnComposerForm.addEventListener('submit', async e => {
       body: JSON.stringify(payload)
     });
 
+    clearProcessingCardTimer();
     participantInput.value = '';
     redirectObjectiveId = null;
-    isDictating = false;
+    usedVoiceDictationForCurrentDraft = false;
     composerHint.textContent =
       'Share firsthand examples, nuances, or redirect to any topic at any time.';
     currentSession = data.session;
     renderSessionState(data.voice_audio);
   } catch (err) {
-    turnErrorMsg.textContent = err.message;
+    clearProcessingCardTimer();
+    renderTranscript();
+    turnErrorMsg.textContent = `${err.message || 'Turn request failed.'} Your draft response is preserved above—tap Send Response to retry.`;
     turnErrorMsg.classList.remove('hidden');
   } finally {
+    isSubmittingTurn = false;
     sendTurnBtn.disabled = false;
     sendTurnBtn.textContent = 'Send Response';
+    participantInput.disabled = false;
   }
+}
+
+turnComposerForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  const text = participantInput.value.trim();
+  if (!text || isSubmittingTurn) return;
+
+  // Prime iOS Safari audio on submit gesture if Auto-Read is enabled
+  if (readAloudEnabled) {
+    unlockIosAudioOnUserGesture();
+  }
+
+  const clientRequestId = `req-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const modality = usedVoiceDictationForCurrentDraft ? 'VOICE_TRANSCRIPT' : 'TEXT';
+  await submitParticipantResponse(text, clientRequestId, modality);
 });
 
 skipQuestionBtn.addEventListener('click', async () => {
+  if (isSubmittingTurn) return;
+  skipQuestionBtn.disabled = true;
   try {
     const data = await apiFetch('/api/owen/interview/turn', {
       method: 'POST',
@@ -571,11 +850,15 @@ skipQuestionBtn.addEventListener('click', async () => {
   } catch (err) {
     turnErrorMsg.textContent = err.message;
     turnErrorMsg.classList.remove('hidden');
+  } finally {
+    skipQuestionBtn.disabled = false;
   }
 });
 
 async function togglePauseOrResume() {
+  if (isSubmittingTurn) return;
   const action = currentSession?.status === 'PAUSED' ? 'RESUME_SESSION' : 'PAUSE_SESSION';
+  pauseResumeBtn.disabled = true;
   try {
     const data = await apiFetch('/api/owen/interview/turn', {
       method: 'POST',
@@ -585,10 +868,14 @@ async function togglePauseOrResume() {
       })
     });
     currentSession = data.session;
-    renderSessionState(data.voice_audio);
+    renderSessionState(data.voice_audio, {
+      scrollToTop: action === 'RESUME_SESSION'
+    });
   } catch (err) {
     turnErrorMsg.textContent = err.message;
     turnErrorMsg.classList.remove('hidden');
+  } finally {
+    pauseResumeBtn.disabled = false;
   }
 }
 
@@ -596,6 +883,9 @@ pauseResumeBtn.addEventListener('click', togglePauseOrResume);
 resumeBannerBtn.addEventListener('click', togglePauseOrResume);
 
 endInterviewBtn.addEventListener('click', async () => {
+  if (isSubmittingTurn) return;
+  endInterviewBtn.disabled = true;
+  endInterviewBtn.textContent = 'Generating Experience Brief…';
   try {
     const pendingText = participantInput.value.trim();
     const data = await apiFetch('/api/owen/interview/turn', {
@@ -612,10 +902,15 @@ endInterviewBtn.addEventListener('click', async () => {
   } catch (err) {
     turnErrorMsg.textContent = err.message;
     turnErrorMsg.classList.remove('hidden');
+  } finally {
+    endInterviewBtn.disabled = false;
+    endInterviewBtn.textContent = '⏹️ End & Review Brief';
   }
 });
 
 viewDraftBriefBtn.addEventListener('click', async () => {
+  viewDraftBriefBtn.disabled = true;
+  viewDraftBriefBtn.textContent = 'Opening Experience Brief…';
   try {
     const data = await apiFetch('/api/owen/interview/brief', {
       method: 'POST',
@@ -623,15 +918,19 @@ viewDraftBriefBtn.addEventListener('click', async () => {
     });
     currentSession = data.session;
     renderExperienceBrief(data.experience_brief);
-    showStage('BRIEF');
+    showStage('BRIEF', { scrollToTop: true });
   } catch (err) {
     turnErrorMsg.textContent = err.message;
     turnErrorMsg.classList.remove('hidden');
+  } finally {
+    viewDraftBriefBtn.disabled = false;
+    viewDraftBriefBtn.textContent = 'Open OWEN Experience Brief & Review';
   }
 });
 
 backToConversationBtn.addEventListener('click', () => {
-  showStage('INTERVIEW');
+  showStage('INTERVIEW', { scrollToTop: true });
+  scrollToLatestTurn();
 });
 
 // ----------------------------------------------------------------------------
@@ -731,72 +1030,502 @@ function showReviewFeedback(msg, isError = false) {
 }
 
 // ----------------------------------------------------------------------------
-// Optional Voice Dictation & Read-Aloud Synthesis
+// iOS Safari-Compatible Read-Aloud & Audio Controls
 // ----------------------------------------------------------------------------
-toggleTtsBtn.addEventListener('click', () => {
-  readAloudEnabled = !readAloudEnabled;
-  toggleTtsBtn.textContent = `Read Aloud: ${readAloudEnabled ? 'On' : 'Off'}`;
-  if (!readAloudEnabled && 'speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
+function setAudioStatus(message, isSpeaking = false, showRow = true) {
+  if (!audioStatusRow || !audioStatusText) return;
+  audioStatusText.textContent = message;
+  if (audioStatusDot) {
+    audioStatusDot.classList.toggle('speaking', Boolean(isSpeaking));
   }
-});
+  audioStatusRow.classList.toggle('hidden', !showRow);
+}
 
-function playInterviewerVoiceIfEnabled(voiceAudio) {
-  if (!readAloudEnabled) return;
+/**
+ * Unlocks WebKit / iOS Safari SpeechSynthesis and AudioContext synchronously
+ * inside a direct user tap event so subsequent speech synthesis is permitted.
+ */
+function unlockIosAudioOnUserGesture() {
+  if (iosAudioUnlocked) return;
+  try {
+    if ('speechSynthesis' in window) {
+      const silentUtterance = new SpeechSynthesisUtterance('');
+      silentUtterance.volume = 0;
+      window.speechSynthesis.speak(silentUtterance);
+    }
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtx) {
+      const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+      setTimeout(() => ctx.close().catch(() => {}), 250);
+    }
+    iosAudioUnlocked = true;
+  } catch {}
+}
 
-  if (voiceAudio && voiceAudio.audioBase64) {
-    const audio = new Audio(`data:${voiceAudio.mimeType || 'audio/mpeg'};base64,${voiceAudio.audioBase64}`);
-    audio.play().catch(() => {});
+function getLatestInterviewerQuestionText() {
+  const turns = currentSession?.turns || [];
+  const lastInterviewer = [...turns].reverse().find(t => t.speaker === 'INTERVIEWER_AI');
+  return lastInterviewer ? lastInterviewer.verbatim_text : '';
+}
+
+function stopAllSpokenPlayback() {
+  if (activeHtmlAudio) {
+    try {
+      activeHtmlAudio.pause();
+      activeHtmlAudio.currentTime = 0;
+    } catch {}
+    activeHtmlAudio = null;
+  }
+  if ('speechSynthesis' in window) {
+    try {
+      window.speechSynthesis.cancel();
+    } catch {}
+  }
+  isAudioPlaying = false;
+  isAudioPaused = false;
+  if (playPromptBtn) {
+    playPromptBtn.textContent = '▶️ Play Question';
+  }
+  if (stopPromptBtn) {
+    stopPromptBtn.classList.add('hidden');
+  }
+}
+
+function speakSpecificText(textToSpeak, voiceAudio = null) {
+  if (!textToSpeak) {
+    setAudioStatus('No interviewer question available to read aloud yet.', false, true);
     return;
   }
 
-  if ('speechSynthesis' in window && currentSession?.turns?.length > 0) {
-    const lastTurn = currentSession.turns[currentSession.turns.length - 1];
-    if (lastTurn.speaker === 'INTERVIEWER_AI') {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(lastTurn.verbatim_text);
-      utterance.rate = 1.02;
-      window.speechSynthesis.speak(utterance);
+  stopAllSpokenPlayback();
+
+  if (voiceAudio && voiceAudio.audioBase64) {
+    try {
+      activeHtmlAudio = new Audio(
+        `data:${voiceAudio.mimeType || 'audio/mpeg'};base64,${voiceAudio.audioBase64}`
+      );
+      activeHtmlAudio.onplay = () => {
+        isAudioPlaying = true;
+        isAudioPaused = false;
+        playPromptBtn.textContent = '⏸️ Pause Audio';
+        stopPromptBtn.classList.remove('hidden');
+        setAudioStatus('Speaking interviewer question (ElevenLabs synthetic voice)…', true, true);
+      };
+      activeHtmlAudio.onended = () => {
+        stopAllSpokenPlayback();
+        setAudioStatus('Audio playback finished.', false, readAloudEnabled);
+      };
+      activeHtmlAudio.onerror = () => {
+        stopAllSpokenPlayback();
+        setAudioStatus('Audio playback unavailable; falling back to browser speech.', false, true);
+      };
+      activeHtmlAudio.play().catch(err => {
+        setAudioStatus(
+          `Tap "▶️ Play Question" to allow audio playback in Safari (${err?.message || 'autoplay blocked'}).`,
+          false,
+          true
+        );
+      });
+      return;
+    } catch {}
+  }
+
+  if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
+    setAudioStatus('Browser speech synthesis is not supported on this device.', false, true);
+    return;
+  }
+
+  try {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    utterance.rate = 1.02;
+    utterance.lang = 'en-US';
+
+    utterance.onstart = () => {
+      isAudioPlaying = true;
+      isAudioPaused = false;
+      playPromptBtn.textContent = '⏸️ Pause Audio';
+      stopPromptBtn.classList.remove('hidden');
+      setAudioStatus('Reading interviewer question aloud… (Check iPhone silent switch if muted)', true, true);
+    };
+
+    utterance.onend = () => {
+      stopAllSpokenPlayback();
+      setAudioStatus('Auto-Read active: new questions will be read aloud.', false, readAloudEnabled);
+    };
+
+    utterance.onerror = event => {
+      stopAllSpokenPlayback();
+      if (event?.error !== 'canceled' && event?.error !== 'interrupted') {
+        setAudioStatus(
+          'Tap "▶️ Play Question" directly to start iPhone Safari audio playback.',
+          false,
+          true
+        );
+      }
+    };
+
+    window.speechSynthesis.speak(utterance);
+  } catch {
+    setAudioStatus('Unable to start browser speech synthesis. Tap "▶️ Play Question" to retry.', false, true);
+  }
+}
+
+function playInterviewerPrompt({ voiceAudio = null, force = false } = {}) {
+  if (!readAloudEnabled && !force) return;
+  const questionText = getLatestInterviewerQuestionText();
+  speakSpecificText(questionText, voiceAudio);
+}
+
+toggleTtsBtn.addEventListener('click', () => {
+  unlockIosAudioOnUserGesture();
+  readAloudEnabled = !readAloudEnabled;
+  toggleTtsBtn.textContent = `🔊 Auto-Read: ${readAloudEnabled ? 'On' : 'Off'}`;
+  toggleTtsBtn.setAttribute('aria-pressed', String(readAloudEnabled));
+  toggleTtsBtn.classList.toggle('active-toggle', readAloudEnabled);
+
+  if (readAloudEnabled) {
+    playInterviewerPrompt({ force: true });
+  } else {
+    stopAllSpokenPlayback();
+    setAudioStatus('Auto-Read turned off.', false, false);
+  }
+});
+
+playPromptBtn.addEventListener('click', () => {
+  unlockIosAudioOnUserGesture();
+
+  if (isAudioPlaying && !isAudioPaused) {
+    if (activeHtmlAudio) {
+      activeHtmlAudio.pause();
+    } else if ('speechSynthesis' in window) {
+      window.speechSynthesis.pause();
+    }
+    isAudioPaused = true;
+    playPromptBtn.textContent = '▶️ Resume Audio';
+    setAudioStatus('Audio paused.', false, true);
+    return;
+  }
+
+  if (isAudioPaused) {
+    if (activeHtmlAudio) {
+      activeHtmlAudio.play().catch(() => {});
+    } else if ('speechSynthesis' in window) {
+      window.speechSynthesis.resume();
+    }
+    isAudioPaused = false;
+    playPromptBtn.textContent = '⏸️ Pause Audio';
+    setAudioStatus('Reading interviewer question aloud…', true, true);
+    return;
+  }
+
+  playInterviewerPrompt({ force: true });
+});
+
+stopPromptBtn.addEventListener('click', () => {
+  stopAllSpokenPlayback();
+  setAudioStatus('Audio stopped.', false, readAloudEnabled);
+});
+
+// ----------------------------------------------------------------------------
+// Prominent Voice Dictation (Speech-to-Text)
+// ----------------------------------------------------------------------------
+function setDictationUiState(newState, statusMessage = '') {
+  dictationState = newState;
+  voiceDictateBtn.classList.remove('listening', 'processing');
+
+  if (newState === 'LISTENING') {
+    voiceDictateBtn.classList.add('listening');
+    voiceDictateBtn.textContent = '🔴 Stop Speaking';
+    voiceDictateBtn.setAttribute('aria-pressed', 'true');
+    dictationStatusBanner.classList.remove('hidden');
+    dictationStatusText.textContent =
+      statusMessage || 'Listening… Speak naturally, then tap "Stop Speaking" when finished.';
+  } else if (newState === 'PROCESSING') {
+    voiceDictateBtn.classList.add('processing');
+    voiceDictateBtn.textContent = '⏳ Processing Speech…';
+    voiceDictateBtn.setAttribute('aria-pressed', 'false');
+    dictationStatusBanner.classList.remove('hidden');
+    dictationStatusText.textContent =
+      statusMessage || 'Finalizing spoken transcript… You can edit the text below before sending.';
+  } else {
+    voiceDictateBtn.textContent = '🎙️ Start Speaking';
+    voiceDictateBtn.setAttribute('aria-pressed', 'false');
+    if (statusMessage) {
+      dictationStatusBanner.classList.remove('hidden');
+      dictationStatusText.textContent = statusMessage;
+    } else {
+      dictationStatusBanner.classList.add('hidden');
     }
   }
 }
 
 function setupSpeechDictation() {
   const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRec) return;
+
+  if (!SpeechRec) {
+    voiceDictateBtn.addEventListener('click', () => {
+      setDictationUiState(
+        'IDLE',
+        'Browser speech recognition is unavailable in this browser. Tip: On iPhone, tap the text box below and tap the microphone key on the iOS keyboard to dictate.'
+      );
+      participantInput.focus();
+    });
+    return;
+  }
 
   speechRecognition = new SpeechRec();
-  speechRecognition.continuous = false;
-  speechRecognition.interimResults = false;
+  speechRecognition.continuous = true;
+  speechRecognition.interimResults = true;
   speechRecognition.lang = 'en-US';
 
-  speechRecognition.onresult = event => {
-    const transcript = event.results?.[0]?.[0]?.transcript || '';
-    if (transcript) {
-      participantInput.value = participantInput.value
-        ? `${participantInput.value.trim()} ${transcript}`
-        : transcript;
-      isDictating = true;
-    }
-    voiceDictateBtn.textContent = '🎙️ Dictate Answer';
+  speechRecognition.onstart = () => {
+    preDictationText = participantInput.value.trim();
+    setDictationUiState(
+      'LISTENING',
+      'Listening… Speak naturally. Words will appear in the response box below so you can review or edit before sending.'
+    );
   };
 
-  speechRecognition.onerror = () => {
-    voiceDictateBtn.textContent = '🎙️ Dictate Answer';
+  speechRecognition.onresult = event => {
+    let finalChunk = '';
+    let interimChunk = '';
+    for (let i = 0; i < event.results.length; i += 1) {
+      const res = event.results[i];
+      const transcriptPiece = res[0]?.transcript || '';
+      if (res.isFinal) {
+        finalChunk += `${transcriptPiece} `;
+      } else {
+        interimChunk += transcriptPiece;
+      }
+    }
+
+    const combinedSpoken = `${finalChunk}${interimChunk}`.trim();
+    if (combinedSpoken) {
+      participantInput.value = preDictationText
+        ? `${preDictationText} ${combinedSpoken}`
+        : combinedSpoken;
+      usedVoiceDictationForCurrentDraft = true;
+    }
+  };
+
+  speechRecognition.onerror = event => {
+    const errCode = event?.error || 'unknown';
+    if (errCode === 'not-allowed' || errCode === 'service-not-allowed') {
+      setDictationUiState(
+        'IDLE',
+        'Microphone permission was denied. Please enable microphone access in Safari settings or use the iPhone keyboard microphone button.'
+      );
+    } else if (errCode === 'no-speech') {
+      setDictationUiState('IDLE', 'No speech detected. Tap "🎙️ Start Speaking" to try again.');
+    } else {
+      setDictationUiState('IDLE', `Voice dictation paused (${errCode}). You can edit your text below or tap Start Speaking again.`);
+    }
   };
 
   speechRecognition.onend = () => {
-    voiceDictateBtn.textContent = '🎙️ Dictate Answer';
+    if (dictationState === 'LISTENING' || dictationState === 'PROCESSING') {
+      setDictationUiState(
+        'IDLE',
+        participantInput.value.trim()
+          ? 'Dictation captured. Review or edit your response below, then tap Send Response.'
+          : ''
+      );
+    }
   };
 
   voiceDictateBtn.addEventListener('click', () => {
-    if (!currentSession?.consent?.audio_recording_consented) return;
+    if (!currentSession?.consent?.audio_recording_consented) {
+      setDictationUiState(
+        'IDLE',
+        'Voice dictation requires Audio Processing Consent on the session consent screen.'
+      );
+      return;
+    }
+
+    if (dictationState === 'LISTENING') {
+      setDictationUiState('PROCESSING', 'Finishing speech capture…');
+      try {
+        speechRecognition.stop();
+      } catch {
+        setDictationUiState('IDLE');
+      }
+      return;
+    }
+
     try {
-      voiceDictateBtn.textContent = '🔴 Listening...';
       speechRecognition.start();
     } catch {
-      voiceDictateBtn.textContent = '🎙️ Dictate Answer';
+      try {
+        speechRecognition.stop();
+      } catch {}
+      setDictationUiState('IDLE');
     }
+  });
+}
+
+// ----------------------------------------------------------------------------
+// Workstream B: ElevenLabs Realtime Conversational Voice Mode (PoC)
+// ----------------------------------------------------------------------------
+async function refreshRealtimeVoiceStatus() {
+  if (!realtimeVoiceStateBadge) return;
+  realtimeVoiceErrorMsg.classList.add('hidden');
+  try {
+    const info = await apiFetch(
+      `/api/owen/interview/voice-session?session_id=${encodeURIComponent(activeSessionId)}`
+    );
+    if (info.disclosure_statement && realtimeVoiceDisclosure) {
+      realtimeVoiceDisclosure.textContent = info.disclosure_statement;
+    }
+
+    const cfg = info.configuration_status || {};
+    if (cfg.conversationalAgentConfigured) {
+      realtimeVoiceStateBadge.textContent = 'Ready · ElevenLabs Conversational Agent Configured';
+      realtimeVoiceMetaText.textContent =
+        'OWEN objectives & Layer 1 verbatim capture active · Voice cloning prohibited';
+    } else {
+      const missingList = (cfg.missingForRealtimeVoice || []).join(', ');
+      realtimeVoiceStateBadge.textContent = `PoC Boundary Ready · Awaiting ${missingList || 'ElevenLabs Agent Config'}`;
+      realtimeVoiceMetaText.textContent =
+        'OWEN dynamic agent prompt override & signed WebSocket handshake ready';
+    }
+  } catch (err) {
+    realtimeVoiceStateBadge.textContent = 'Voice Status Check Failed';
+    realtimeVoiceErrorMsg.textContent = err.message;
+    realtimeVoiceErrorMsg.classList.remove('hidden');
+  }
+}
+
+if (toggleRealtimeVoiceBtn) {
+  toggleRealtimeVoiceBtn.addEventListener('click', () => {
+    const isHidden = realtimeVoiceDrawer.classList.contains('hidden');
+    realtimeVoiceDrawer.classList.toggle('hidden', !isHidden);
+    if (isHidden) {
+      refreshRealtimeVoiceStatus();
+    }
+  });
+}
+
+if (closeRealtimeVoiceBtn) {
+  closeRealtimeVoiceBtn.addEventListener('click', () => {
+    disconnectRealtimeVoiceSession();
+    realtimeVoiceDrawer.classList.add('hidden');
+  });
+}
+
+function disconnectRealtimeVoiceSession() {
+  if (realtimeVoiceSocket) {
+    try {
+      realtimeVoiceSocket.close();
+    } catch {}
+    realtimeVoiceSocket = null;
+  }
+  if (realtimeAudioStream) {
+    try {
+      realtimeAudioStream.getTracks().forEach(t => t.stop());
+    } catch {}
+    realtimeAudioStream = null;
+  }
+  isRealtimeMicMuted = false;
+  if (startRealtimeVoiceBtn) startRealtimeVoiceBtn.classList.remove('hidden');
+  if (muteRealtimeMicBtn) muteRealtimeMicBtn.classList.add('hidden');
+  if (stopRealtimeVoiceBtn) stopRealtimeVoiceBtn.classList.add('hidden');
+}
+
+if (startRealtimeVoiceBtn) {
+  startRealtimeVoiceBtn.addEventListener('click', async () => {
+    realtimeVoiceErrorMsg.classList.add('hidden');
+    unlockIosAudioOnUserGesture();
+    startRealtimeVoiceBtn.disabled = true;
+    startRealtimeVoiceBtn.textContent = 'Initializing Signed OWEN Voice Session…';
+
+    try {
+      const sessionInit = await apiFetch('/api/owen/interview/voice-session', {
+        method: 'POST',
+        body: JSON.stringify({ session_id: activeSessionId })
+      });
+
+      if (sessionInit.status !== 'READY' || !sessionInit.signedUrl) {
+        const missing = (sessionInit.missingConfiguration || []).join(', ');
+        realtimeVoiceStateBadge.textContent = `Awaiting Credentials (${sessionInit.status})`;
+        realtimeVoiceErrorMsg.textContent =
+          `OWEN dynamic voice agent override generated successfully (Objective target: ${(sessionInit.conversationOverride?.owen_governance?.active_objective_ids || []).join(', ')}), ` +
+          `but live ElevenLabs WebSocket streaming requires provisioning [${missing}] in Cloudflare Pages secrets. Use "🎙️ Start Speaking" dictation + "🔊 Auto-Read" below in the meantime.`;
+        realtimeVoiceErrorMsg.classList.remove('hidden');
+        return;
+      }
+
+      // Request microphone stream and connect to signed ElevenLabs Conversational AI WebSocket
+      realtimeAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      realtimeVoiceSocket = new WebSocket(sessionInit.signedUrl);
+
+      realtimeVoiceSocket.onopen = () => {
+        realtimeVoiceStateBadge.textContent = '🔴 Live ElevenLabs Voice Connected';
+        startRealtimeVoiceBtn.classList.add('hidden');
+        muteRealtimeMicBtn.classList.remove('hidden');
+        stopRealtimeVoiceBtn.classList.remove('hidden');
+
+        // Send OWEN dynamic conversation override so OWEN's objectives and disclosure govern the agent
+        realtimeVoiceSocket.send(
+          JSON.stringify({
+            type: 'conversation_initiation_client_data',
+            conversation_config_override: {
+              agent: sessionInit.conversationOverride.agent,
+              tts: sessionInit.conversationOverride.tts
+            }
+          })
+        );
+      };
+
+      realtimeVoiceSocket.onmessage = async event => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === 'user_transcript' && msg.user_transcription_event?.user_transcript) {
+            const spokenText = msg.user_transcription_event.user_transcript.trim();
+            if (spokenText) {
+              await submitParticipantResponse(
+                spokenText,
+                `el-voice-${Date.now()}`,
+                'VOICE_TRANSCRIPT'
+              );
+            }
+          }
+        } catch {}
+      };
+
+      realtimeVoiceSocket.onclose = () => {
+        disconnectRealtimeVoiceSession();
+        realtimeVoiceStateBadge.textContent = 'Voice Session Disconnected (Switched to Text)';
+      };
+    } catch (err) {
+      disconnectRealtimeVoiceSession();
+      realtimeVoiceErrorMsg.textContent = err.message || 'Unable to start realtime voice session.';
+      realtimeVoiceErrorMsg.classList.remove('hidden');
+    } finally {
+      startRealtimeVoiceBtn.disabled = false;
+      startRealtimeVoiceBtn.textContent = '🎙️ Connect Live Voice Session';
+    }
+  });
+}
+
+if (muteRealtimeMicBtn) {
+  muteRealtimeMicBtn.addEventListener('click', () => {
+    if (!realtimeAudioStream) return;
+    isRealtimeMicMuted = !isRealtimeMicMuted;
+    realtimeAudioStream.getAudioTracks().forEach(track => {
+      track.enabled = !isRealtimeMicMuted;
+    });
+    muteRealtimeMicBtn.textContent = isRealtimeMicMuted ? '🎙️ Unmute Mic' : '🔇 Mute Mic';
+  });
+}
+
+if (stopRealtimeVoiceBtn) {
+  stopRealtimeVoiceBtn.addEventListener('click', () => {
+    disconnectRealtimeVoiceSession();
+    realtimeVoiceStateBadge.textContent = 'Voice Session Ended · Continuing in Text Mode';
   });
 }
 

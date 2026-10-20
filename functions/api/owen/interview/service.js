@@ -292,7 +292,7 @@ export function createInterviewServiceContext(env = {}, rawInviteToken = '', ses
   const nodeEnv = getEnvValue(env, 'NODE_ENV');
   const storeMode = getEnvValue(env, 'INTERVIEW_STORE');
   const geminiApiKey = getEnvValue(env, 'GEMINI_API_KEY');
-  const geminiModelId = getEnvValue(env, 'GEMINI_MODEL_ID') || 'gemini-3-flash-preview';
+  const geminiModelId = getEnvValue(env, 'GEMINI_MODEL_ID') || 'gemini-3.6-flash';
   const elevenLabsApiKey = getEnvValue(env, 'ELEVENLABS_API_KEY');
   const elevenLabsVoiceId = getEnvValue(env, 'ELEVENLABS_VOICE_ID');
   const elevenLabsAgentId = getEnvValue(env, 'ELEVENLABS_AGENT_ID');

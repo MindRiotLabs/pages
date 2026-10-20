@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>OWEN Experience Acquisition · MindRiot Labs</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="no-referrer" />
+    <link rel="stylesheet" href="/owen/interview/interview.css" />
+  </head>
+  <body>
+    <div class="owen-interview-app">
+      <!-- Top Brand & Governance Bar -->
+      <header class="owen-topbar">
+        <div class="topbar-brand">
+          <img
+            src="/images/MRL-logo-horizontal-alpha-01.png"
+            alt="MindRiot Labs"
+            class="brand-logo"
+          />
+          <div class="brand-divider"></div>
+          <div class="brand-titles">
+            <span class="brand-eyebrow">OWEN FOUNDRY · PILOT 001</span>
+            <span class="brand-title">Experience Acquisition Agent</span>
+          </div>
+        </div>
+        <div class="topbar-status">
+          <span class="status-pill" id="sessionStatusBadge">Authentication Required</span>
+        </div>
+      </header>
+
+      <main class="owen-main">
+        <!-- ================================================================
+             STAGE 1: PRIVATE INVITATION TOKEN GATE
+             ================================================================ -->
+        <section class="card-panel" id="authGatePanel" aria-labelledby="authGateTitle">
+          <div class="panel-eyebrow">Private Executive Session</div>
+          <h1 id="authGateTitle" class="panel-title">
+            Institutional Knowledge &amp; Decision Continuity
+          </h1>
+          <p class="panel-subtitle">
+            Welcome. This adaptive OWEN Experience Acquisition session is protected by a private
+            invitation token. Please enter your invitation code below (or use the private invitation
+            link provided by Joseph Van Harken) to access your session.
+          </p>
+
+          <form id="tokenAuthForm" class="auth-form">
+            <label for="inviteTokenInput" class="field-label">Private Invitation Token</label>
+            <div class="input-row">
+              <input
+                type="password"
+                id="inviteTokenInput"
+                class="text-input"
+                placeholder="Enter invitation code..."
+                autocomplete="off"
+                required
+              />
+              <button type="submit" class="btn btn-primary" id="verifyTokenBtn">
+                Access Session
+              </button>
+            </div>
+            <p class="form-error hidden" id="authErrorMsg" role="alert"></p>
+          </form>
+        </section>
+
+        <!-- ================================================================
+             STAGE 2: AI DISCLOSURE & INFORMED CONSENT GATE
+             ================================================================ -->
+        <section class="card-panel hidden" id="consentGatePanel" aria-labelledby="consentTitle">
+          <div class="panel-eyebrow">Informed Consent &amp; Epistemic Governance</div>
+          <h1 id="consentTitle" class="panel-title">
+            Welcome, <span id="consentParticipantName">Russ Richmond</span>
+          </h1>
+          <p class="panel-subtitle" id="consentPurposeText">
+            Explore the parallels between OWEN and McKinsey’s human-centered knowledge-management
+            practices, identify where traditional repositories lose decision rationale or competing
+            perspectives, and shape OWEN’s Experience Acquisition architecture.
+          </p>
+
+          <!-- AI Interviewer & Synthetic Voice Disclosure -->
+          <div class="disclosure-box" role="region" aria-label="AI Interviewer Disclosure">
+            <div class="disclosure-badge">AI INTERVIEWER DISCLOSURE</div>
+            <p id="aiDisclosureStatement">
+              You are interacting with the OWEN AI Experience Acquisition Agent on behalf of Joseph
+              Van Harken and MindRiot Labs—you are conversing with an adaptive AI interviewer, not
+              speaking directly with Joseph.
+            </p>
+          </div>
+
+          <!-- Data Storage, Confidentiality & Epistemic Separation Notice -->
+          <div class="info-grid">
+            <div class="info-card">
+              <h3>Epistemic Separation</h3>
+              <p>
+                OWEN strictly separates your verbatim statements (<code>HUMAN</code>) from machine
+                architectural interpretations (<code>MACHINE_INFERRED</code>). AI never converts its
+                own synthesis into quotes attributed to you.
+              </p>
+            </div>
+            <div class="info-card">
+              <h3>Confidentiality Guardrails</h3>
+              <p>
+                We are exploring institutional knowledge-management patterns and architecture—never
+                confidential client identities or proprietary engagement financials.
+              </p>
+            </div>
+            <div class="info-card">
+              <h3>Your Sovereignty &amp; Review</h3>
+              <p>
+                You may skip questions, redirect topics, pause, or end the interview at any time.
+                Upon completion, you can review, amend, or exclude any attributed statement.
+              </p>
+            </div>
+          </div>
+
+          <form id="consentForm" class="consent-form">
+            <div class="checkbox-group">
+              <label class="checkbox-item">
+                <input type="checkbox" id="ackAiDisclosureCheck" required />
+                <span>
+                  <strong>AI Interviewer Acknowledgment (Required):</strong> I understand that I am
+                  interacting with the OWEN AI Experience Acquisition Agent (and synthetic voice if
+                  enabled), not speaking directly with Joseph Van Harken.
+                </span>
+              </label>
+
+              <label class="checkbox-item">
+                <input type="checkbox" id="consentTranscriptCheck" required />
+                <span>
+                  <strong>Transcript Capture Consent (Required):</strong> I consent to OWEN
+                  capturing the text transcript of this conversation to generate a draft OWEN
+                  Experience Brief for my review and MindRiot Labs architectural evaluation.
+                </span>
+              </label>
+
+              <label class="checkbox-item">
+                <input type="checkbox" id="consentAudioCheck" />
+                <span>
+                  <strong>Voice / Audio Processing Consent (Optional — Separate):</strong> I
+                  separately consent to optional voice dictation and spoken audio synthesis during
+                  this session. (Leave unchecked for a strictly text-only session.)
+                </span>
+              </label>
+            </div>
+
+            <div class="attribution-select-row">
+              <label for="initialAttributionSelect" class="field-label">
+                Preferred Attribution Mode
+              </label>
+              <select id="initialAttributionSelect" class="select-input">
+                <option value="ATTRIBUTED">
+                  Attributed to Russ Richmond (Internal MRL / OWEN &amp; Approved Brief)
+                </option>
+                <option value="ANONYMIZED_EXTERNAL">
+                  Anonymize my name in any external summaries
+                </option>
+                <option value="INTERNAL_ONLY">
+                  Strictly Internal to MindRiot Labs / OWEN Architecture Team Only
+                </option>
+              </select>
+            </div>
+
+            <p class="form-error hidden" id="consentErrorMsg" role="alert"></p>
+
+            <div class="consent-actions">
+              <button type="submit" class="btn btn-primary btn-large" id="startInterviewBtn">
+                Grant Consent &amp; Begin Adaptive Interview
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <!-- ================================================================
+             STAGE 3: ADAPTIVE CONVERSATIONAL INTERVIEW WORKSPACE
+             ================================================================ -->
+        <section class="interview-workspace hidden" id="interviewWorkspace">
+          <!-- Left / Top: Conversation Stream & Composer -->
+          <div class="conversation-column">
+            <!-- Session Controls Bar -->
+            <div class="session-controls-bar">
+              <div class="controls-left">
+                <span class="active-objective-pill" id="activeObjectivePill">
+                  Objective A · Original Connection
+                </span>
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-sm"
+                  id="toggleTtsBtn"
+                  title="Toggle spoken read-aloud of interviewer prompts"
+                >
+                  Read Aloud: Off
+                </button>
+              </div>
+              <div class="controls-right">
+                <button type="button" class="btn btn-secondary btn-sm" id="skipQuestionBtn">
+                  Skip Topic
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" id="pauseResumeBtn">
+                  Pause
+                </button>
+                <button type="button" class="btn btn-danger btn-sm" id="endInterviewBtn">
+                  End &amp; Review Brief
+                </button>
+              </div>
+            </div>
+
+            <!-- Interrupted / Paused Banner -->
+            <div class="paused-banner hidden" id="pausedBanner" role="status">
+              <span>
+                Session is currently paused. All transcript turns and objective progress are safely
+                saved.
+              </span>
+              <button type="button" class="btn btn-primary btn-sm" id="resumeBannerBtn">
+                Resume Conversation
+              </button>
+            </div>
+
+            <!-- Transcript Feed -->
+            <div class="transcript-feed" id="transcriptFeed" aria-live="polite"></div>
+
+            <!-- Adaptive Composer -->
+            <form id="turnComposerForm" class="composer-box">
+              <div class="composer-toolbar">
+                <span class="composer-hint" id="composerHint">
+                  Share firsthand examples, nuances, or redirect to any topic at any time.
+                </span>
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm hidden"
+                  id="voiceDictateBtn"
+                >
+                  🎙️ Dictate Answer
+                </button>
+              </div>
+
+              <div class="composer-input-wrap">
+                <textarea
+                  id="participantInput"
+                  class="composer-textarea"
+                  rows="3"
+                  placeholder="Type your response here..."
+                  required
+                ></textarea>
+                <button type="submit" class="btn btn-primary send-btn" id="sendTurnBtn">
+                  Send Response
+                </button>
+              </div>
+              <p class="form-error hidden" id="turnErrorMsg" role="alert"></p>
+            </form>
+          </div>
+
+          <!-- Right / Collapsible Drawer: Objective Coverage & Epistemic Tracker -->
+          <aside class="objectives-sidebar" aria-label="Interview Objectives Coverage">
+            <div class="sidebar-card">
+              <div class="sidebar-card-header">
+                <h2>Inquiry Coverage</h2>
+                <span class="coverage-counter" id="coverageCounterBadge">0 / 8 Sufficient</span>
+              </div>
+              <p class="sidebar-card-caption">
+                Click any topic below to redirect the conversation to that area.
+              </p>
+              <ul class="objective-list" id="objectiveList"></ul>
+            </div>
+
+            <div class="sidebar-card">
+              <div class="sidebar-card-header">
+                <h2>Live Epistemic Ledger</h2>
+              </div>
+              <div class="ledger-stats">
+                <div class="ledger-stat">
+                  <span class="stat-value" id="humanStatementsCount">0</span>
+                  <span class="stat-label">Participant Claims (HUMAN)</span>
+                </div>
+                <div class="ledger-stat">
+                  <span class="stat-value" id="machineInterpsCount">0</span>
+                  <span class="stat-label">OWEN Lessons (MACHINE_INFERRED)</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="btn btn-secondary btn-full"
+                id="viewDraftBriefBtn"
+              >
+                Open OWEN Experience Brief &amp; Review
+              </button>
+            </div>
+          </aside>
+        </section>
+
+        <!-- ================================================================
+             STAGE 4: OWEN EXPERIENCE BRIEF & PARTICIPANT REVIEW / CORRECTION
+             ================================================================ -->
+        <section class="card-panel hidden" id="experienceBriefPanel" aria-labelledby="briefTitle">
+          <div class="brief-header-row">
+            <div>
+              <div class="panel-eyebrow">OWEN FOUNDRY ARTIFACT · EPISTEMICALLY SEPARATED</div>
+              <h1 id="briefTitle" class="panel-title">OWEN Experience Brief</h1>
+              <p class="panel-subtitle" id="briefExecutiveSummary"></p>
+            </div>
+            <div class="brief-header-actions">
+              <button type="button" class="btn btn-secondary" id="backToConversationBtn">
+                ← Return to Interview
+              </button>
+            </div>
+          </div>
+
+          <!-- Governance & Publication Status Banner -->
+          <div class="governance-status-bar" id="briefGovernanceBar">
+            <div>
+              <strong>Publication Status:</strong>
+              <span id="briefPubStatusText">DRAFT_PENDING_REVIEW</span>
+              <span class="gov-separator">·</span>
+              <strong>Propagation Scope:</strong>
+              <code id="briefScopeText">project_only</code>
+              <span class="gov-separator">·</span>
+              <strong>Human Steward Approval:</strong>
+              <span id="briefStewardStatusText">Pending Joseph Van Harken Review</span>
+            </div>
+          </div>
+
+          <!-- Participant Attribution & Clarification Controls -->
+          <div class="review-controls-card">
+            <h3>Participant Review, Attribution &amp; Clarifications</h3>
+            <p>
+              Every statement attributed to you below is linked to its exact conversation turn. You
+              can amend wording, exclude any quote from the brief, update your attribution
+              preference, or add a post-interview clarification.
+            </p>
+            <div class="review-forms-grid">
+              <div class="review-form-block">
+                <label for="reviewAttributionSelect" class="field-label">
+                  Update Attribution Preference
+                </label>
+                <div class="input-row">
+                  <select id="reviewAttributionSelect" class="select-input">
+                    <option value="ATTRIBUTED">Attributed to Russ Richmond</option>
+                    <option value="ANONYMIZED_EXTERNAL">Anonymized for External Summaries</option>
+                    <option value="INTERNAL_ONLY">Internal MRL / OWEN Only</option>
+                  </select>
+                  <button type="button" class="btn btn-secondary" id="saveAttributionBtn">
+                    Update Attribution
+                  </button>
+                </div>
+              </div>
+
+              <div class="review-form-block">
+                <label for="addClarificationInput" class="field-label">
+                  Add an Additional Takeaway or Clarification
+                </label>
+                <div class="input-row">
+                  <input
+                    type="text"
+                    id="addClarificationInput"
+                    class="text-input"
+                    placeholder="Add a clarifying point or caveat..."
+                  />
+                  <button type="button" class="btn btn-primary" id="addClarificationBtn">
+                    Add Clarification
+                  </button>
+                </div>
+              </div>
+            </div>
+            <p class="form-feedback hidden" id="reviewFeedbackMsg" role="status"></p>
+          </div>
+
+          <!-- Layer 2: Direct Participant Statements (author_origin: HUMAN) -->
+          <div class="brief-section">
+            <div class="section-header-tag tag-human">
+              LAYER 2 · PARTICIPANT STATEMENTS &amp; EVIDENCE (author_origin: HUMAN)
+            </div>
+            <h2>Direct Statements &amp; Grounded Claims</h2>
+            <p class="section-caption">
+              You may amend or exclude any statement below. Amendments preserve provenance while
+              updating the brief immediately.
+            </p>
+            <div id="directStatementsContainer" class="statements-list"></div>
+          </div>
+
+          <!-- Layer 3: Machine Interpretations & OWEN Architectural Lessons (MACHINE_INFERRED) -->
+          <div class="brief-section">
+            <div class="section-header-tag tag-machine">
+              LAYER 3 · OWEN ARCHITECTURAL INTERPRETATIONS (author_origin: MACHINE_INFERRED)
+            </div>
+            <h2>Lessons Relevant to OWEN &amp; Observed McKinsey Similarities</h2>
+            <p class="section-caption">
+              These hypotheses and design implications are inferred by OWEN’s analytical engine and
+              are never attributed as direct quotes from you.
+            </p>
+            <div id="owenLessonsContainer" class="lessons-grid"></div>
+          </div>
+
+          <!-- Architectural Gaps & Recommended Follow-up Experiments -->
+          <div class="brief-two-col">
+            <div class="brief-section">
+              <h3>Potential Architectural Gaps Identified</h3>
+              <ul id="briefGapsList" class="structured-list"></ul>
+            </div>
+            <div class="brief-section">
+              <h3>Recommended OWEN Follow-Up Experiments</h3>
+              <ul id="briefExperimentsList" class="structured-list"></ul>
+            </div>
+          </div>
+
+          <!-- Contradictions, Tensions & Unresolved Follow-Up Questions -->
+          <div class="brief-two-col">
+            <div class="brief-section">
+              <h3>Preserved Tensions &amp; Competing Perspectives</h3>
+              <ul id="briefUncertaintiesList" class="structured-list"></ul>
+            </div>
+            <div class="brief-section">
+              <h3>Open Follow-Up Questions</h3>
+              <ul id="briefFollowupsList" class="structured-list"></ul>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="/owen/interview/interview.js"></script>
+  </body>
+</html>

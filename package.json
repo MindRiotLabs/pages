@@ -1,0 +1,17 @@
+{
+  "name": "mindriotlabs-website",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MindRiot Labs official website and OWEN Experience Acquisition Agent Pilot 001",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "build": "wrangler pages functions build --compatibility-date 2024-09-23 --compatibility-flag nodejs_compat"
+  },
+  "dependencies": {
+    "@mrl/owen": "file:./packages/mrl-owen-0.1.0-0342685.tgz"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0"
+  }
+}

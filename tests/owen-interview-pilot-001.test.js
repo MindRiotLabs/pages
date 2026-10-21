@@ -117,6 +117,14 @@ describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Securi
     const uatData = await validUatRes.json();
     assert.equal(uatData.session.id, DISPOSABLE_UAT_SESSION_ID);
     assert.equal(uatData.session.participant.actor_id, 'actor-uat-disposable-001');
+
+    // Revoked session ses-uat-disposable-001 is unconditionally rejected with 401
+    const revokedSessionReq = new Request(
+      'https://mindriotlabs.com/api/owen/interview/session?session_id=ses-uat-disposable-001',
+      { headers: { Authorization: `Bearer ${SYNTHETIC_UAT_TOKEN}` } }
+    );
+    const revokedSessionRes = await getSession({ request: revokedSessionReq, env: testEnv });
+    assert.equal(revokedSessionRes.status, 401);
   });
 
   it('3. Enforces server-side brute-force rate limiting (429 Too Many Requests with Retry-After)', async () => {
@@ -315,14 +323,14 @@ describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Securi
     const path = await import('node:path');
     const { OWEN_BUILD_METADATA } = await import('@mrl/owen');
 
-    // Verify canonical OWEN build provenance matches surgical release commit 6cf46d8ed21561e1b1bb924e7a9bd5ed8e2493df
+    // Verify canonical OWEN build provenance matches surgical release commit 2e6a598ba753663e67a4be1e5bdc12124afe82a4
     assert.equal(
       OWEN_BUILD_METADATA.canonical_commit_sha,
-      '6cf46d8ed21561e1b1bb924e7a9bd5ed8e2493df'
+      '2e6a598ba753663e67a4be1e5bdc12124afe82a4'
     );
-    assert.equal(OWEN_BUILD_METADATA.canonical_commit_short, '6cf46d8');
+    assert.equal(OWEN_BUILD_METADATA.canonical_commit_short, '2e6a598');
 
-    const tarballPath = path.resolve(process.cwd(), 'packages/mrl-owen-0.1.0-6cf46d8.tgz');
+    const tarballPath = path.resolve(process.cwd(), 'packages/mrl-owen-0.1.0-2e6a598.tgz');
     assert.equal(fs.existsSync(tarballPath), true);
     const actualSha256 = crypto
       .createHash('sha256')
@@ -330,7 +338,7 @@ describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Securi
       .digest('hex');
     assert.equal(
       actualSha256,
-      '33d6a618ee80a0d07b12e4f87f9a293b872829d70034877239d26358d8edab0c'
+      '69fd03c07895d2c28b4bd96b7dc067b4863b5415ba6eb8459b0b50275920cbc5'
     );
 
     // Verify wrangler.toml targets mindriotlabs-production

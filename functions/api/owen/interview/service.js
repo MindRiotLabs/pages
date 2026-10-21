@@ -40,7 +40,8 @@ export const DISPOSABLE_UAT_SESSION_ID = 'ses-uat-disposable-002';
 export const FOUNDER_UAT_V02_SESSION_ID = 'ses-founder-uat-jvh-v02';
 export const REVOKED_SESSION_IDS = new Set(['ses-uat-disposable-001']);
 export const REVOKED_TOKEN_SHA256S = new Set([
-  '598311524dbc2c4ad97fd09771e82fd1b5640f3f694b08510a3ef794593add06'
+  '598311524dbc2c4ad97fd09771e82fd1b5640f3f694b08510a3ef794593add06',
+  '223559fccace9d5078cb825592cb4d1e5148abaad6ed7996cfd1d3a5045b04df'
 ]);
 export const DEFAULT_SUPABASE_URL = 'https://xkgtipcyswjpvwmmawmf.supabase.co';
 export const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_a84bMzDhwTFRDxLnfMTLcA_pov-Kgr3';

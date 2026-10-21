@@ -175,9 +175,12 @@ async function initApp() {
     activeToken = sessionStorage.getItem(STORAGE_TOKEN_KEY) || '';
   }
 
-  // Immediately scrub any token or session parameters from visible URL bar and browser history
+  // Immediately scrub any token from visible URL bar and browser history while preserving ?session_id=...
   if (urlToken || window.location.hash || url.searchParams.has('token')) {
     url.searchParams.delete('token');
+    if (urlSessionId) {
+      url.searchParams.set('session_id', activeSessionId);
+    }
     const cleanSearch = url.searchParams.toString();
     const cleanUrl = url.pathname + (cleanSearch ? `?${cleanSearch}` : '');
     window.history.replaceState(null, document.title, cleanUrl);

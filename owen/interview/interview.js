@@ -13,6 +13,7 @@
  * - Interactive OWEN Experience Brief viewer & participant statement amendment/exclusion controls
  */
 
+const FRONTEND_BUILD_VERSION = 'v0.2.2-20261021';
 const STORAGE_TOKEN_KEY = 'owen_pilot_001_invite_token';
 const STORAGE_SESSION_ID_KEY = 'owen_pilot_001_session_id';
 
@@ -138,30 +139,61 @@ async function apiFetch(endpoint, options = {}) {
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.error || `Request failed (${res.status})`);
+    const err = new Error(data.error || `Request failed (${res.status})`);
+    err.status = res.status;
+    err.code = data.code || null;
+    throw err;
   }
   return data;
 }
 
 // ----------------------------------------------------------------------------
-// Initialization & Interrupted Session Recovery
+// Initialization, Same-Document Hash Navigation & Interrupted Session Recovery
 // ----------------------------------------------------------------------------
-async function initApp() {
-  const url = new URL(window.location.href);
-  const hashParams = new URLSearchParams(
-    window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash
-  );
+function extractInvitationAndSessionFromUrlString(rawHref) {
+  try {
+    const url = new URL(rawHref, window.location.origin);
+    const rawHash = url.hash.startsWith('#') ? url.hash.slice(1) : url.hash;
+    const normalizedHash = rawHash.startsWith('?') ? rawHash.slice(1) : rawHash;
+    const hashParams = new URLSearchParams(normalizedHash);
 
-  const hashToken = hashParams.get('token');
-  const queryToken = url.searchParams.get('token');
-  const urlToken = hashToken || queryToken;
+    let hashToken = hashParams.get('token') || hashParams.get('inv') || '';
+    if (!hashToken && normalizedHash && !normalizedHash.includes('=')) {
+      hashToken = decodeURIComponent(normalizedHash).trim();
+    }
+    const queryToken = url.searchParams.get('token') || url.searchParams.get('inv') || '';
+    const urlToken = (hashToken || queryToken).trim();
 
-  const hashSessionId = hashParams.get('session_id');
-  const querySessionId = url.searchParams.get('session_id');
-  const urlSessionId = hashSessionId || querySessionId;
+    const hashSessionId = hashParams.get('session_id') || '';
+    const querySessionId = url.searchParams.get('session_id') || '';
+    const urlSessionId = (hashSessionId || querySessionId).trim();
+
+    return {
+      url,
+      rawHash,
+      urlToken,
+      urlSessionId,
+      tokenSource: hashToken ? 'hash_fragment' : queryToken ? 'query_param' : 'none'
+    };
+  } catch {
+    return {
+      url: new URL(window.location.href),
+      rawHash: '',
+      urlToken: '',
+      urlSessionId: '',
+      tokenSource: 'none'
+    };
+  }
+}
+
+async function captureUrlInvitationAndAuthenticate(options = {}) {
+  const { trigger = 'init' } = options;
+  const parsed = extractInvitationAndSessionFromUrlString(window.location.href);
+  const { url, rawHash, urlToken, urlSessionId } = parsed;
+  let tokenSource = parsed.tokenSource;
 
   if (urlSessionId) {
-    activeSessionId = urlSessionId.trim();
+    activeSessionId = urlSessionId;
     sessionStorage.setItem(STORAGE_SESSION_ID_KEY, activeSessionId);
   } else {
     activeSessionId =
@@ -169,36 +201,102 @@ async function initApp() {
   }
 
   if (urlToken) {
-    activeToken = urlToken.trim();
+    activeToken = urlToken;
     sessionStorage.setItem(STORAGE_TOKEN_KEY, activeToken);
-  } else {
-    activeToken = sessionStorage.getItem(STORAGE_TOKEN_KEY) || '';
+  } else if (trigger === 'init') {
+    const storedToken = sessionStorage.getItem(STORAGE_TOKEN_KEY) || '';
+    if (storedToken) {
+      activeToken = storedToken;
+      tokenSource = 'session_storage';
+    } else {
+      activeToken = '';
+    }
   }
 
-  // Immediately scrub any token from visible URL bar and browser history while preserving ?session_id=...
-  if (urlToken || window.location.hash || url.searchParams.has('token')) {
+  // Immediately scrub any token or one-time cache-buster from visible URL bar and history while preserving ?session_id=...
+  let scrubbedUrl = window.location.pathname + window.location.search;
+  if (
+    urlToken ||
+    window.location.hash ||
+    url.searchParams.has('token') ||
+    url.searchParams.has('inv') ||
+    url.searchParams.has('v')
+  ) {
     url.searchParams.delete('token');
-    if (urlSessionId) {
+    url.searchParams.delete('inv');
+    url.searchParams.delete('v');
+    if (urlSessionId || activeSessionId !== 'ses-pilot-001-russ-richmond') {
       url.searchParams.set('session_id', activeSessionId);
     }
     const cleanSearch = url.searchParams.toString();
-    const cleanUrl = url.pathname + (cleanSearch ? `?${cleanSearch}` : '');
-    window.history.replaceState(null, document.title, cleanUrl);
+    scrubbedUrl = url.pathname + (cleanSearch ? `?${cleanSearch}` : '');
+    window.history.replaceState(null, document.title, scrubbedUrl);
   }
 
-  setupSpeechDictation();
+  const diagnostics = {
+    frontend_version: FRONTEND_BUILD_VERSION,
+    trigger,
+    parsed_session_id: activeSessionId,
+    fragment_present: Boolean(rawHash),
+    token_source: tokenSource,
+    token_length: activeToken ? activeToken.length : 0,
+    token_is_alphanumeric: Boolean(activeToken && /^[A-Za-z0-9]+$/.test(activeToken)),
+    scrubbed_url: scrubbedUrl,
+    api_status: null,
+    authenticated_participant: null,
+    stage_after_init: null,
+    error_category: null
+  };
 
   if (activeToken) {
     try {
+      authErrorMsg.classList.add('hidden');
       await loadSession();
-    } catch {
+      diagnostics.api_status = 200;
+      diagnostics.authenticated_participant = currentSession?.participant?.name || null;
+      diagnostics.stage_after_init = currentStageView;
+    } catch (err) {
+      const status = err?.status || 500;
+      diagnostics.api_status = status;
+      diagnostics.error_category =
+        status === 401
+          ? 'TOKEN_REJECTED_401'
+          : status === 429
+          ? 'RATE_LIMITED_429'
+          : 'NETWORK_OR_SERVER_ERROR';
       sessionStorage.removeItem(STORAGE_TOKEN_KEY);
       activeToken = '';
       showStage('AUTH');
+      diagnostics.stage_after_init = currentStageView;
+      if (urlToken) {
+        authErrorMsg.textContent =
+          `Automatic invitation sign-in did not complete (HTTP ${status} for session ${activeSessionId}). ` +
+          `Please verify you opened the latest invitation link or paste your invitation token below.`;
+        authErrorMsg.classList.remove('hidden');
+      }
     }
   } else {
     showStage('AUTH');
+    diagnostics.stage_after_init = currentStageView;
   }
+
+  window.__OWEN_AUTH_DIAGNOSTICS__ = diagnostics;
+  return diagnostics;
+}
+
+async function initApp() {
+  setupSpeechDictation();
+  window.addEventListener('hashchange', () => {
+    if (window.location.hash) {
+      captureUrlInvitationAndAuthenticate({ trigger: 'hashchange' });
+    }
+  });
+  window.addEventListener('popstate', () => {
+    if (window.location.hash) {
+      captureUrlInvitationAndAuthenticate({ trigger: 'popstate' });
+    }
+  });
+  await captureUrlInvitationAndAuthenticate({ trigger: 'init' });
 }
 
 async function loadSession() {
@@ -705,8 +803,24 @@ function escapeHtml(str) {
 tokenAuthForm.addEventListener('submit', async e => {
   e.preventDefault();
   authErrorMsg.classList.add('hidden');
-  const candidate = inviteTokenInput.value.trim();
+  let candidate = inviteTokenInput.value.trim();
   if (!candidate) return;
+
+  if (
+    candidate.includes('http://') ||
+    candidate.includes('https://') ||
+    candidate.includes('token=') ||
+    candidate.includes('session_id=')
+  ) {
+    const extracted = extractInvitationAndSessionFromUrlString(candidate);
+    if (extracted.urlSessionId) {
+      activeSessionId = extracted.urlSessionId;
+      sessionStorage.setItem(STORAGE_SESSION_ID_KEY, activeSessionId);
+    }
+    if (extracted.urlToken) {
+      candidate = extracted.urlToken;
+    }
+  }
 
   activeToken = candidate;
   try {

@@ -189,16 +189,12 @@ async function loadReviewSession(sessionId, reviewToken) {
 function applyReviewData(review) {
   state.review = review;
 
-  // Initialize UI cleanup choices: if server is UNDECIDED and default_ui_preselected is true,
-  // preselect ACCEPTED_CLEANUP in UI while keeping server awareness clear.
+  // Only populate uiCleanupChoices when the server already has a non-UNDECIDED participant decision.
+  // Preselected items (default_ui_preselected=true) render as preselected in the UI without
+  // mutating server-side UNDECIDED state until explicit participant action or final submission.
   for (const cleanup of review.flagged_cleanup_recommendations || []) {
     if (cleanup.participant_decision !== 'UNDECIDED') {
       state.uiCleanupChoices.set(cleanup.cleanup_id, cleanup.participant_decision);
-    } else if (!state.uiCleanupChoices.has(cleanup.cleanup_id)) {
-      state.uiCleanupChoices.set(
-        cleanup.cleanup_id,
-        cleanup.default_ui_preselected ? 'ACCEPTED_CLEANUP' : 'UNDECIDED'
-      );
     }
   }
 
@@ -565,10 +561,10 @@ function renderAttributionControls() {
       sa.permitted_sharing_scope || 'INTERNAL_OWEN_LEARNING_ONLY';
   }
   if (els.allowFoundryIngestionCheckbox) {
-    els.allowFoundryIngestionCheckbox.checked = sa.allow_foundry_ingestion !== false;
+    els.allowFoundryIngestionCheckbox.checked = sa.allow_foundry_ingestion === true;
   }
   if (els.notifyFutureOutcomesCheckbox) {
-    els.notifyFutureOutcomesCheckbox.checked = sa.notify_on_future_outcomes !== false;
+    els.notifyFutureOutcomesCheckbox.checked = sa.notify_on_future_outcomes === true;
   }
   if (els.overallCommentTextarea && r.overall_participant_comment !== undefined) {
     els.overallCommentTextarea.value = r.overall_participant_comment;
@@ -594,7 +590,7 @@ function renderConfirmationState() {
   }
 }
 
-function collectCurrentPayload() {
+function collectCurrentPayload(isFinalSubmit = false) {
   const r = state.review;
   if (!r) return {};
 
@@ -620,7 +616,11 @@ function collectCurrentPayload() {
     cleanup_id: c.cleanup_id,
     participant_decision:
       state.uiCleanupChoices.get(c.cleanup_id) ||
-      (c.default_ui_preselected ? 'ACCEPTED_CLEANUP' : 'UNDECIDED'),
+      (c.participant_decision !== 'UNDECIDED'
+        ? c.participant_decision
+        : isFinalSubmit && c.default_ui_preselected
+        ? 'ACCEPTED_CLEANUP'
+        : 'UNDECIDED'),
     ...(c.participant_note !== undefined ? { participant_note: c.participant_note } : {})
   }));
 
@@ -660,7 +660,7 @@ async function saveDraftToServer() {
 
   try {
     const payload = {
-      ...collectCurrentPayload(),
+      ...collectCurrentPayload(false),
       client_request_id: `draft-${Date.now()}`
     };
 
@@ -692,7 +692,7 @@ async function submitFinalReview() {
   setAutosaveIndicator('Submitting review...', 'saving');
 
   try {
-    const basePayload = collectCurrentPayload();
+    const basePayload = collectCurrentPayload(true);
     const stateFingerprint = JSON.stringify(basePayload);
     if (stateFingerprint !== state.lastSubmitHash || !state.lastSubmitRequestId) {
       state.lastSubmitHash = stateFingerprint;
@@ -831,7 +831,12 @@ els.candidateLessonsContainer?.addEventListener('click', e => {
 });
 
 els.attributionPreferenceSelect?.addEventListener('change', () => scheduleAutosave());
-els.sharingScopeSelect?.addEventListener('change', () => scheduleAutosave());
+els.sharingScopeSelect?.addEventListener('change', () => {
+  if (els.sharingScopeSelect.value === 'DO_NOT_PROPAGATE' && els.allowFoundryIngestionCheckbox) {
+    els.allowFoundryIngestionCheckbox.checked = false;
+  }
+  scheduleAutosave();
+});
 els.allowFoundryIngestionCheckbox?.addEventListener('change', () => scheduleAutosave());
 els.notifyFutureOutcomesCheckbox?.addEventListener('change', () => scheduleAutosave());
 els.overallCommentTextarea?.addEventListener('input', () => scheduleAutosave());

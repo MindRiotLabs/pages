@@ -50,6 +50,13 @@ export {
 };
 
 export const DISPOSABLE_UAT_REVIEW_SESSION_ID = 'ses-uat-review-disposable-001';
+export const DISPOSABLE_UAT_EXPIRED_SESSION_ID = 'ses-uat-review-expired-001';
+export const DISPOSABLE_UAT_REVOKED_SESSION_ID = 'ses-uat-review-revoked-001';
+export const DISPOSABLE_UAT_REVIEW_SESSION_IDS = new Set([
+  DISPOSABLE_UAT_REVIEW_SESSION_ID,
+  DISPOSABLE_UAT_EXPIRED_SESSION_ID,
+  DISPOSABLE_UAT_REVOKED_SESSION_ID
+]);
 
 export const reviewCorsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -96,7 +103,10 @@ export function getConfiguredReviewTokenForSession(
   env = {},
   sessionId = DISPOSABLE_UAT_REVIEW_SESSION_ID
 ) {
-  if (sessionId === DISPOSABLE_UAT_REVIEW_SESSION_ID || sessionId === DISPOSABLE_UAT_SESSION_ID) {
+  if (
+    DISPOSABLE_UAT_REVIEW_SESSION_IDS.has(sessionId) ||
+    sessionId === DISPOSABLE_UAT_SESSION_ID
+  ) {
     return (
       getEnvValue(env, 'OWEN_UAT_REVIEW_TOKEN') ||
       getEnvValue(env, 'OWEN_UAT_DISPOSABLE_REVIEW_TOKEN')
@@ -291,6 +301,34 @@ export async function ensureDisposableUatReviewSession(
     expires_at: options.expiresAt
   });
 
+  if (options.saveInitialDraft) {
+    await reviewService.saveParticipantReviewDraft({
+      session_id: sessionId,
+      raw_review_token: rawReviewToken,
+      section_updates: [
+        {
+          section_id: 'sec-1-codified-primers-and-expert-links',
+          participant_action: 'CONFIRMED_ACCURATE',
+          participant_note: 'Saved draft before credential expiry.'
+        }
+      ]
+    });
+    if (options.expiredAtAfterDraft) {
+      await reviewService.issueOrRenewReviewCredential({
+        session_id: sessionId,
+        raw_review_token: rawReviewToken,
+        expires_at: options.expiredAtAfterDraft
+      });
+    }
+  }
+
+  if (options.revoked) {
+    await reviewService.revokeReviewCredential(
+      sessionId,
+      'Revoked during disposable UAT credential lifecycle verification.'
+    );
+  }
+
   return store.getSession(sessionId);
 }
 
@@ -354,7 +392,7 @@ export async function resolveAuthorizedReviewContext(request, env = {}, body = n
   const useMemoryStore =
     nodeEnv === 'test' ||
     reviewStoreMode === 'memory' ||
-    sessionId === DISPOSABLE_UAT_REVIEW_SESSION_ID;
+    DISPOSABLE_UAT_REVIEW_SESSION_IDS.has(sessionId);
 
   const store = useMemoryStore
     ? getSharedReviewMemoryStore()
@@ -367,7 +405,7 @@ export async function resolveAuthorizedReviewContext(request, env = {}, body = n
   const expectedReviewToken = getConfiguredReviewTokenForSession(env, sessionId);
 
   if (
-    sessionId === DISPOSABLE_UAT_REVIEW_SESSION_ID ||
+    DISPOSABLE_UAT_REVIEW_SESSION_IDS.has(sessionId) ||
     sessionId === DEFAULT_PILOT_001_SESSION_ID
   ) {
     if (!expectedReviewToken) {
@@ -386,9 +424,19 @@ export async function resolveAuthorizedReviewContext(request, env = {}, body = n
     }
   }
 
-  // Auto-seed only the disposable UAT session (never Russ's Pilot 001 session)
+  // Auto-seed only disposable UAT sessions (never Russ's Pilot 001 session)
   if (sessionId === DISPOSABLE_UAT_REVIEW_SESSION_ID) {
     await ensureDisposableUatReviewSession(store, sessionId, expectedReviewToken);
+  } else if (sessionId === DISPOSABLE_UAT_EXPIRED_SESSION_ID) {
+    await ensureDisposableUatReviewSession(store, sessionId, expectedReviewToken, {
+      saveInitialDraft: true,
+      expiredAtAfterDraft: '2026-01-01T00:00:00.000Z'
+    });
+  } else if (sessionId === DISPOSABLE_UAT_REVOKED_SESSION_ID) {
+    await ensureDisposableUatReviewSession(store, sessionId, expectedReviewToken, {
+      saveInitialDraft: true,
+      revoked: true
+    });
   }
 
   const acquisitionAgent = new ExperienceAcquisitionAgent({ store });

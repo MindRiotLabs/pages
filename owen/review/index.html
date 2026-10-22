@@ -249,13 +249,16 @@
                   <option value="EXTERNAL_CASE_STUDY_REQUIRES_SEPARATE_SIGNOFF">
                     External Reference Permitted Only With Separate Written Sign-Off
                   </option>
+                  <option value="DO_NOT_PROPAGATE">
+                    Do Not Propagate (Steward Archive Only — No Foundry Ingestion)
+                  </option>
                 </select>
               </div>
             </div>
 
             <div class="checkbox-group">
               <label class="checkbox-row" for="allowFoundryIngestionCheckbox">
-                <input type="checkbox" id="allowFoundryIngestionCheckbox" checked />
+                <input type="checkbox" id="allowFoundryIngestionCheckbox" />
                 <span>
                   Allow OWEN Foundry to index my confirmed statements (excluding any items I marked excluded)
                   once the Human Steward authorizes the brief.
@@ -263,7 +266,7 @@
               </label>
 
               <label class="checkbox-row" for="notifyFutureOutcomesCheckbox">
-                <input type="checkbox" id="notifyFutureOutcomesCheckbox" checked />
+                <input type="checkbox" id="notifyFutureOutcomesCheckbox" />
                 <span>
                   Send me a brief update when proposed experiments inspired by this session are tested or
                   verified.

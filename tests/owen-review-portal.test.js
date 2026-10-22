@@ -10,6 +10,8 @@ import { onRequestGet as getInterviewSession } from '../functions/api/owen/inter
 import {
   resetReviewServiceForTests,
   DISPOSABLE_UAT_REVIEW_SESSION_ID,
+  DISPOSABLE_UAT_EXPIRED_SESSION_ID,
+  DISPOSABLE_UAT_REVOKED_SESSION_ID,
   SupabaseRpcReviewSessionStore,
   getSharedReviewMemoryStore,
   hashReviewToken
@@ -85,9 +87,29 @@ describe('MindRiotLabs /api/owen/review/* & /owen/review Portal v0.3 Suite', () 
     );
     const crossSessionRes = await getReviewSession({ request: crossSessionReq, env: testEnv });
     assert.equal(crossSessionRes.status, 401);
+    // F. Expired review credential returns 401 REVIEW_TOKEN_EXPIRED with saved_progress_preserved: true
+    const expiredReq = new Request(
+      `https://mindriotlabs.com/api/owen/review/session?session_id=${DISPOSABLE_UAT_EXPIRED_SESSION_ID}`,
+      { headers: { Authorization: `Bearer ${SYNTHETIC_UAT_REVIEW_TOKEN}` } }
+    );
+    const expiredRes = await getReviewSession({ request: expiredReq, env: testEnv });
+    assert.equal(expiredRes.status, 401);
+    const expiredBody = await expiredRes.json();
+    assert.equal(expiredBody.code, 'REVIEW_TOKEN_EXPIRED');
+    assert.equal(expiredBody.saved_progress_preserved, true);
+
+    // G. Revoked review credential returns 403 REVIEW_TOKEN_REVOKED
+    const revokedReq = new Request(
+      `https://mindriotlabs.com/api/owen/review/session?session_id=${DISPOSABLE_UAT_REVOKED_SESSION_ID}`,
+      { headers: { Authorization: `Bearer ${SYNTHETIC_UAT_REVIEW_TOKEN}` } }
+    );
+    const revokedRes = await getReviewSession({ request: revokedReq, env: testEnv });
+    assert.equal(revokedRes.status, 403);
+    const revokedBody = await revokedRes.json();
+    assert.equal(revokedBody.code, 'REVIEW_TOKEN_REVOKED');
   });
 
-  it('2. Loads concise 5-section Experience Review Package, preselects 2 cleanup recommendations without auto-accepting, and projects 4 Decision-4 Contribution-to-Impact items without internal ledger IDs', async () => {
+  it('2. Loads concise 6-section Experience Review Package, defaults allow_foundry_ingestion to false, preselects 2 cleanup recommendations without auto-accepting, and projects 4 Decision-4 Contribution-to-Impact items without internal ledger IDs', async () => {
     const req = new Request(
       `https://mindriotlabs.com/api/owen/review/session?session_id=${DISPOSABLE_UAT_REVIEW_SESSION_ID}`,
       { headers: { Authorization: `Bearer ${SYNTHETIC_UAT_REVIEW_TOKEN}` } }
@@ -107,8 +129,12 @@ describe('MindRiotLabs /api/owen/review/* & /owen/review Portal v0.3 Suite', () 
     assert.equal(review.governance_notice.participant_reviewed, false);
     assert.equal(review.governance_notice.human_steward_approved, false);
 
-    // 5 curated sections
-    assert.equal(review.sections.length, 5);
+    // Fail-closed consent defaults before affirmative participant opt-in
+    assert.equal(review.sharing_and_attribution.allow_foundry_ingestion, false);
+    assert.equal(review.sharing_and_attribution.notify_on_future_outcomes, false);
+
+    // 6 curated sections
+    assert.equal(review.sections.length, 6);
     assert.ok(review.sections.every((s) => s.participant_action === 'UNREVIEWED'));
     assert.ok(review.sections.every((s) => s.supporting_excerpts.length > 0));
 
@@ -212,7 +238,7 @@ describe('MindRiotLabs /api/owen/review/* & /owen/review Portal v0.3 Suite', () 
     const editedSec = review.sections.find(
       (s) => s.section_id === 'sec-1-codified-primers-and-expert-links'
     );
-    assert.equal(editedSec.participant_action, 'SUGGEST_EDIT');
+    assert.equal(editedSec.participant_action, 'EDITED_OR_CLARIFIED');
     assert.match(editedSec.participant_edited_summary, /Clarified: PDNet/);
     // Original testimony remains untouched
     assert.match(editedSec.supporting_excerpts[0].verbatim_quote, /At McKinsey, PDNet primers/);
@@ -257,6 +283,10 @@ describe('MindRiotLabs /api/owen/review/* & /owen/review Portal v0.3 Suite', () 
         },
         {
           section_id: 'sec-5-hidden-pearls-and-ai-boundaries',
+          participant_action: 'CONFIRM_ACCURATE'
+        },
+        {
+          section_id: 'sec-6-actionable-pretask-delivery',
           participant_action: 'CONFIRM_ACCURATE'
         }
       ],

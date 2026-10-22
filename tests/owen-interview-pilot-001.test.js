@@ -323,14 +323,14 @@ describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Securi
     const path = await import('node:path');
     const { OWEN_BUILD_METADATA } = await import('@mrl/owen');
 
-    // Verify canonical OWEN build provenance matches surgical release commit 2e6a598ba753663e67a4be1e5bdc12124afe82a4
+    // Verify canonical OWEN build provenance matches v0.2.3 release commit 0771b7bde2249fd8683204bdf2c2d823df8b80c3
     assert.equal(
       OWEN_BUILD_METADATA.canonical_commit_sha,
-      '2e6a598ba753663e67a4be1e5bdc12124afe82a4'
+      '0771b7bde2249fd8683204bdf2c2d823df8b80c3'
     );
-    assert.equal(OWEN_BUILD_METADATA.canonical_commit_short, '2e6a598');
+    assert.equal(OWEN_BUILD_METADATA.canonical_commit_short, '0771b7b');
 
-    const tarballPath = path.resolve(process.cwd(), 'packages/mrl-owen-0.1.0-2e6a598.tgz');
+    const tarballPath = path.resolve(process.cwd(), 'packages/mrl-owen-0.1.0-0771b7b.tgz');
     assert.equal(fs.existsSync(tarballPath), true);
     const actualSha256 = crypto
       .createHash('sha256')
@@ -338,7 +338,7 @@ describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Securi
       .digest('hex');
     assert.equal(
       actualSha256,
-      '69fd03c07895d2c28b4bd96b7dc067b4863b5415ba6eb8459b0b50275920cbc5'
+      '9e87dc9c54b7919aba289ad8851a26d813daa3cb6b70e7c6e404c9cf27a59295'
     );
 
     // Verify wrangler.toml targets mindriotlabs-production
@@ -479,5 +479,85 @@ describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Securi
     assert.equal(voiceInitBody.status, 'REQUIRES_AGENT_ID');
     assert.ok(voiceInitBody.missingConfiguration.includes('ELEVENLABS_AGENT_ID'));
   });
-});
 
+  it('8. [v0.2.3 Regression] Edge /api/owen/interview/turn distinguishes quoted vs. present stop requests, excludes logistical remarks, and marks disputed interpretations', async () => {
+    const authHeaders = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${SYNTHETIC_UAT_TOKEN}`
+    };
+
+    await postConsent({
+      request: new Request('https://mindriotlabs.com/api/owen/interview/consent', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          session_id: DISPOSABLE_UAT_SESSION_ID,
+          transcript_capture_consented: true,
+          audio_recording_consented: true,
+          synthetic_voice_acknowledged: true,
+          attribution_preference: 'ATTRIBUTED'
+        })
+      }),
+      env: testEnv
+    });
+
+    // 8a. Quoted stop phrase does not stop the interview
+    const quotedRes = await postTurn({
+      request: new Request('https://mindriotlabs.com/api/owen/interview/turn', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          session_id: DISPOSABLE_UAT_SESSION_ID,
+          participant_text:
+            'When a busy partner said "I am running out of time for this interview," we summarized our findings in two minutes.',
+          modality: 'VOICE_TRANSCRIPT'
+        })
+      }),
+      env: testEnv
+    });
+    const quotedBody = await quotedRes.json();
+    assert.equal(quotedBody.session.status, 'IN_PROGRESS');
+    assert.equal(quotedBody.session.epistemic_ledger.participant_statements.length, 1);
+
+    // 8b. Participant pushback marks prior interpretation DISPUTED_BY_PARTICIPANT while preserving it
+    const pushbackRes = await postTurn({
+      request: new Request('https://mindriotlabs.com/api/owen/interview/turn', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          session_id: DISPOSABLE_UAT_SESSION_ID,
+          participant_text:
+            'Like I am saying I think this is a real limitation and I do not think it needs to solve the wandering problem.',
+          modality: 'VOICE_TRANSCRIPT'
+        })
+      }),
+      env: testEnv
+    });
+    const pushbackBody = await pushbackRes.json();
+    assert.equal(
+      pushbackBody.session.epistemic_ledger.machine_interpretations[0].validation_status,
+      'DISPUTED_BY_PARTICIPANT'
+    );
+
+    // 8c. Present-tense stop request ("I am running out of time for this interview") wraps up immediately without adding a logistical statement
+    const stmtCountBefore = pushbackBody.session.epistemic_ledger.participant_statements.length;
+    const stopRes = await postTurn({
+      request: new Request('https://mindriotlabs.com/api/owen/interview/turn', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          session_id: DISPOSABLE_UAT_SESSION_ID,
+          participant_text: 'I am running out of time for this interview',
+          modality: 'VOICE_TRANSCRIPT'
+        })
+      }),
+      env: testEnv
+    });
+    const stopBody = await stopRes.json();
+    assert.equal(stopBody.session.status, 'COMPLETED');
+    assert.equal(
+      stopBody.session.epistemic_ledger.participant_statements.length,
+      stmtCountBefore
+    );
+  });
+});

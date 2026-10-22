@@ -13,7 +13,7 @@
  * - Interactive OWEN Experience Brief viewer & participant statement amendment/exclusion controls
  */
 
-const FRONTEND_BUILD_VERSION = 'v0.2.2-20261021';
+const FRONTEND_BUILD_VERSION = 'v0.2.3-20261022';
 const STORAGE_TOKEN_KEY = 'owen_pilot_001_invite_token';
 const STORAGE_SESSION_ID_KEY = 'owen_pilot_001_session_id';
 

@@ -54,6 +54,8 @@ export const DISPOSABLE_UAT_EXPIRED_SESSION_ID = 'ses-uat-review-expired-001';
 export const DISPOSABLE_UAT_REVOKED_SESSION_ID = 'ses-uat-review-revoked-001';
 export const DISPOSABLE_UAT_REVIEW_SESSION_IDS = new Set([
   DISPOSABLE_UAT_REVIEW_SESSION_ID,
+  'ses-uat-review-disposable-002',
+  'ses-uat-review-disposable-003',
   DISPOSABLE_UAT_EXPIRED_SESSION_ID,
   DISPOSABLE_UAT_REVOKED_SESSION_ID
 ]);
@@ -425,7 +427,7 @@ export async function resolveAuthorizedReviewContext(request, env = {}, body = n
   }
 
   // Auto-seed only disposable UAT sessions (never Russ's Pilot 001 session)
-  if (sessionId === DISPOSABLE_UAT_REVIEW_SESSION_ID) {
+  if (sessionId.startsWith('ses-uat-review-disposable-')) {
     await ensureDisposableUatReviewSession(store, sessionId, expectedReviewToken);
   } else if (sessionId === DISPOSABLE_UAT_EXPIRED_SESSION_ID) {
     await ensureDisposableUatReviewSession(store, sessionId, expectedReviewToken, {

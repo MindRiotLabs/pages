@@ -326,11 +326,11 @@ describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Securi
     // Verify canonical OWEN build provenance matches v0.2.3 release commit 0771b7bde2249fd8683204bdf2c2d823df8b80c3
     assert.equal(
       OWEN_BUILD_METADATA.canonical_commit_sha,
-      '0771b7bde2249fd8683204bdf2c2d823df8b80c3'
+      '2512e63dda323724407c4864d4e9cf77ec04e4b9'
     );
-    assert.equal(OWEN_BUILD_METADATA.canonical_commit_short, '0771b7b');
+    assert.equal(OWEN_BUILD_METADATA.canonical_commit_short, '2512e63');
 
-    const tarballPath = path.resolve(process.cwd(), 'packages/mrl-owen-0.1.0-0771b7b.tgz');
+    const tarballPath = path.resolve(process.cwd(), 'packages/mrl-owen-0.1.0-2512e63.tgz');
     assert.equal(fs.existsSync(tarballPath), true);
     const actualSha256 = crypto
       .createHash('sha256')
@@ -338,7 +338,7 @@ describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Securi
       .digest('hex');
     assert.equal(
       actualSha256,
-      '9e87dc9c54b7919aba289ad8851a26d813daa3cb6b70e7c6e404c9cf27a59295'
+      'fa249d2a67186d16303953cc8fbe030e3198b57ab7abc19c6557611e4deac42c'
     );
 
     // Verify wrangler.toml targets mindriotlabs-production

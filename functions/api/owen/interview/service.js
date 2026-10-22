@@ -1,5 +1,5 @@
 /**
- * MindRiot Labs — OWEN Experience Acquisition Server-Side Service Boundary
+ * MindRiot Labs â€” OWEN Experience Acquisition Server-Side Service Boundary
  *
  * Bridges Cloudflare Pages Functions at /api/owen/interview/* to the canonical
  * @mrl/owen ExperienceAcquisitionAgent and Supabase durable persistence.
@@ -489,6 +489,9 @@ export function sanitizeSessionForClient(session, extra = {}) {
   const copy = structuredClone(session);
   if (copy.access_control) {
     delete copy.access_control.invitation_token_sha256;
+  }
+  if (copy.review_access_control) {
+    delete copy.review_access_control.review_token_sha256;
   }
   return {
     session: copy,

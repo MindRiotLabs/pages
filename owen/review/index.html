@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="referrer" content="no-referrer" />
+    <title>OWEN — Participant Experience Review &amp; Contribution-to-Impact</title>
+    <link rel="icon" type="image/png" href="/assets/favicon.png" />
+    <link rel="stylesheet" href="/owen/review/review.css" />
+  </head>
+  <body>
+    <div class="owen-review-app">
+      <!-- Sticky Top Navigation Bar -->
+      <header class="owen-topbar" role="banner">
+        <div class="topbar-brand">
+          <a href="/" class="brand-link" aria-label="MindRiot Labs Home">
+            <img src="/assets/logo-white.png" alt="MindRiot Labs" class="brand-logo" />
+          </a>
+          <span class="brand-divider" aria-hidden="true"></span>
+          <div class="brand-titles">
+            <span class="brand-eyebrow">OWEN Experience Substrate · v0.3</span>
+            <span class="brand-title" id="headerSessionTitle">Participant Experience Review</span>
+          </div>
+        </div>
+        <div class="topbar-status">
+          <span class="status-pill" id="reviewStatusBadge" aria-live="polite">Authentication Required</span>
+        </div>
+      </header>
+
+      <main class="owen-main" id="mainContent">
+        <!-- STEP 1: Scoped Review Link Gate -->
+        <section class="card-panel" id="authGatePanel" aria-labelledby="authGateHeading">
+          <div class="panel-eyebrow">Private Scoped Review Access</div>
+          <h1 class="panel-title" id="authGateHeading">Review Your OWEN Experience Brief</h1>
+          <p class="panel-subtitle">
+            This private, expiring review portal allows you to verify how OWEN summarized your interview,
+            inspect original supporting quotes, adjust attribution preferences, and see how your experience
+            is informing OWEN’s evolution.
+          </p>
+
+          <div class="governance-callout" role="note">
+            <strong>Participant Sovereignty Guarantee:</strong> Opening this link does not approve or publish
+            anything. Your original interview transcript remains frozen as recorded, and nothing is finalized
+            until you explicitly submit your review.
+          </div>
+
+          <form id="authGateForm" class="auth-form" novalidate>
+            <div class="form-field">
+              <label for="sessionIdInput" class="field-label">Review Session Identifier</label>
+              <input
+                type="text"
+                id="sessionIdInput"
+                class="text-input"
+                value="ses-uat-review-disposable-001"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </div>
+            <div class="form-field">
+              <label for="reviewTokenInput" class="field-label">Private Review Access Key</label>
+              <input
+                type="password"
+                id="reviewTokenInput"
+                class="text-input"
+                placeholder="Paste your scoped review key..."
+                autocomplete="off"
+                required
+              />
+              <span class="field-hint">
+                Review keys are independently scoped from interview invitation links and expire after 14 days.
+              </span>
+            </div>
+            <div id="authErrorBox" class="error-banner hidden" role="alert" aria-live="assertive"></div>
+            <div class="form-actions">
+              <button type="submit" id="unlockReviewBtn" class="btn btn-primary">
+                Open Experience Review
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <!-- ACTIVE REVIEW PORTAL -->
+        <div id="reviewWorkspace" class="review-workspace hidden">
+          <!-- Confirmation Banner (shown after explicit submission) -->
+          <section
+            id="submissionConfirmationBanner"
+            class="card-panel confirmation-panel hidden"
+            aria-live="polite"
+          >
+            <div class="confirmation-header">
+              <span class="confirmation-badge">Review Submitted</span>
+              <span class="confirmation-timestamp" id="submittedTimestampText"></span>
+            </div>
+            <h2 class="confirmation-title">Thank you — your Experience Brief review is recorded.</h2>
+            <p class="confirmation-body">
+              Your confirmations, clarifications, cleanup choices, and attribution boundaries have been
+              saved as append-only provenance records. Your session is now at the
+              <strong>Human Steward Gate (Awaiting Steward Authority)</strong>—no organizational propagation
+              or Foundry ingestion can occur without separate Human Steward authorization.
+            </p>
+            <p class="confirmation-subnote" id="futureOutcomeOptInNote"></p>
+          </section>
+
+          <!-- STEP 2: Welcoming Context & Epistemic Boundary Explanation -->
+          <section class="card-panel welcome-panel" aria-labelledby="welcomeHeading">
+            <div class="welcome-meta-row">
+              <span class="meta-pill" id="welcomeEstimatePill">Estimated time: ~3 min</span>
+              <span class="meta-pill" id="welcomeExpiryPill">Link active</span>
+            </div>
+            <h1 class="panel-title" id="welcomeHeading">Welcome</h1>
+            <p class="panel-subtitle" id="welcomeMessageText"></p>
+
+            <div class="epistemic-boundary-banner" role="region" aria-label="Epistemic Boundary Notice">
+              <div class="boundary-item">
+                <span class="boundary-dot dot-human" aria-hidden="true"></span>
+                <div>
+                  <strong>Your Direct Testimony:</strong> Grounded in your verbatim words. You can confirm,
+                  edit/clarify, or exclude any section below.
+                </div>
+              </div>
+              <div class="boundary-item">
+                <span class="boundary-dot dot-machine" aria-hidden="true"></span>
+                <div>
+                  <strong>OWEN’s Separate Interpretations:</strong> Clearly labeled as machine-inferred
+                  hypotheses—never attributed as quotes from you.
+                </div>
+              </div>
+              <div class="boundary-item">
+                <span class="boundary-dot dot-steward" aria-hidden="true"></span>
+                <div>
+                  <strong>Human Steward Gate:</strong> Viewing this page or preselected cleanup suggestions
+                  never constitutes approval.
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- STEP 3, 4 & 5: Concise Experience Brief Sections + Collapsible Testimony -->
+          <section class="card-panel" aria-labelledby="sectionsHeading">
+            <div class="section-header-row">
+              <div>
+                <div class="panel-eyebrow">Step 1 of 4 · What OWEN Captured</div>
+                <h2 class="section-heading" id="sectionsHeading">
+                  Experience Brief Summary Sections
+                </h2>
+                <p class="section-description">
+                  Review each concise theme below. Expand <em>Original Supporting Testimony</em> to inspect
+                  the verbatim quote, then confirm accuracy, suggest an inline edit/clarification, or exclude
+                  the material from your approved brief.
+                </p>
+              </div>
+              <button
+                type="button"
+                id="confirmAllUnreviewedBtn"
+                class="btn btn-secondary btn-compact"
+              >
+                Confirm All Unreviewed
+              </button>
+            </div>
+
+            <div id="reviewSectionsContainer" class="review-sections-list"></div>
+          </section>
+
+          <!-- STEP 6A: Flagged Cleanup Recommendations (Decision 3: Preselected != Accepted) -->
+          <section class="card-panel" id="cleanupPanel" aria-labelledby="cleanupHeading">
+            <div class="panel-eyebrow">Step 2 of 4 · Recommended Transcript &amp; Synthesis Cleanups</div>
+            <h2 class="section-heading" id="cleanupHeading">
+              Suggested Quality Cleanups for Your Review
+            </h2>
+            <p class="section-description">
+              During post-session quality review, we flagged the following items where an AI synthesis
+              over-reached or a logistical closing remark was captured alongside domain claims. They are
+              preselected below as suggested cleanups for your convenience, but
+              <strong>preselection does not take effect unless you submit</strong>—and you can change either
+              choice below.
+            </p>
+            <div id="cleanupListContainer" class="cleanup-list"></div>
+          </section>
+
+          <!-- STEP 6B: OWEN's Separate Machine Interpretations & Candidate Lessons -->
+          <section class="card-panel" id="candidateLessonsPanel" aria-labelledby="lessonsHeading">
+            <div class="panel-eyebrow">Separate Epistemic Layer · Machine-Inferred Hypotheses</div>
+            <h2 class="section-heading" id="lessonsHeading">
+              OWEN’s Candidate Lessons (Separated from Your Quotes)
+            </h2>
+            <p class="section-description">
+              These candidate architectural lessons were synthesized by OWEN (`MACHINE_INFERRED`). They are
+              never presented as statements made by you. You may optionally share whether each interpretation
+              resonates, needs nuance, or misses the mark.
+            </p>
+            <div id="candidateLessonsContainer" class="lessons-list"></div>
+          </section>
+
+          <!-- STEP 7: Contribution-to-Impact ("What Your Experience Helped Us Reconsider") -->
+          <section class="card-panel impact-panel" aria-labelledby="impactHeading">
+            <div class="panel-eyebrow">Step 3 of 4 · Contribution-to-Impact Provenance</div>
+            <h2 class="section-heading" id="impactHeading">
+              What Your Experience Helped Us Reconsider
+            </h2>
+            <p class="section-description" id="impactIntroductionText"></p>
+
+            <div class="non-endorsement-banner" id="impactNonEndorsementBanner" role="note"></div>
+
+            <div id="impactItemsContainer" class="impact-cards-grid"></div>
+          </section>
+
+          <!-- STEP 8: Scoped Attribution, Consent & Sharing Boundaries -->
+          <section class="card-panel" aria-labelledby="attributionHeading">
+            <div class="panel-eyebrow">Step 4 of 4 · Attribution &amp; Sharing Boundaries</div>
+            <h2 class="section-heading" id="attributionHeading">
+              Your Attribution &amp; Sharing Permissions
+            </h2>
+            <p class="section-description">
+              You control how your reviewed Experience Brief may be attributed and where it may be referenced.
+              Even after your submission, any organizational propagation requires separate Human Steward
+              authorization.
+            </p>
+
+            <div class="controls-grid">
+              <div class="form-field">
+                <label for="attributionPreferenceSelect" class="field-label">
+                  Attribution Preference
+                </label>
+                <select id="attributionPreferenceSelect" class="select-input">
+                  <option value="ATTRIBUTED">
+                    Named Attribution (Attribute insights to me within permitted scope)
+                  </option>
+                  <option value="ANONYMIZED_EXTERNAL">
+                    Anonymized Attribution ("Former McKinsey Practitioner &amp; Healthcare AI Executive")
+                  </option>
+                  <option value="INTERNAL_ONLY">
+                    Strict Internal Steward Reference Only (Do not cite name in briefs)
+                  </option>
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label for="sharingScopeSelect" class="field-label">
+                  Permitted Sharing Scope
+                </label>
+                <select id="sharingScopeSelect" class="select-input">
+                  <option value="INTERNAL_OWEN_LEARNING_ONLY">
+                    OWEN Architecture &amp; Calibration Only (Default — Project-Only)
+                  </option>
+                  <option value="MRL_PORTFOLIO_INTERNAL">
+                    MindRiot Labs Internal Portfolio Ventures Only
+                  </option>
+                  <option value="EXTERNAL_CASE_STUDY_REQUIRES_SEPARATE_SIGNOFF">
+                    External Reference Permitted Only With Separate Written Sign-Off
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="checkbox-group">
+              <label class="checkbox-row" for="allowFoundryIngestionCheckbox">
+                <input type="checkbox" id="allowFoundryIngestionCheckbox" checked />
+                <span>
+                  Allow OWEN Foundry to index my confirmed statements (excluding any items I marked excluded)
+                  once the Human Steward authorizes the brief.
+                </span>
+              </label>
+
+              <label class="checkbox-row" for="notifyFutureOutcomesCheckbox">
+                <input type="checkbox" id="notifyFutureOutcomesCheckbox" checked />
+                <span>
+                  Send me a brief update when proposed experiments inspired by this session are tested or
+                  verified.
+                </span>
+              </label>
+            </div>
+
+            <div class="form-field" style="margin-top: 16px;">
+              <label for="overallCommentTextarea" class="field-label">
+                Additional Reflections or Context (Optional)
+              </label>
+              <textarea
+                id="overallCommentTextarea"
+                class="textarea-input"
+                rows="3"
+                placeholder="Any overarching thoughts, caveats, or context you want preserved alongside your review..."
+              ></textarea>
+            </div>
+          </section>
+
+          <!-- STEP 9: Sticky Bottom Submission Bar -->
+          <footer class="sticky-submit-bar" role="contentinfo">
+            <div class="submit-bar-inner">
+              <div class="autosave-status">
+                <span class="autosave-dot" id="autosaveDot" aria-hidden="true"></span>
+                <span id="autosaveStatusText" aria-live="polite">Progress saved locally</span>
+              </div>
+              <div class="submit-bar-actions">
+                <button type="button" id="saveDraftBtn" class="btn btn-secondary">
+                  Save Draft
+                </button>
+                <button type="button" id="submitReviewBtn" class="btn btn-primary">
+                  Submit Experience Review
+                </button>
+              </div>
+            </div>
+          </footer>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="/owen/review/review.js"></script>
+  </body>
+</html>

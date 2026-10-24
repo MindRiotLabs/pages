@@ -4,10 +4,13 @@
  * Bridges Cloudflare Pages Functions at /api/owen/review/* to the canonical
  * @mrl/owen ExperienceReviewService and Supabase durable persistence.
  *
- * Governance & Security Invariants (ADR-0019):
+ * Governance & Security Invariants (ADR-0019, ADR-0020):
  * - Independently scoped 14-day review credentials (x-owen-review-token / Bearer).
  * - Interview invitation tokens are strictly rejected on all /api/owen/review/* endpoints.
  * - Review tokens are never accepted from URL query strings (?token=...).
+ * - Rejects 64-character hex SHA-256 digests presented as bearer tokens (DIGEST_REPLAY_FORBIDDEN).
+ * - Durable persistence uses service_role-authenticated, raw-token-verified Supabase
+ *   SECURITY DEFINER RPCs (owen_get_review_session / owen_save_review_session).
  * - Opening a review link never marks participant_reviewed=true or accepts preselected cleanups.
  * - Completed interview turns are frozen and immutable.
  * - Zero internal ledger identifiers (stmt-*, minterp-*, turn-*, les-*) or token hashes in responses.
@@ -30,17 +33,30 @@ import {
 } from '@mrl/owen';
 import {
   DEFAULT_PILOT_001_SESSION_ID,
-  DEFAULT_SUPABASE_ANON_KEY,
   DEFAULT_SUPABASE_URL,
   DISPOSABLE_UAT_SESSION_ID,
+  FOUNDER_UAT_V02_SESSION_ID,
   InterviewRateLimitError,
   REVOKED_SESSION_IDS,
   REVOKED_TOKEN_SHA256S,
   clearFailedAuthAttempts,
   enforceRateLimit,
   getConfiguredTokenForSession,
-  recordFailedAuthAttempt
+  recordFailedAuthAttempt,
+  resolveSupabaseServiceKey,
+  sanitizeErrorMessageForClient
 } from '../interview/service.js';
+
+export class ReviewPortalDisabledError extends Error {
+  constructor(
+    message = 'The OWEN Experience Review Portal is temporarily offline for maintenance. Your saved review progress is preserved.'
+  ) {
+    super(message);
+    this.name = 'ReviewPortalDisabledError';
+    this.code = 'REVIEW_PORTAL_DISABLED';
+    this.status = 503;
+  }
+}
 
 export {
   CompletedInterviewTurnsImmutableError,
@@ -130,27 +146,55 @@ function timingSafeReviewHashMatch(tokenA, tokenB) {
 
 /**
  * Durable review store backed by Supabase SECURITY DEFINER RPCs:
- * - owen_get_review_session(p_session_id, p_review_token_sha256)
- * - owen_save_review_session(p_session_id, p_session, p_review_token_sha256)
+ * - owen_get_review_session(p_session_id, p_review_token, p_rpc_secret)
+ * - owen_save_review_session(p_session_id, p_session, p_review_token, p_rpc_secret)
+ *
+ * Security Invariants (ADR-0020):
+ * - Authenticates to Supabase PostgREST using the server-only SUPABASE_SERVICE_ROLE_KEY.
+ * - Sends the raw review token (p_review_token) so PostgreSQL computes SHA-256
+ *   server-side and rejects pass-the-hash digest replay (DIGEST_REPLAY_FORBIDDEN).
  */
 export class SupabaseRpcReviewSessionStore {
-  constructor({ supabaseUrl, supabaseKey, activeReviewTokenSha256, fetchImpl }) {
+  constructor({
+    supabaseUrl,
+    supabaseKey,
+    rawReviewToken,
+    activeReviewTokenSha256,
+    rpcSecret = null,
+    fetchImpl = null
+  }) {
     this.supabaseUrl = (supabaseUrl || DEFAULT_SUPABASE_URL).replace(/\/+$/, '');
-    this.supabaseKey = supabaseKey || DEFAULT_SUPABASE_ANON_KEY;
-    this.activeReviewTokenSha256 = activeReviewTokenSha256;
-    this.fetchImpl = fetchImpl || fetch;
+    this.supabaseKey = supabaseKey;
+    this.rawReviewToken = typeof rawReviewToken === 'string' ? rawReviewToken.trim() : '';
+    this.activeReviewTokenSha256 =
+      activeReviewTokenSha256 || (this.rawReviewToken ? hashReviewToken(this.rawReviewToken) : '');
+    this.rpcSecret = rpcSecret || null;
+    this.fetchImpl = fetchImpl || null;
     this.requestSessionCache = new Map();
   }
 
   async getSession(sessionId) {
-    if (!this.activeReviewTokenSha256) {
+    if (!this.supabaseKey || !this.rawReviewToken) {
       return undefined;
+    }
+    if (/^[0-9a-f]{64}$/i.test(this.rawReviewToken)) {
+      throw new ReviewAccessDeniedError(
+        'SHA-256 token digests cannot be used as bearer review credentials (DIGEST_REPLAY_FORBIDDEN).',
+        'DIGEST_REPLAY_FORBIDDEN'
+      );
     }
     if (this.requestSessionCache.has(sessionId)) {
       return structuredClone(this.requestSessionCache.get(sessionId));
     }
 
-    const res = await this.fetchImpl(
+    const doFetch = this.fetchImpl || globalThis.fetch;
+    const payload = {
+      p_session_id: sessionId,
+      p_review_token: this.rawReviewToken,
+      ...(this.rpcSecret ? { p_rpc_secret: this.rpcSecret } : {})
+    };
+
+    const res = await doFetch(
       `${this.supabaseUrl}/rest/v1/rpc/owen_get_review_session`,
       {
         method: 'POST',
@@ -159,15 +203,15 @@ export class SupabaseRpcReviewSessionStore {
           apikey: this.supabaseKey,
           Authorization: `Bearer ${this.supabaseKey}`
         },
-        body: JSON.stringify({
-          p_session_id: sessionId,
-          p_review_token_sha256: this.activeReviewTokenSha256
-        })
+        body: JSON.stringify(payload)
       }
     );
 
     if (!res.ok) {
       const errText = await res.text().catch(() => '');
+      if (errText.includes('REVIEW_PORTAL_ROLLED_BACK')) {
+        throw new ReviewPortalDisabledError();
+      }
       if (errText.includes('REVIEW_TOKEN_EXPIRED')) {
         throw new ReviewTokenExpiredError();
       }
@@ -183,6 +227,21 @@ export class SupabaseRpcReviewSessionStore {
           'WRONG_TOKEN_SCOPE'
         );
       }
+      if (errText.includes('DIGEST_REPLAY_FORBIDDEN')) {
+        throw new ReviewAccessDeniedError(
+          'SHA-256 token digests cannot be used as bearer review credentials.',
+          'DIGEST_REPLAY_FORBIDDEN'
+        );
+      }
+      if (
+        res.status === 401 ||
+        res.status === 403 ||
+        res.status === 404 ||
+        res.status >= 500 ||
+        /PGRST\d{3}|permission denied|JWSError|JWT/i.test(errText)
+      ) {
+        throw new Error(`Durable review session persistence failed (${res.status}): ${errText}`);
+      }
       return undefined;
     }
 
@@ -196,12 +255,33 @@ export class SupabaseRpcReviewSessionStore {
 
   async saveSession(session) {
     if (!session || !session.id) return;
+    if (!this.supabaseKey) {
+      throw new Error('Server persistence credential (SUPABASE_SERVICE_ROLE_KEY) is required.');
+    }
+    if (!this.rawReviewToken) {
+      throw new ReviewAccessDeniedError(
+        'Raw review credential is required for durable review persistence.',
+        'MISSING_TOKEN'
+      );
+    }
+    if (/^[0-9a-f]{64}$/i.test(this.rawReviewToken)) {
+      throw new ReviewAccessDeniedError(
+        'SHA-256 token digests cannot be used as bearer review credentials (DIGEST_REPLAY_FORBIDDEN).',
+        'DIGEST_REPLAY_FORBIDDEN'
+      );
+    }
+
     this.requestSessionCache.set(session.id, structuredClone(session));
 
-    const tokenSha =
-      session?.review_access_control?.review_token_sha256 || this.activeReviewTokenSha256;
+    const doFetch = this.fetchImpl || globalThis.fetch;
+    const payload = {
+      p_session_id: session.id,
+      p_session: session,
+      p_review_token: this.rawReviewToken,
+      ...(this.rpcSecret ? { p_rpc_secret: this.rpcSecret } : {})
+    };
 
-    const res = await this.fetchImpl(
+    const res = await doFetch(
       `${this.supabaseUrl}/rest/v1/rpc/owen_save_review_session`,
       {
         method: 'POST',
@@ -210,16 +290,18 @@ export class SupabaseRpcReviewSessionStore {
           apikey: this.supabaseKey,
           Authorization: `Bearer ${this.supabaseKey}`
         },
-        body: JSON.stringify({
-          p_session_id: session.id,
-          p_session: session,
-          p_review_token_sha256: tokenSha
-        })
+        body: JSON.stringify(payload)
       }
     );
 
     if (!res.ok) {
       const errText = await res.text().catch(() => 'Supabase review RPC error');
+      if (errText.includes('REVIEW_PORTAL_ROLLED_BACK')) {
+        throw new ReviewPortalDisabledError();
+      }
+      if (errText.includes('IMMUTABLE_SOURCE_EVIDENCE_VIOLATION')) {
+        throw new CompletedInterviewTurnsImmutableError(errText);
+      }
       throw new Error(`Durable review session persistence failed (${res.status}): ${errText}`);
     }
   }
@@ -341,6 +423,10 @@ export async function ensureDisposableUatReviewSession(
 export async function resolveAuthorizedReviewContext(request, env = {}, body = null) {
   enforceRateLimit(request);
 
+  if (String(getEnvValue(env, 'OWEN_REVIEW_PORTAL_DISABLED')).toLowerCase() === 'true') {
+    throw new ReviewPortalDisabledError();
+  }
+
   const url = new URL(request.url);
 
   // Never allow secrets in URL query parameters
@@ -366,6 +452,15 @@ export async function resolveAuthorizedReviewContext(request, env = {}, body = n
     );
   }
 
+  // Reject pass-the-hash digest replay (64-character hex SHA-256 digest presented as raw token)
+  if (/^[0-9a-f]{64}$/i.test(rawReviewToken)) {
+    recordFailedAuthAttempt(request);
+    throw new ReviewAccessDeniedError(
+      'SHA-256 token digests cannot be used as bearer review credentials (DIGEST_REPLAY_FORBIDDEN).',
+      'DIGEST_REPLAY_FORBIDDEN'
+    );
+  }
+
   const incomingSha = hashReviewToken(rawReviewToken);
   if (REVOKED_SESSION_IDS.has(sessionId) || REVOKED_TOKEN_SHA256S.has(incomingSha)) {
     recordFailedAuthAttempt(request);
@@ -379,6 +474,7 @@ export async function resolveAuthorizedReviewContext(request, env = {}, body = n
   const knownInviteTokens = [
     getConfiguredTokenForSession(env, sessionId),
     getConfiguredTokenForSession(env, DISPOSABLE_UAT_SESSION_ID),
+    getConfiguredTokenForSession(env, FOUNDER_UAT_V02_SESSION_ID),
     getConfiguredTokenForSession(env, DEFAULT_PILOT_001_SESSION_ID)
   ].filter(Boolean);
   if (knownInviteTokens.some((invTok) => timingSafeReviewHashMatch(rawReviewToken, invTok))) {
@@ -392,16 +488,29 @@ export async function resolveAuthorizedReviewContext(request, env = {}, body = n
   const nodeEnv = getEnvValue(env, 'NODE_ENV');
   const reviewStoreMode = getEnvValue(env, 'REVIEW_STORE') || getEnvValue(env, 'INTERVIEW_STORE');
   const useMemoryStore =
-    nodeEnv === 'test' ||
-    reviewStoreMode === 'memory' ||
-    DISPOSABLE_UAT_REVIEW_SESSION_IDS.has(sessionId);
+    reviewStoreMode === 'supabase'
+      ? false
+      : nodeEnv === 'test' ||
+        reviewStoreMode === 'memory' ||
+        DISPOSABLE_UAT_REVIEW_SESSION_IDS.has(sessionId);
+
+  const supabaseServiceKey = resolveSupabaseServiceKey(env);
+  const rpcSecret = getEnvValue(env, 'OWEN_SUPABASE_RPC_SECRET') || null;
+
+  if (!useMemoryStore && !supabaseServiceKey) {
+    throw new Error(
+      'Server persistence credential (SUPABASE_SERVICE_ROLE_KEY) is not configured on the Cloudflare Worker.'
+    );
+  }
 
   const store = useMemoryStore
     ? getSharedReviewMemoryStore()
     : new SupabaseRpcReviewSessionStore({
-        supabaseUrl: env?.SUPABASE_URL || DEFAULT_SUPABASE_URL,
-        supabaseKey: env?.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY,
-        activeReviewTokenSha256: incomingSha
+        supabaseUrl: getEnvValue(env, 'SUPABASE_URL') || DEFAULT_SUPABASE_URL,
+        supabaseKey: supabaseServiceKey,
+        rawReviewToken,
+        activeReviewTokenSha256: incomingSha,
+        rpcSecret
       });
 
   const expectedReviewToken = getConfiguredReviewTokenForSession(env, sessionId);
@@ -426,19 +535,21 @@ export async function resolveAuthorizedReviewContext(request, env = {}, body = n
     }
   }
 
-  // Auto-seed only disposable UAT sessions (never Russ's Pilot 001 session)
-  if (sessionId.startsWith('ses-uat-review-disposable-')) {
-    await ensureDisposableUatReviewSession(store, sessionId, expectedReviewToken);
-  } else if (sessionId === DISPOSABLE_UAT_EXPIRED_SESSION_ID) {
-    await ensureDisposableUatReviewSession(store, sessionId, expectedReviewToken, {
-      saveInitialDraft: true,
-      expiredAtAfterDraft: '2026-01-01T00:00:00.000Z'
-    });
-  } else if (sessionId === DISPOSABLE_UAT_REVOKED_SESSION_ID) {
-    await ensureDisposableUatReviewSession(store, sessionId, expectedReviewToken, {
-      saveInitialDraft: true,
-      revoked: true
-    });
+  // Auto-seed disposable UAT sessions only when running in-memory store mode
+  if (useMemoryStore) {
+    if (sessionId.startsWith('ses-uat-review-disposable-')) {
+      await ensureDisposableUatReviewSession(store, sessionId, expectedReviewToken);
+    } else if (sessionId === DISPOSABLE_UAT_EXPIRED_SESSION_ID) {
+      await ensureDisposableUatReviewSession(store, sessionId, expectedReviewToken, {
+        saveInitialDraft: true,
+        expiredAtAfterDraft: '2026-01-01T00:00:00.000Z'
+      });
+    } else if (sessionId === DISPOSABLE_UAT_REVOKED_SESSION_ID) {
+      await ensureDisposableUatReviewSession(store, sessionId, expectedReviewToken, {
+        saveInitialDraft: true,
+        revoked: true
+      });
+    }
   }
 
   const acquisitionAgent = new ExperienceAcquisitionAgent({ store });
@@ -505,6 +616,17 @@ export function buildReviewErrorResponse(
     );
   }
 
+  if (err instanceof ReviewPortalDisabledError) {
+    return new Response(
+      JSON.stringify({
+        error: err.message,
+        code: 'REVIEW_PORTAL_DISABLED',
+        saved_progress_preserved: true
+      }),
+      { status: 503, headers: reviewCorsHeaders }
+    );
+  }
+
   if (err instanceof CompletedInterviewTurnsImmutableError) {
     return new Response(
       JSON.stringify({
@@ -515,12 +637,15 @@ export function buildReviewErrorResponse(
     );
   }
 
+  const sanitized = sanitizeErrorMessageForClient(err?.message, defaultMessage);
+  const status = sanitized.isInternalError ? 500 : defaultStatus;
+  const code = sanitized.isInternalError ? 'INTERNAL_ERROR' : defaultCode;
   return new Response(
     JSON.stringify({
-      error: err?.message || defaultMessage,
-      code: defaultCode
+      error: sanitized.message,
+      code
     }),
-    { status: defaultStatus, headers: reviewCorsHeaders }
+    { status, headers: reviewCorsHeaders }
   );
 }
 

@@ -1,18 +1,20 @@
 /**
- * MindRiot Labs â€” OWEN Experience Acquisition Server-Side Service Boundary
+ * MindRiot Labs — OWEN Experience Acquisition Server-Side Service Boundary
  *
  * Bridges Cloudflare Pages Functions at /api/owen/interview/* to the canonical
  * @mrl/owen ExperienceAcquisitionAgent and Supabase durable persistence.
  *
- * Architectural & Security Invariants:
+ * Architectural & Security Invariants (ADR-0018, ADR-0019, ADR-0020):
  * - Zero core interview logic or schema duplication in MindRiotLabs; all intelligence,
  *   epistemic separation, and brief synthesis execute via @mrl/owen.
  * - No hardcoded fallback invitation tokens or development auth bypasses.
  * - Strict session-to-token binding: each token authorizes ONLY its intended session/participant.
  * - Invitation tokens are accepted only via HTTP headers or POST body (never URL query strings).
+ * - Rejects 64-character hex SHA-256 digests presented as bearer tokens (DIGEST_REPLAY_FORBIDDEN).
  * - Server-side rate limiting and brute-force lockout (429 Too Many Requests).
- * - Durable persistence uses token-gated Supabase SECURITY DEFINER RPCs
- *   (owen_upsert_interview_session / owen_get_interview_session) on project xkgtipcyswjpvwmmawmf.
+ * - Durable persistence uses service_role-authenticated, raw-token-verified Supabase
+ *   SECURITY DEFINER RPCs (owen_upsert_interview_session / owen_get_interview_session)
+ *   on project xkgtipcyswjpvwmmawmf.
  * - Never exposes raw API keys, database credentials, or invitation_token_sha256 to clients.
  */
 
@@ -38,7 +40,7 @@ export {
 export const DEFAULT_PILOT_001_SESSION_ID = 'ses-pilot-001-russ-richmond';
 export const DISPOSABLE_UAT_SESSION_ID = 'ses-uat-disposable-002';
 export const FOUNDER_UAT_V02_SESSION_ID = 'ses-founder-uat-jvh-v02';
-export const REVOKED_SESSION_IDS = new Set(['ses-uat-disposable-001']);
+export const REVOKED_SESSION_IDS = new Set(['ses-uat-disposable-001', 'ses-prod-smoke-v022']);
 export const REVOKED_TOKEN_SHA256S = new Set([
   '598311524dbc2c4ad97fd09771e82fd1b5640f3f694b08510a3ef794593add06',
   '223559fccace9d5078cb825592cb4d1e5148abaad6ed7996cfd1d3a5045b04df',
@@ -147,15 +149,32 @@ export function clearFailedAuthAttempts(request) {
 
 /**
  * Durable InterviewSessionStore backed by Supabase REST RPC functions:
- * - owen_upsert_interview_session(p_session, p_invitation_token_sha256)
- * - owen_get_interview_session(p_session_id, p_invitation_token_sha256)
+ * - owen_upsert_interview_session(p_session, p_invitation_token, p_rpc_secret)
+ * - owen_get_interview_session(p_session_id, p_invitation_token, p_rpc_secret)
+ *
+ * Security Invariants (ADR-0020):
+ * - Authenticates to Supabase PostgREST using the server-only SUPABASE_SERVICE_ROLE_KEY.
+ * - Sends the raw invitation token (p_invitation_token) so PostgreSQL computes SHA-256
+ *   server-side and rejects pass-the-hash digest replay (DIGEST_REPLAY_FORBIDDEN).
  */
 export class SupabaseRpcInterviewSessionStore {
-  constructor({ supabaseUrl, supabaseKey, activeTokenSha256, fallbackMemoryStore }) {
+  constructor({
+    supabaseUrl,
+    supabaseKey,
+    rawInviteToken,
+    activeTokenSha256,
+    rpcSecret = null,
+    fallbackMemoryStore = null,
+    fetchImpl = null
+  }) {
     this.supabaseUrl = (supabaseUrl || DEFAULT_SUPABASE_URL).replace(/\/+$/, '');
-    this.supabaseKey = supabaseKey || DEFAULT_SUPABASE_ANON_KEY;
-    this.activeTokenSha256 = activeTokenSha256;
+    this.supabaseKey = supabaseKey;
+    this.rawInviteToken = typeof rawInviteToken === 'string' ? rawInviteToken.trim() : '';
+    this.activeTokenSha256 =
+      activeTokenSha256 || (this.rawInviteToken ? hashInvitationToken(this.rawInviteToken) : '');
+    this.rpcSecret = rpcSecret || null;
     this.fallbackMemoryStore = fallbackMemoryStore;
+    this.fetchImpl = fetchImpl || null;
     this.requestSessionCache = new Map();
     this.lastReadMs = 0;
     this.lastWriteMs = 0;
@@ -164,8 +183,17 @@ export class SupabaseRpcInterviewSessionStore {
   }
 
   async saveSession(session) {
-    const tokenSha =
-      session?.access_control?.invitation_token_sha256 || this.activeTokenSha256;
+    if (!this.supabaseKey) {
+      throw new Error('Server persistence credential (SUPABASE_SERVICE_ROLE_KEY) is required.');
+    }
+    if (!this.rawInviteToken) {
+      throw new InterviewAccessDeniedError('Raw invitation token is required for durable persistence.');
+    }
+    if (/^[0-9a-f]{64}$/i.test(this.rawInviteToken)) {
+      throw new InterviewAccessDeniedError(
+        'SHA-256 token digests cannot be used as bearer credentials (DIGEST_REPLAY_FORBIDDEN).'
+      );
+    }
 
     if (session && session.id) {
       this.requestSessionCache.set(session.id, structuredClone(session));
@@ -175,8 +203,15 @@ export class SupabaseRpcInterviewSessionStore {
       await this.fallbackMemoryStore.saveSession(session);
     }
 
+    const doFetch = this.fetchImpl || globalThis.fetch;
+    const payload = {
+      p_session: session,
+      p_invitation_token: this.rawInviteToken,
+      ...(this.rpcSecret ? { p_rpc_secret: this.rpcSecret } : {})
+    };
+
     const t0 = Date.now();
-    const res = await fetch(
+    const res = await doFetch(
       `${this.supabaseUrl}/rest/v1/rpc/owen_upsert_interview_session`,
       {
         method: 'POST',
@@ -185,10 +220,7 @@ export class SupabaseRpcInterviewSessionStore {
           apikey: this.supabaseKey,
           Authorization: `Bearer ${this.supabaseKey}`
         },
-        body: JSON.stringify({
-          p_session: session,
-          p_invitation_token_sha256: tokenSha
-        })
+        body: JSON.stringify(payload)
       }
     );
     this.lastWriteMs = Date.now() - t0;
@@ -201,16 +233,28 @@ export class SupabaseRpcInterviewSessionStore {
   }
 
   async getSession(sessionId) {
-    if (!this.activeTokenSha256) {
+    if (!this.supabaseKey || !this.rawInviteToken) {
       return undefined;
+    }
+    if (/^[0-9a-f]{64}$/i.test(this.rawInviteToken)) {
+      throw new InterviewAccessDeniedError(
+        'SHA-256 token digests cannot be used as bearer credentials (DIGEST_REPLAY_FORBIDDEN).'
+      );
     }
 
     if (this.requestSessionCache.has(sessionId)) {
       return structuredClone(this.requestSessionCache.get(sessionId));
     }
 
+    const doFetch = this.fetchImpl || globalThis.fetch;
+    const payload = {
+      p_session_id: sessionId,
+      p_invitation_token: this.rawInviteToken,
+      ...(this.rpcSecret ? { p_rpc_secret: this.rpcSecret } : {})
+    };
+
     const t0 = Date.now();
-    const res = await fetch(
+    const res = await doFetch(
       `${this.supabaseUrl}/rest/v1/rpc/owen_get_interview_session`,
       {
         method: 'POST',
@@ -219,16 +263,32 @@ export class SupabaseRpcInterviewSessionStore {
           apikey: this.supabaseKey,
           Authorization: `Bearer ${this.supabaseKey}`
         },
-        body: JSON.stringify({
-          p_session_id: sessionId,
-          p_invitation_token_sha256: this.activeTokenSha256
-        })
+        body: JSON.stringify(payload)
       }
     );
     this.lastReadMs = Date.now() - t0;
     this.readCount += 1;
 
     if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      if (
+        /DIGEST_REPLAY_FORBIDDEN|Invalid invitation token|revoked|WRONG_TOKEN_SCOPE|MISSING_TOKEN/i.test(
+          errText
+        )
+      ) {
+        throw new InterviewAccessDeniedError(
+          'Invalid or unauthorized invitation token for the requested interview session.'
+        );
+      }
+      if (
+        res.status === 401 ||
+        res.status === 403 ||
+        res.status === 404 ||
+        res.status >= 500 ||
+        /PGRST\d{3}|permission denied|JWSError|JWT/i.test(errText)
+      ) {
+        throw new Error(`Durable session persistence failed (${res.status}): ${errText}`);
+      }
       return undefined;
     }
 
@@ -274,12 +334,27 @@ function getEnvValue(env, key) {
 }
 
 /**
+ * Resolves the privileged server-only Supabase key for SECURITY DEFINER RPC execution.
+ * Never falls back to DEFAULT_SUPABASE_ANON_KEY.
+ */
+export function resolveSupabaseServiceKey(env = {}) {
+  return (
+    getEnvValue(env, 'SUPABASE_SERVICE_ROLE_KEY') ||
+    getEnvValue(env, 'OWEN_SUPABASE_SERVICE_ROLE_KEY') ||
+    ''
+  );
+}
+
+/**
  * Returns the configured invitation token for a specific target session ID.
  * Never falls back to a hardcoded token in deployed environments.
  */
 export function getConfiguredTokenForSession(env = {}, sessionId = DEFAULT_PILOT_001_SESSION_ID) {
   if (sessionId === DISPOSABLE_UAT_SESSION_ID) {
     return getEnvValue(env, 'OWEN_UAT_DISPOSABLE_INVITE_TOKEN');
+  }
+  if (sessionId === FOUNDER_UAT_V02_SESSION_ID) {
+    return getEnvValue(env, 'OWEN_FOUNDER_UAT_V02_INVITE_TOKEN');
   }
   if (sessionId === DEFAULT_PILOT_001_SESSION_ID) {
     return getEnvValue(env, 'OWEN_PILOT_001_INVITE_TOKEN');
@@ -309,16 +384,27 @@ export function createInterviewServiceContext(env = {}, rawInviteToken = '', ses
     cachedMemoryStore = new InMemoryInterviewSessionStore();
   }
 
-  const useMemoryOnly = nodeEnv === 'test' || storeMode === 'memory';
+  const useMemoryOnly =
+    storeMode === 'supabase' ? false : nodeEnv === 'test' || storeMode === 'memory';
   const expectedSessionToken = getConfiguredTokenForSession(env, sessionId);
   const activeTokenSha256 = rawInviteToken ? hashInvitationToken(rawInviteToken) : '';
+  const supabaseServiceKey = resolveSupabaseServiceKey(env);
+  const rpcSecret = getEnvValue(env, 'OWEN_SUPABASE_RPC_SECRET') || null;
+
+  if (!useMemoryOnly && !supabaseServiceKey) {
+    throw new Error(
+      'Server persistence credential (SUPABASE_SERVICE_ROLE_KEY) is not configured on the Cloudflare Worker.'
+    );
+  }
 
   const store = useMemoryOnly
     ? cachedMemoryStore
     : new SupabaseRpcInterviewSessionStore({
-        supabaseUrl: env?.SUPABASE_URL || DEFAULT_SUPABASE_URL,
-        supabaseKey: env?.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY,
+        supabaseUrl: getEnvValue(env, 'SUPABASE_URL') || DEFAULT_SUPABASE_URL,
+        supabaseKey: supabaseServiceKey,
+        rawInviteToken,
         activeTokenSha256,
+        rpcSecret,
         fallbackMemoryStore: null
       });
 
@@ -363,6 +449,13 @@ export async function resolveAuthorizedPilotSession(request, env = {}, body = nu
   enforceRateLimit(request);
 
   const url = new URL(request.url);
+  if (url.searchParams.has('token') || url.searchParams.has('invitation_token')) {
+    recordFailedAuthAttempt(request);
+    throw new InterviewAccessDeniedError(
+      'Invitation credentials must not be passed in URL query parameters. Use Authorization or x-owen-invite-token header.'
+    );
+  }
+
   const sessionId =
     (body && body.session_id) ||
     url.searchParams.get('session_id') ||
@@ -373,6 +466,14 @@ export async function resolveAuthorizedPilotSession(request, env = {}, body = nu
     recordFailedAuthAttempt(request);
     throw new InterviewAccessDeniedError(
       'Private invitation token is required (via Authorization or x-owen-invite-token header).'
+    );
+  }
+
+  // Reject pass-the-hash digest replay (64-character hex SHA-256 digest presented as raw token)
+  if (/^[0-9a-f]{64}$/i.test(rawToken)) {
+    recordFailedAuthAttempt(request);
+    throw new InterviewAccessDeniedError(
+      'SHA-256 token digests cannot be used as bearer credentials (DIGEST_REPLAY_FORBIDDEN).'
     );
   }
 
@@ -387,8 +488,12 @@ export async function resolveAuthorizedPilotSession(request, env = {}, body = nu
   const { agent, store, voiceAdapter, expectedSessionToken, modelProvider } =
     createInterviewServiceContext(env, rawToken, sessionId);
 
-  // Enforce strict session-specific token binding for Pilot 001 and UAT sessions
-  if (sessionId === DEFAULT_PILOT_001_SESSION_ID || sessionId === DISPOSABLE_UAT_SESSION_ID) {
+  // Enforce strict session-specific token binding for Pilot 001, Founder UAT, and Disposable UAT sessions
+  if (
+    sessionId === DEFAULT_PILOT_001_SESSION_ID ||
+    sessionId === DISPOSABLE_UAT_SESSION_ID ||
+    sessionId === FOUNDER_UAT_V02_SESSION_ID
+  ) {
     if (!expectedSessionToken) {
       recordFailedAuthAttempt(request);
       throw new InterviewAccessDeniedError(
@@ -406,8 +511,14 @@ export async function resolveAuthorizedPilotSession(request, env = {}, body = nu
   // Check if session already exists in store
   let session = await agent.getSession(sessionId);
 
-  if (!session && (sessionId === DEFAULT_PILOT_001_SESSION_ID || sessionId === DISPOSABLE_UAT_SESSION_ID)) {
-    const isUat = sessionId === DISPOSABLE_UAT_SESSION_ID;
+  if (
+    !session &&
+    (sessionId === DEFAULT_PILOT_001_SESSION_ID ||
+      sessionId === DISPOSABLE_UAT_SESSION_ID ||
+      sessionId === FOUNDER_UAT_V02_SESSION_ID)
+  ) {
+    const isUat =
+      sessionId === DISPOSABLE_UAT_SESSION_ID || sessionId === FOUNDER_UAT_V02_SESSION_ID;
     const config = createRussRichmondPilotSessionConfig(expectedSessionToken, {
       sessionId,
       modality: voiceAdapter.isConfigured() ? 'ELEVENLABS_VOICE' : 'TEXT_ADAPTIVE',
@@ -435,6 +546,28 @@ export async function resolveAuthorizedPilotSession(request, env = {}, body = nu
     recordFailedAuthAttempt(request);
     throw err;
   }
+}
+
+const INTERNAL_ERROR_LEAK_PATTERN =
+  /SUPABASE_SERVICE_ROLE_KEY|OWEN_SUPABASE_SERVICE_ROLE_KEY|Server persistence credential|Durable session persistence failed|Durable review session persistence failed|PGRST\d{3}|permission denied for function|JWSError|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}|sb_secret_[A-Za-z0-9_-]+|sb_publishable_[A-Za-z0-9_-]+|apikey|Bearer\s+[A-Za-z0-9._-]+/i;
+
+export function sanitizeErrorMessageForClient(
+  rawMessage,
+  defaultMessage = 'Unable to process request.'
+) {
+  if (!rawMessage || typeof rawMessage !== 'string') {
+    return { message: defaultMessage, isInternalError: true };
+  }
+  if (INTERNAL_ERROR_LEAK_PATTERN.test(rawMessage)) {
+    return {
+      message: defaultMessage || 'Service temporarily unavailable due to a server configuration error.',
+      isInternalError: true
+    };
+  }
+  const scrubbed = rawMessage
+    .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, '[REDACTED_JWT]')
+    .replace(/sb_(?:secret|publishable)_[A-Za-z0-9_-]+/g, '[REDACTED_KEY]');
+  return { message: scrubbed, isInternalError: false };
 }
 
 export function buildErrorResponse(err, defaultMessage, defaultStatus = 500, defaultCode = 'INTERNAL_ERROR') {
@@ -472,12 +605,15 @@ export function buildErrorResponse(err, defaultMessage, defaultStatus = 500, def
       { status: defaultCode === 'CONSENT_REQUIRED' ? 400 : 403, headers: corsHeaders }
     );
   }
+  const sanitized = sanitizeErrorMessageForClient(err?.message, defaultMessage);
+  const status = sanitized.isInternalError ? 500 : defaultStatus;
+  const code = sanitized.isInternalError ? 'INTERNAL_ERROR' : defaultCode;
   return new Response(
     JSON.stringify({
-      error: err?.message || defaultMessage,
-      code: defaultCode
+      error: sanitized.message,
+      code
     }),
-    { status: defaultStatus, headers: corsHeaders }
+    { status, headers: corsHeaders }
   );
 }
 

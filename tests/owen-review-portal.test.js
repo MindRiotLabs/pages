@@ -374,10 +374,10 @@ describe('MindRiotLabs /api/owen/review/* & /owen/review Portal v0.3 Suite', () 
     assert.ok(Number(throttledRes.headers.get('Retry-After')) > 0);
   });
 
-  it('6. Verifies SupabaseRpcReviewSessionStore invokes owen_get_review_session and owen_save_review_session RPCs without mutating turns', async () => {
+  it('6. Verifies SupabaseRpcReviewSessionStore invokes owen_get_review_session and owen_save_review_session RPCs with raw p_review_token (never digest) and rejects digest replay', async () => {
     const rpcCalls = [];
     const mockFetch = async (url, init) => {
-      rpcCalls.push({ url, body: JSON.parse(init.body) });
+      rpcCalls.push({ url, headers: init.headers, body: JSON.parse(init.body) });
       if (url.endsWith('/rest/v1/rpc/owen_get_review_session')) {
         return new Response(JSON.stringify(null), { status: 200 });
       }
@@ -389,14 +389,41 @@ describe('MindRiotLabs /api/owen/review/* & /owen/review Portal v0.3 Suite', () 
 
     const store = new SupabaseRpcReviewSessionStore({
       supabaseUrl: 'https://example.supabase.co',
-      supabaseKey: 'anon-key-test',
-      activeReviewTokenSha256: hashReviewToken(SYNTHETIC_UAT_REVIEW_TOKEN),
+      supabaseKey: 'service-role-key-test',
+      rawReviewToken: SYNTHETIC_UAT_REVIEW_TOKEN,
+      rpcSecret: 'rpc-secret-test-01',
       fetchImpl: mockFetch
     });
     const loaded = await store.getSession('ses-test-rpc');
     assert.equal(loaded, undefined);
     assert.equal(rpcCalls.length, 1);
     assert.ok(rpcCalls[0].url.endsWith('/rest/v1/rpc/owen_get_review_session'));
+    assert.equal(rpcCalls[0].body.p_review_token, SYNTHETIC_UAT_REVIEW_TOKEN);
+    assert.equal(rpcCalls[0].body.p_review_token_sha256, undefined);
+    assert.equal(rpcCalls[0].body.p_rpc_secret, 'rpc-secret-test-01');
+    assert.equal(rpcCalls[0].headers.apikey, 'service-role-key-test');
+
+    // Passing a 64-character hex SHA-256 digest as rawReviewToken is rejected with DIGEST_REPLAY_FORBIDDEN
+    const digestReplayStore = new SupabaseRpcReviewSessionStore({
+      supabaseUrl: 'https://example.supabase.co',
+      supabaseKey: 'service-role-key-test',
+      rawReviewToken: hashReviewToken(SYNTHETIC_UAT_REVIEW_TOKEN),
+      fetchImpl: mockFetch
+    });
+    await assert.rejects(
+      () => digestReplayStore.getSession('ses-test-rpc'),
+      (err) => err.code === 'DIGEST_REPLAY_FORBIDDEN'
+    );
+
+    // HTTP review endpoint also rejects 64-hex SHA-256 digest replay with 401 DIGEST_REPLAY_FORBIDDEN
+    const digestHttpReq = new Request(
+      `https://mindriotlabs.com/api/owen/review/session?session_id=${DISPOSABLE_UAT_REVIEW_SESSION_ID}`,
+      { headers: { Authorization: `Bearer ${hashReviewToken(SYNTHETIC_UAT_REVIEW_TOKEN)}` } }
+    );
+    const digestHttpRes = await getReviewSession({ request: digestHttpReq, env: testEnv });
+    assert.equal(digestHttpRes.status, 401);
+    const digestHttpBody = await digestHttpRes.json();
+    assert.equal(digestHttpBody.code, 'DIGEST_REPLAY_FORBIDDEN');
   });
 
   it('7. Verifies mobile-first /owen/review portal HTML, CSS, and JS ergonomics for Mobile Safari and privacy invariants', () => {
@@ -422,5 +449,30 @@ describe('MindRiotLabs /api/owen/review/* & /owen/review Portal v0.3 Suite', () 
     // Immediate URL fragment token scrubbing via history.replaceState and inline editing without window.prompt
     assert.match(js, /window\.history\.replaceState/);
     assert.doesNotMatch(js, /window\.prompt\s*\(/);
+  });
+
+  it('8. Supports non-regressing Review Portal kill-switch (OWEN_REVIEW_PORTAL_DISABLED / REVIEW_PORTAL_ROLLED_BACK -> 503) while keeping hardened Interview endpoints active', async () => {
+    const disabledEnv = {
+      ...testEnv,
+      OWEN_REVIEW_PORTAL_DISABLED: 'true'
+    };
+
+    const revReq = new Request(
+      `https://mindriotlabs.com/api/owen/review/session?session_id=${DISPOSABLE_UAT_REVIEW_SESSION_ID}`,
+      { headers: { Authorization: `Bearer ${SYNTHETIC_UAT_REVIEW_TOKEN}` } }
+    );
+    const revRes = await getReviewSession({ request: revReq, env: disabledEnv });
+    assert.equal(revRes.status, 503);
+    const revBody = await revRes.json();
+    assert.equal(revBody.code, 'REVIEW_PORTAL_DISABLED');
+    assert.equal(revBody.saved_progress_preserved, true);
+
+    // Meanwhile, interview endpoint remains 200 OK under the hardened boundary
+    const intReq = new Request(
+      `https://mindriotlabs.com/api/owen/interview/session?session_id=${DISPOSABLE_UAT_SESSION_ID}`,
+      { headers: { Authorization: `Bearer ${SYNTHETIC_UAT_INVITE_TOKEN}` } }
+    );
+    const intRes = await getInterviewSession({ request: intReq, env: disabledEnv });
+    assert.equal(intRes.status, 200);
   });
 });

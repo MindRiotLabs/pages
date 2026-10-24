@@ -16,12 +16,16 @@ import {
   resetInterviewServiceForTests,
   SupabaseRpcInterviewSessionStore,
   DEFAULT_PILOT_001_SESSION_ID,
-  DISPOSABLE_UAT_SESSION_ID
+  DISPOSABLE_UAT_SESSION_ID,
+  FOUNDER_UAT_V02_SESSION_ID,
+  hashInvitationToken,
+  buildErrorResponse
 } from '../functions/api/owen/interview/service.js';
 
 describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Security Hardening Suite', () => {
   const SYNTHETIC_PILOT_TOKEN = 'pilot001_synthetic_test_token_a9f8e7d6c5b4a3';
   const SYNTHETIC_UAT_TOKEN = 'uat001_synthetic_test_token_11223344556677';
+  const SYNTHETIC_FOUNDER_V02_TOKEN = 'founder_v02_synthetic_test_token_998877665544';
   const LEGACY_ROTATED_TOKEN = 'mrl-owen-russ-pilot-001-2026';
 
   const testEnv = {
@@ -29,6 +33,7 @@ describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Securi
     INTERVIEW_STORE: 'memory',
     OWEN_PILOT_001_INVITE_TOKEN: SYNTHETIC_PILOT_TOKEN,
     OWEN_UAT_DISPOSABLE_INVITE_TOKEN: SYNTHETIC_UAT_TOKEN,
+    OWEN_FOUNDER_UAT_V02_INVITE_TOKEN: SYNTHETIC_FOUNDER_V02_TOKEN,
     ELEVENLABS_API_KEY: 'el_test_key',
     ELEVENLABS_VOICE_ID: 'voice_jvh_existing',
     ELEVENLABS_WEBHOOK_SECRET: 'whsec_test_secret_001'
@@ -315,7 +320,7 @@ describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Securi
       body: rawBody
     });
     const dupRes = await postWebhook({ request: dupReq, env: testEnv });
-    assert.equal(dupRes.status, 202);
+    assert.equal(dupRes.status, 200 + 2);
   });
 
   it('6. Verifies surgical release provenance, mindriotlabs-production target, and existing website isolation', async () => {
@@ -375,14 +380,14 @@ describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Securi
     }
   });
 
-  it('7. Caches per-request Supabase reads, emits timing_metadata, and governs ElevenLabs voice-session endpoint', async () => {
-    // 7a. Verify SupabaseRpcInterviewSessionStore performs only 1 RPC read across multiple getSession calls in a single request
+  it('7. Caches per-request Supabase reads, sends raw p_invitation_token (never digest), emits timing_metadata, and governs ElevenLabs voice-session endpoint', async () => {
+    // 7a. Verify SupabaseRpcInterviewSessionStore performs only 1 RPC read across multiple getSession calls and passes raw p_invitation_token
     const origFetch = globalThis.fetch;
-    let rpcGetCalls = 0;
+    const rpcPayloads = [];
     try {
-      globalThis.fetch = async url => {
+      globalThis.fetch = async (url, init) => {
         if (String(url).includes('owen_get_interview_session')) {
-          rpcGetCalls += 1;
+          rpcPayloads.push(JSON.parse(init.body));
           return new Response(JSON.stringify({ id: 'ses-cache-test', turns: [] }), { status: 200 });
         }
         return new Response(JSON.stringify({ ok: true }), { status: 200 });
@@ -390,15 +395,19 @@ describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Securi
 
       const rpcStore = new SupabaseRpcInterviewSessionStore({
         supabaseUrl: 'https://example.supabase.co',
-        supabaseKey: 'anon_test',
-        activeTokenSha256: 'sha256_test'
+        supabaseKey: 'service_role_test',
+        rawInviteToken: SYNTHETIC_PILOT_TOKEN,
+        rpcSecret: 'rpc_secret_001'
       });
 
       await rpcStore.getSession('ses-cache-test');
       await rpcStore.getSession('ses-cache-test');
       await rpcStore.getSession('ses-cache-test');
-      assert.equal(rpcGetCalls, 1, 'Expected per-request cache to coalesce 3 reads into 1 RPC call');
+      assert.equal(rpcPayloads.length, 1, 'Expected per-request cache to coalesce 3 reads into 1 RPC call');
       assert.equal(rpcStore.readCount, 1);
+      assert.equal(rpcPayloads[0].p_invitation_token, SYNTHETIC_PILOT_TOKEN);
+      assert.equal(rpcPayloads[0].p_invitation_token_sha256, undefined);
+      assert.equal(rpcPayloads[0].p_rpc_secret, 'rpc_secret_001');
     } finally {
       globalThis.fetch = origFetch;
     }
@@ -559,5 +568,72 @@ describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Securi
       stopBody.session.epistemic_ledger.participant_statements.length,
       stmtCountBefore
     );
+  });
+
+  it('9. [ADR-0020 P0-1 Security Hardening] Rejects 64-character SHA-256 digest replay, binds ses-founder-uat-jvh-v02, and requires SUPABASE_SERVICE_ROLE_KEY in durable mode', async () => {
+    const pilotTokenDigest = hashInvitationToken(SYNTHETIC_PILOT_TOKEN);
+
+    // 9a. Presenting a 64-hex SHA-256 digest as the invitation token is rejected with 401
+    const digestReplayReq = new Request(
+      `https://mindriotlabs.com/api/owen/interview/session?session_id=${DEFAULT_PILOT_001_SESSION_ID}`,
+      { headers: { Authorization: `Bearer ${pilotTokenDigest}` } }
+    );
+    const digestReplayRes = await getSession({ request: digestReplayReq, env: testEnv });
+    assert.equal(digestReplayRes.status, 401);
+    const digestReplayBody = await digestReplayRes.json();
+    assert.match(digestReplayBody.error, /DIGEST_REPLAY_FORBIDDEN/);
+
+    // 9b. SupabaseRpcInterviewSessionStore rejects 64-hex digest replay directly
+    const badDigestStore = new SupabaseRpcInterviewSessionStore({
+      supabaseUrl: 'https://example.supabase.co',
+      supabaseKey: 'service_role_key',
+      rawInviteToken: pilotTokenDigest
+    });
+    await assert.rejects(
+      () => badDigestStore.getSession(DEFAULT_PILOT_001_SESSION_ID),
+      /DIGEST_REPLAY_FORBIDDEN/
+    );
+
+    // 9c. Founder UAT v02 session enforces OWEN_FOUNDER_UAT_V02_INVITE_TOKEN binding
+    const wrongFounderReq = new Request(
+      `https://mindriotlabs.com/api/owen/interview/session?session_id=${FOUNDER_UAT_V02_SESSION_ID}`,
+      { headers: { Authorization: `Bearer ${SYNTHETIC_UAT_TOKEN}` } }
+    );
+    const wrongFounderRes = await getSession({ request: wrongFounderReq, env: testEnv });
+    assert.equal(wrongFounderRes.status, 401);
+
+    const validFounderReq = new Request(
+      `https://mindriotlabs.com/api/owen/interview/session?session_id=${FOUNDER_UAT_V02_SESSION_ID}`,
+      { headers: { Authorization: `Bearer ${SYNTHETIC_FOUNDER_V02_TOKEN}` } }
+    );
+    const validFounderRes = await getSession({ request: validFounderReq, env: testEnv });
+    assert.equal(validFounderRes.status, 200);
+
+    // 9d. Durable mode fails closed if SUPABASE_SERVICE_ROLE_KEY is missing (never falls back to public anon key)
+    const missingServiceRoleEnv = {
+      NODE_ENV: 'production',
+      INTERVIEW_STORE: 'supabase',
+      OWEN_PILOT_001_INVITE_TOKEN: SYNTHETIC_PILOT_TOKEN
+    };
+    const durableNoKeyReq = new Request(
+      `https://mindriotlabs.com/api/owen/interview/session?session_id=${DEFAULT_PILOT_001_SESSION_ID}`,
+      { headers: { Authorization: `Bearer ${SYNTHETIC_PILOT_TOKEN}` } }
+    );
+    const durableNoKeyRes = await getSession({ request: durableNoKeyReq, env: missingServiceRoleEnv });
+    assert.equal(durableNoKeyRes.status, 500);
+    const durableNoKeyBody = await durableNoKeyRes.json();
+    assert.equal(durableNoKeyBody.code, 'INTERNAL_ERROR');
+    assert.doesNotMatch(JSON.stringify(durableNoKeyBody), /SUPABASE_SERVICE_ROLE_KEY|eyJ|sb_secret_/);
+
+    // 9e. Error response sanitizer never leaks JWTs, service_role keys, or PostgREST error bodies to clients
+    const leakErr = new Error(
+      'Durable session persistence failed (404): {"code":"PGRST202","hint":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.sig sb_secret_123456"}'
+    );
+    const sanitizedRes = buildErrorResponse(leakErr, 'Unable to process interview turn', 400, 'TURN_PROCESSING_ERROR');
+    assert.equal(sanitizedRes.status, 500);
+    const sanitizedBody = await sanitizedRes.json();
+    assert.equal(sanitizedBody.code, 'INTERNAL_ERROR');
+    assert.equal(sanitizedBody.error, 'Unable to process interview turn');
+    assert.doesNotMatch(JSON.stringify(sanitizedBody), /PGRST202|eyJ|sb_secret_/);
   });
 });

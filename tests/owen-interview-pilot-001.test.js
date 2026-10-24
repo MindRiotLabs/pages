@@ -16,6 +16,7 @@ import {
   resetInterviewServiceForTests,
   SupabaseRpcInterviewSessionStore,
   CANONICAL_PRODUCTION_SUPABASE_PROJECT_REF,
+  CANONICAL_STAGING_SUPABASE_PROJECT_REF,
   DEFAULT_SUPABASE_URL,
   DEFAULT_SUPABASE_ANON_KEY,
   DEFAULT_PILOT_001_SESSION_ID,
@@ -646,6 +647,7 @@ describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Securi
     assert.equal(DEFAULT_SUPABASE_URL, '');
     assert.equal(DEFAULT_SUPABASE_ANON_KEY, '');
     assert.equal(CANONICAL_PRODUCTION_SUPABASE_PROJECT_REF, 'xkgtipcyswjpvwmmawmf');
+    assert.equal(CANONICAL_STAGING_SUPABASE_PROJECT_REF, 'wfesuspzrknxaqswhksj');
 
     // 10b. Missing SUPABASE_URL fails closed in durable mode even if SUPABASE_SERVICE_ROLE_KEY is present
     assert.throws(

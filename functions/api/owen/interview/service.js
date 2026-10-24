@@ -47,6 +47,7 @@ export const REVOKED_TOKEN_SHA256S = new Set([
   'e6d2517a6f6c38c2fb53e9c8fa1e62b780bed593938e65503acfd4ec85334216'
 ]);
 export const CANONICAL_PRODUCTION_SUPABASE_PROJECT_REF = 'xkgtipcyswjpvwmmawmf';
+export const CANONICAL_STAGING_SUPABASE_PROJECT_REF = 'wfesuspzrknxaqswhksj';
 export const DEFAULT_SUPABASE_URL = '';
 export const DEFAULT_SUPABASE_ANON_KEY = '';
 

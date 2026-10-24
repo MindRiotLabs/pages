@@ -15,11 +15,15 @@ import {
 import {
   resetInterviewServiceForTests,
   SupabaseRpcInterviewSessionStore,
+  CANONICAL_PRODUCTION_SUPABASE_PROJECT_REF,
+  DEFAULT_SUPABASE_URL,
+  DEFAULT_SUPABASE_ANON_KEY,
   DEFAULT_PILOT_001_SESSION_ID,
   DISPOSABLE_UAT_SESSION_ID,
   FOUNDER_UAT_V02_SESSION_ID,
   hashInvitationToken,
-  buildErrorResponse
+  buildErrorResponse,
+  resolveValidatedSupabaseUrl
 } from '../functions/api/owen/interview/service.js';
 
 describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Security Hardening Suite', () => {
@@ -635,5 +639,112 @@ describe('MindRiotLabs /api/owen/interview/* Edge Functions Integration & Securi
     assert.equal(sanitizedBody.code, 'INTERNAL_ERROR');
     assert.equal(sanitizedBody.error, 'Unable to process interview turn');
     assert.doesNotMatch(JSON.stringify(sanitizedBody), /PGRST202|eyJ|sb_secret_/);
+  });
+
+  it('10. [Environment Separation] Removes hardcoded production Supabase fallback, fails closed when SUPABASE_URL is missing, and blocks cross-environment leaks', async () => {
+    // 10a. No hardcoded fallback URL or anon key in module exports
+    assert.equal(DEFAULT_SUPABASE_URL, '');
+    assert.equal(DEFAULT_SUPABASE_ANON_KEY, '');
+    assert.equal(CANONICAL_PRODUCTION_SUPABASE_PROJECT_REF, 'xkgtipcyswjpvwmmawmf');
+
+    // 10b. Missing SUPABASE_URL fails closed in durable mode even if SUPABASE_SERVICE_ROLE_KEY is present
+    assert.throws(
+      () =>
+        resolveValidatedSupabaseUrl(
+          { OWEN_ENVIRONMENT: 'staging' },
+          new Request('https://staging.mindriotlabs.com/api/owen/interview/session')
+        ),
+      /SUPABASE_URL.*not configured/
+    );
+
+    const missingUrlDurableEnv = {
+      NODE_ENV: 'production',
+      INTERVIEW_STORE: 'supabase',
+      SUPABASE_SERVICE_ROLE_KEY: 'sb_secret_synthetic_test_only',
+      OWEN_UAT_DISPOSABLE_INVITE_TOKEN: SYNTHETIC_UAT_TOKEN
+    };
+    const missingUrlReq = new Request(
+      `https://staging.mindriotlabs.com/api/owen/interview/session?session_id=${DISPOSABLE_UAT_SESSION_ID}`,
+      { headers: { Authorization: `Bearer ${SYNTHETIC_UAT_TOKEN}` } }
+    );
+    const missingUrlRes = await getSession({ request: missingUrlReq, env: missingUrlDurableEnv });
+    assert.equal(missingUrlRes.status, 500);
+    const missingUrlBody = await missingUrlRes.json();
+    assert.equal(missingUrlBody.code, 'INTERNAL_ERROR');
+    assert.doesNotMatch(JSON.stringify(missingUrlBody), /SUPABASE_URL|xkgtipcyswjpvwmmawmf/);
+
+    // 10c. Staging or preview runtime attempting to connect to production Supabase (xkgtipcyswjpvwmmawmf) is blocked
+    assert.throws(
+      () =>
+        resolveValidatedSupabaseUrl(
+          {
+            OWEN_ENVIRONMENT: 'staging',
+            SUPABASE_URL: 'https://xkgtipcyswjpvwmmawmf.supabase.co'
+          },
+          new Request('https://staging.mindriotlabs.com/api/owen/interview/session')
+        ),
+      /CROSS_ENVIRONMENT_ISOLATION_VIOLATION/
+    );
+
+    // Non-main Cloudflare Pages preview branch attempting to connect to production Supabase is blocked
+    assert.throws(
+      () =>
+        resolveValidatedSupabaseUrl(
+          {
+            CF_PAGES_BRANCH: 'feat/owen-review-portal-v0.3',
+            SUPABASE_URL: 'https://xkgtipcyswjpvwmmawmf.supabase.co'
+          },
+          new Request('https://abc1234.mindriotlabs-production.pages.dev/api/owen/interview/session')
+        ),
+      /CROSS_ENVIRONMENT_ISOLATION_VIOLATION/
+    );
+
+    // 10d. Production runtime attempting to connect to a staging Supabase project is blocked
+    assert.throws(
+      () =>
+        resolveValidatedSupabaseUrl(
+          {
+            OWEN_ENVIRONMENT: 'production',
+            SUPABASE_URL: 'https://stagingprojectref001.supabase.co'
+          },
+          new Request('https://mindriotlabs.com/api/owen/interview/session')
+        ),
+      /CROSS_ENVIRONMENT_ISOLATION_VIOLATION/
+    );
+
+    // 10e. Valid environment pairings succeed
+    assert.equal(
+      resolveValidatedSupabaseUrl(
+        {
+          OWEN_ENVIRONMENT: 'staging',
+          SUPABASE_URL: 'https://stagingprojectref001.supabase.co/'
+        },
+        new Request('https://staging.mindriotlabs.com/api/owen/interview/session')
+      ),
+      'https://stagingprojectref001.supabase.co'
+    );
+    assert.equal(
+      resolveValidatedSupabaseUrl(
+        {
+          OWEN_ENVIRONMENT: 'production',
+          SUPABASE_URL: 'https://xkgtipcyswjpvwmmawmf.supabase.co/'
+        },
+        new Request('https://mindriotlabs.com/api/owen/interview/session')
+      ),
+      'https://xkgtipcyswjpvwmmawmf.supabase.co'
+    );
+
+    // 10f. Staging runtime unconditionally blocks access to Russ Richmond's Pilot 001 session ID
+    const stagingPilotAttemptReq = new Request(
+      `https://staging.mindriotlabs.com/api/owen/interview/session?session_id=${DEFAULT_PILOT_001_SESSION_ID}`,
+      { headers: { Authorization: `Bearer ${SYNTHETIC_PILOT_TOKEN}` } }
+    );
+    const stagingPilotAttemptRes = await getSession({
+      request: stagingPilotAttemptReq,
+      env: { ...testEnv, OWEN_ENVIRONMENT: 'staging' }
+    });
+    assert.equal(stagingPilotAttemptRes.status, 401);
+    const stagingPilotAttemptBody = await stagingPilotAttemptRes.json();
+    assert.match(stagingPilotAttemptBody.error, /ENVIRONMENT_ISOLATION_FORBIDDEN/);
   });
 });

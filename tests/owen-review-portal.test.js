@@ -475,4 +475,43 @@ describe('MindRiotLabs /api/owen/review/* & /owen/review Portal v0.3 Suite', () 
     const intRes = await getInterviewSession({ request: intReq, env: disabledEnv });
     assert.equal(intRes.status, 200);
   });
+
+  it('9. [Environment Separation] Review endpoints fail closed when SUPABASE_URL is missing in durable mode and block cross-environment or Pilot 001 access on staging', async () => {
+    // 9a. Durable review mode fails closed when SUPABASE_URL is missing
+    const durableMissingUrlEnv = {
+      NODE_ENV: 'production',
+      REVIEW_STORE: 'supabase',
+      SUPABASE_SERVICE_ROLE_KEY: 'sb_secret_synthetic_test_only',
+      OWEN_UAT_REVIEW_TOKEN: SYNTHETIC_UAT_REVIEW_TOKEN
+    };
+    const missingUrlReq = new Request(
+      `https://staging.mindriotlabs.com/api/owen/review/session?session_id=${DISPOSABLE_UAT_REVIEW_SESSION_ID}`,
+      { headers: { Authorization: `Bearer ${SYNTHETIC_UAT_REVIEW_TOKEN}` } }
+    );
+    const missingUrlRes = await getReviewSession({
+      request: missingUrlReq,
+      env: durableMissingUrlEnv
+    });
+    assert.equal(missingUrlRes.status, 500);
+    const missingUrlBody = await missingUrlRes.json();
+    assert.equal(missingUrlBody.code, 'INTERNAL_ERROR');
+    assert.doesNotMatch(JSON.stringify(missingUrlBody), /SUPABASE_URL|xkgtipcyswjpvwmmawmf/);
+
+    // 9b. Staging runtime blocks access to Russ Richmond's Pilot 001 review session with 401 ENVIRONMENT_ISOLATION_FORBIDDEN
+    const stagingPilotRevReq = new Request(
+      `https://staging.mindriotlabs.com/api/owen/review/session?session_id=${DEFAULT_PILOT_001_SESSION_ID}`,
+      { headers: { Authorization: `Bearer ${SYNTHETIC_UAT_REVIEW_TOKEN}` } }
+    );
+    const stagingPilotRevRes = await getReviewSession({
+      request: stagingPilotRevReq,
+      env: {
+        ...testEnv,
+        OWEN_ENVIRONMENT: 'staging',
+        OWEN_PILOT_001_REVIEW_TOKEN: 'synthetic_pilot_review_tok'
+      }
+    });
+    assert.equal(stagingPilotRevRes.status, 401);
+    const stagingPilotRevBody = await stagingPilotRevRes.json();
+    assert.equal(stagingPilotRevBody.code, 'ENVIRONMENT_ISOLATION_FORBIDDEN');
+  });
 });

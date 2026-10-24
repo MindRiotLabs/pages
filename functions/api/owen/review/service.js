@@ -33,7 +33,6 @@ import {
 } from '@mrl/owen';
 import {
   DEFAULT_PILOT_001_SESSION_ID,
-  DEFAULT_SUPABASE_URL,
   DISPOSABLE_UAT_SESSION_ID,
   FOUNDER_UAT_V02_SESSION_ID,
   InterviewRateLimitError,
@@ -42,8 +41,10 @@ import {
   clearFailedAuthAttempts,
   enforceRateLimit,
   getConfiguredTokenForSession,
+  isStagingOrPreviewRuntime,
   recordFailedAuthAttempt,
   resolveSupabaseServiceKey,
+  resolveValidatedSupabaseUrl,
   sanitizeErrorMessageForClient
 } from '../interview/service.js';
 
@@ -163,7 +164,13 @@ export class SupabaseRpcReviewSessionStore {
     rpcSecret = null,
     fetchImpl = null
   }) {
-    this.supabaseUrl = (supabaseUrl || DEFAULT_SUPABASE_URL).replace(/\/+$/, '');
+    const normalizedUrl = String(supabaseUrl || '').trim().replace(/\/+$/, '');
+    if (!normalizedUrl) {
+      throw new Error(
+        'Server persistence configuration (SUPABASE_URL) is not configured on the Cloudflare Worker.'
+      );
+    }
+    this.supabaseUrl = normalizedUrl;
     this.supabaseKey = supabaseKey;
     this.rawReviewToken = typeof rawReviewToken === 'string' ? rawReviewToken.trim() : '';
     this.activeReviewTokenSha256 =
@@ -470,6 +477,14 @@ export async function resolveAuthorizedReviewContext(request, env = {}, body = n
     );
   }
 
+  if (isStagingOrPreviewRuntime(env, request) && sessionId === DEFAULT_PILOT_001_SESSION_ID) {
+    recordFailedAuthAttempt(request);
+    throw new ReviewAccessDeniedError(
+      'Production pilot review sessions are not accessible in the staging or preview environment.',
+      'ENVIRONMENT_ISOLATION_FORBIDDEN'
+    );
+  }
+
   // Strictly reject interview invitation tokens if presented on review endpoints
   const knownInviteTokens = [
     getConfiguredTokenForSession(env, sessionId),
@@ -490,23 +505,25 @@ export async function resolveAuthorizedReviewContext(request, env = {}, body = n
   const useMemoryStore =
     reviewStoreMode === 'supabase'
       ? false
-      : nodeEnv === 'test' ||
-        reviewStoreMode === 'memory' ||
-        DISPOSABLE_UAT_REVIEW_SESSION_IDS.has(sessionId);
+      : nodeEnv === 'test' || reviewStoreMode === 'memory';
 
   const supabaseServiceKey = resolveSupabaseServiceKey(env);
   const rpcSecret = getEnvValue(env, 'OWEN_SUPABASE_RPC_SECRET') || null;
 
-  if (!useMemoryStore && !supabaseServiceKey) {
-    throw new Error(
-      'Server persistence credential (SUPABASE_SERVICE_ROLE_KEY) is not configured on the Cloudflare Worker.'
-    );
+  let supabaseUrl = '';
+  if (!useMemoryStore) {
+    supabaseUrl = resolveValidatedSupabaseUrl(env, request);
+    if (!supabaseServiceKey) {
+      throw new Error(
+        'Server persistence credential (SUPABASE_SERVICE_ROLE_KEY) is not configured on the Cloudflare Worker.'
+      );
+    }
   }
 
   const store = useMemoryStore
     ? getSharedReviewMemoryStore()
     : new SupabaseRpcReviewSessionStore({
-        supabaseUrl: getEnvValue(env, 'SUPABASE_URL') || DEFAULT_SUPABASE_URL,
+        supabaseUrl,
         supabaseKey: supabaseServiceKey,
         rawReviewToken,
         activeReviewTokenSha256: incomingSha,

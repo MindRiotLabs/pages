@@ -46,8 +46,9 @@ export const REVOKED_TOKEN_SHA256S = new Set([
   '223559fccace9d5078cb825592cb4d1e5148abaad6ed7996cfd1d3a5045b04df',
   'e6d2517a6f6c38c2fb53e9c8fa1e62b780bed593938e65503acfd4ec85334216'
 ]);
-export const DEFAULT_SUPABASE_URL = 'https://xkgtipcyswjpvwmmawmf.supabase.co';
-export const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_a84bMzDhwTFRDxLnfMTLcA_pov-Kgr3';
+export const CANONICAL_PRODUCTION_SUPABASE_PROJECT_REF = 'xkgtipcyswjpvwmmawmf';
+export const DEFAULT_SUPABASE_URL = '';
+export const DEFAULT_SUPABASE_ANON_KEY = '';
 
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -167,7 +168,13 @@ export class SupabaseRpcInterviewSessionStore {
     fallbackMemoryStore = null,
     fetchImpl = null
   }) {
-    this.supabaseUrl = (supabaseUrl || DEFAULT_SUPABASE_URL).replace(/\/+$/, '');
+    const normalizedUrl = String(supabaseUrl || '').trim().replace(/\/+$/, '');
+    if (!normalizedUrl) {
+      throw new Error(
+        'Server persistence configuration (SUPABASE_URL) is not configured on the Cloudflare Worker.'
+      );
+    }
+    this.supabaseUrl = normalizedUrl;
     this.supabaseKey = supabaseKey;
     this.rawInviteToken = typeof rawInviteToken === 'string' ? rawInviteToken.trim() : '';
     this.activeTokenSha256 =
@@ -334,6 +341,118 @@ function getEnvValue(env, key) {
 }
 
 /**
+ * Determines whether the current Worker invocation is executing in a staging or preview
+ * environment (e.g. staging.mindriotlabs.com, *.mindriotlabs-staging.pages.dev,
+ * OWEN_ENVIRONMENT=staging/preview, or a non-main CF_PAGES_BRANCH preview build).
+ */
+export function isStagingOrPreviewRuntime(env = {}, request = null) {
+  const owenEnv = String(getEnvValue(env, 'OWEN_ENVIRONMENT')).trim().toLowerCase();
+  if (owenEnv === 'staging' || owenEnv === 'preview') {
+    return true;
+  }
+  const cfPagesBranch = String(getEnvValue(env, 'CF_PAGES_BRANCH')).trim().toLowerCase();
+  if (cfPagesBranch && cfPagesBranch !== 'main') {
+    return true;
+  }
+  if (request && typeof request.url === 'string') {
+    try {
+      const host = new URL(request.url).hostname.toLowerCase();
+      if (
+        host === 'staging.mindriotlabs.com' ||
+        host === 'mindriotlabs-staging.pages.dev' ||
+        host.endsWith('.mindriotlabs-staging.pages.dev')
+      ) {
+        return true;
+      }
+    } catch {
+      // ignore malformed URL
+    }
+  }
+  return false;
+}
+
+/**
+ * Determines whether the current Worker invocation is executing in the canonical
+ * production environment (mindriotlabs.com / mindriotlabs-production).
+ */
+export function isProductionRuntime(env = {}, request = null) {
+  if (isStagingOrPreviewRuntime(env, request)) {
+    return false;
+  }
+  const owenEnv = String(getEnvValue(env, 'OWEN_ENVIRONMENT')).trim().toLowerCase();
+  if (owenEnv === 'production') {
+    return true;
+  }
+  const cfPagesBranch = String(getEnvValue(env, 'CF_PAGES_BRANCH')).trim().toLowerCase();
+  if (cfPagesBranch === 'main') {
+    return true;
+  }
+  if (request && typeof request.url === 'string') {
+    try {
+      const host = new URL(request.url).hostname.toLowerCase();
+      if (
+        host === 'mindriotlabs.com' ||
+        host === 'www.mindriotlabs.com' ||
+        host === 'mindriotlabs-production.pages.dev' ||
+        host.endsWith('.mindriotlabs-production.pages.dev')
+      ) {
+        return true;
+      }
+    } catch {
+      // ignore malformed URL
+    }
+  }
+  return false;
+}
+
+/**
+ * Resolves and validates the environment-specific SUPABASE_URL, failing closed
+ * when missing or when a cross-environment connection (staging/preview -> production
+ * or production -> staging) is attempted.
+ */
+export function resolveValidatedSupabaseUrl(env = {}, request = null) {
+  const rawUrl = String(getEnvValue(env, 'SUPABASE_URL')).trim().replace(/\/+$/, '');
+  if (!rawUrl) {
+    throw new Error(
+      'Server persistence configuration (SUPABASE_URL) is not configured on the Cloudflare Worker.'
+    );
+  }
+  let parsed;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    throw new Error(
+      'Server persistence configuration (SUPABASE_URL) is not a valid URL.'
+    );
+  }
+  const isLocalLoopback =
+    parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+  if (parsed.protocol !== 'https:' && !isLocalLoopback) {
+    throw new Error(
+      'Server persistence configuration (SUPABASE_URL) must use HTTPS.'
+    );
+  }
+
+  const targetsProductionSupabase = rawUrl
+    .toLowerCase()
+    .includes(CANONICAL_PRODUCTION_SUPABASE_PROJECT_REF);
+
+  if (isStagingOrPreviewRuntime(env, request) && targetsProductionSupabase) {
+    throw new Error(
+      'CROSS_ENVIRONMENT_ISOLATION_VIOLATION: Staging or preview Worker is forbidden from connecting to the production Supabase project.'
+    );
+  }
+
+  if (isProductionRuntime(env, request) && !targetsProductionSupabase && !isLocalLoopback) {
+    throw new Error(
+      'CROSS_ENVIRONMENT_ISOLATION_VIOLATION: Production Worker is forbidden from connecting to a non-production Supabase project.'
+    );
+  }
+
+  return rawUrl;
+}
+
+/**
  * Resolves the privileged server-only Supabase key for SECURITY DEFINER RPC execution.
  * Never falls back to DEFAULT_SUPABASE_ANON_KEY.
  */
@@ -370,7 +489,12 @@ function timingSafeHashMatch(tokenA, tokenB) {
   return crypto.timingSafeEqual(hashA, hashB);
 }
 
-export function createInterviewServiceContext(env = {}, rawInviteToken = '', sessionId = DEFAULT_PILOT_001_SESSION_ID) {
+export function createInterviewServiceContext(
+  env = {},
+  rawInviteToken = '',
+  sessionId = DEFAULT_PILOT_001_SESSION_ID,
+  request = null
+) {
   const nodeEnv = getEnvValue(env, 'NODE_ENV');
   const storeMode = getEnvValue(env, 'INTERVIEW_STORE');
   const geminiApiKey = getEnvValue(env, 'GEMINI_API_KEY');
@@ -391,16 +515,20 @@ export function createInterviewServiceContext(env = {}, rawInviteToken = '', ses
   const supabaseServiceKey = resolveSupabaseServiceKey(env);
   const rpcSecret = getEnvValue(env, 'OWEN_SUPABASE_RPC_SECRET') || null;
 
-  if (!useMemoryOnly && !supabaseServiceKey) {
-    throw new Error(
-      'Server persistence credential (SUPABASE_SERVICE_ROLE_KEY) is not configured on the Cloudflare Worker.'
-    );
+  let supabaseUrl = '';
+  if (!useMemoryOnly) {
+    supabaseUrl = resolveValidatedSupabaseUrl(env, request);
+    if (!supabaseServiceKey) {
+      throw new Error(
+        'Server persistence credential (SUPABASE_SERVICE_ROLE_KEY) is not configured on the Cloudflare Worker.'
+      );
+    }
   }
 
   const store = useMemoryOnly
     ? cachedMemoryStore
     : new SupabaseRpcInterviewSessionStore({
-        supabaseUrl: getEnvValue(env, 'SUPABASE_URL') || DEFAULT_SUPABASE_URL,
+        supabaseUrl,
         supabaseKey: supabaseServiceKey,
         rawInviteToken,
         activeTokenSha256,
@@ -485,8 +613,15 @@ export async function resolveAuthorizedPilotSession(request, env = {}, body = nu
     );
   }
 
+  if (isStagingOrPreviewRuntime(env, request) && sessionId === DEFAULT_PILOT_001_SESSION_ID) {
+    recordFailedAuthAttempt(request);
+    throw new InterviewAccessDeniedError(
+      'Production pilot sessions are not accessible in the staging or preview environment (ENVIRONMENT_ISOLATION_FORBIDDEN).'
+    );
+  }
+
   const { agent, store, voiceAdapter, expectedSessionToken, modelProvider } =
-    createInterviewServiceContext(env, rawToken, sessionId);
+    createInterviewServiceContext(env, rawToken, sessionId, request);
 
   // Enforce strict session-specific token binding for Pilot 001, Founder UAT, and Disposable UAT sessions
   if (
@@ -549,7 +684,7 @@ export async function resolveAuthorizedPilotSession(request, env = {}, body = nu
 }
 
 const INTERNAL_ERROR_LEAK_PATTERN =
-  /SUPABASE_SERVICE_ROLE_KEY|OWEN_SUPABASE_SERVICE_ROLE_KEY|Server persistence credential|Durable session persistence failed|Durable review session persistence failed|PGRST\d{3}|permission denied for function|JWSError|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}|sb_secret_[A-Za-z0-9_-]+|sb_publishable_[A-Za-z0-9_-]+|apikey|Bearer\s+[A-Za-z0-9._-]+/i;
+  /SUPABASE_SERVICE_ROLE_KEY|OWEN_SUPABASE_SERVICE_ROLE_KEY|SUPABASE_URL|Server persistence credential|Server persistence configuration|CROSS_ENVIRONMENT_ISOLATION_VIOLATION|Durable session persistence failed|Durable review session persistence failed|PGRST\d{3}|permission denied for function|JWSError|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}|sb_secret_[A-Za-z0-9_-]+|sb_publishable_[A-Za-z0-9_-]+|apikey|Bearer\s+[A-Za-z0-9._-]+/i;
 
 export function sanitizeErrorMessageForClient(
   rawMessage,

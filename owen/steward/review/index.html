@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="referrer" content="no-referrer" />
+    <title>OWEN — Human Steward Review Preview (Read-Only Governance Inspection)</title>
+    <link rel="stylesheet" href="/owen/review/review.css" />
+    <link rel="stylesheet" href="/owen/steward/review/steward-review.css" />
+  </head>
+  <body>
+    <div class="owen-review-app steward-preview-app">
+      <!-- Persistent Sticky Governance Banner -->
+      <div class="steward-governance-ribbon" role="region" aria-label="Steward Preview Governance Notice">
+        <div class="ribbon-inner">
+          <span class="ribbon-pill">STEWARD PREVIEW ONLY</span>
+          <span class="ribbon-text" id="governanceBannerText">
+            UNAPPROVED &amp; NON-PARTICIPANT-FACING · STRICTLY READ-ONLY INSPECTION · NO PARTICIPANT REVIEW TOKEN PROVISIONED · ZERO EVIDENCE MUTATION
+          </span>
+        </div>
+      </div>
+
+      <!-- Sticky Top Navigation Bar -->
+      <header class="owen-topbar steward-topbar" role="banner">
+        <div class="topbar-brand">
+          <a href="/" class="brand-link" aria-label="MindRiot Labs Home">
+            <img src="/images/MRL-logo-horizontal-alpha-01.png" alt="MindRiot Labs" class="brand-logo" />
+          </a>
+          <span class="brand-divider" aria-hidden="true"></span>
+          <div class="brand-titles">
+            <span class="brand-eyebrow">OWEN Assurance · Human Steward Gate v0.3</span>
+            <span class="brand-title" id="headerSessionTitle">Human Steward Review Package Preview</span>
+          </div>
+        </div>
+        <div class="topbar-status steward-topbar-actions">
+          <span class="status-pill" id="stewardEnvBadge">Environment: Checking...</span>
+          <span class="status-pill" id="stewardAuthBadge" aria-live="polite">Steward Auth Required</span>
+          <button type="button" id="signOutBtn" class="btn btn-secondary btn-sm hidden">
+            Sign Out
+          </button>
+        </div>
+      </header>
+
+      <main class="owen-main steward-main" id="mainContent">
+        <!-- STEP 1: Supabase Auth Individual Human Steward Login Gate -->
+        <section class="card-panel" id="stewardAuthGatePanel" aria-labelledby="stewardAuthHeading">
+          <div class="panel-eyebrow">Option B · Individual Supabase Auth + Explicit Actor Binding</div>
+          <h1 class="panel-title" id="stewardAuthHeading">
+            Human Steward Review Preview
+          </h1>
+          <p class="panel-subtitle">
+            Authenticate with your verified MindRiot Labs Steward identity to inspect a completed interview’s
+            proposed <code>ExperienceReviewPackage</code>, <code>ContributionToImpactChain</code>,
+            epistemic ledger, uncertainties, and frozen verbatim testimony—without provisioning a participant
+            review token or modifying source evidence.
+          </p>
+
+          <div class="governance-callout steward-authority-chain-box" role="note">
+            <strong>Enforced Server-Side Authority Chain (ADR-0021):</strong>
+            <ol class="authority-chain-list">
+              <li>
+                <strong>Verified Human Identity:</strong> Individual Supabase Auth session
+                (<code>auth.users</code> with confirmed email).
+              </li>
+              <li>
+                <strong>Explicit UUID-to-Actor Binding:</strong> Active linkage in
+                <code>public.foundry_actor_auth_bindings</code> to a <code>HUMAN</code> actor in
+                <code>public.core_actors</code>. Matching email addresses alone never grant access.
+              </li>
+              <li>
+                <strong>Project-Scoped Steward Role:</strong> Verified <code>FOUNDER</code> or
+                <code>STEWARD</code> membership in <code>public.foundry_members</code> for the session’s
+                <code>project_id</code>.
+              </li>
+            </ol>
+          </div>
+
+          <!-- Auth Mode Tabs -->
+          <div class="auth-mode-tabs" role="tablist" aria-label="Steward Sign-In Method">
+            <button
+              type="button"
+              id="tabPasswordMode"
+              class="auth-tab-btn active"
+              role="tab"
+              aria-selected="true"
+            >
+              Email &amp; Password Sign-In
+            </button>
+            <button
+              type="button"
+              id="tabOtpMode"
+              class="auth-tab-btn"
+              role="tab"
+              aria-selected="false"
+            >
+              Email Magic Link / OTP Code
+            </button>
+          </div>
+
+          <!-- Target Session Selector -->
+          <div class="form-field" style="margin-top: 1.25rem;">
+            <label for="sessionSelectInput" class="field-label">Target Interview Session</label>
+            <select id="sessionSelectInput" class="text-input"></select>
+            <input
+              type="text"
+              id="customSessionIdInput"
+              class="text-input"
+              style="margin-top: 0.5rem;"
+              placeholder="Or enter a specific session_id (e.g., ses-pilot-001-russ-richmond)..."
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+
+          <!-- Form A: Email + Password -->
+          <form id="passwordLoginForm" class="auth-form" novalidate>
+            <div class="form-field">
+              <label for="stewardEmailInput" class="field-label">Steward Email Address</label>
+              <input
+                type="email"
+                id="stewardEmailInput"
+                class="text-input"
+                placeholder="jvh@mindriotlabs.com"
+                autocomplete="username"
+                required
+              />
+            </div>
+            <div class="form-field">
+              <label for="stewardPasswordInput" class="field-label">Password</label>
+              <input
+                type="password"
+                id="stewardPasswordInput"
+                class="text-input"
+                placeholder="Enter your Supabase Auth password..."
+                autocomplete="current-password"
+                required
+              />
+            </div>
+            <div class="form-actions">
+              <button type="submit" id="passwordSignInBtn" class="btn btn-primary">
+                Sign In &amp; Open Read-Only Steward Preview
+              </button>
+            </div>
+          </form>
+
+          <!-- Form B: Email Magic Link / One-Time Code -->
+          <form id="otpLoginForm" class="auth-form hidden" novalidate>
+            <div class="form-field">
+              <label for="otpEmailInput" class="field-label">Steward Email Address</label>
+              <input
+                type="email"
+                id="otpEmailInput"
+                class="text-input"
+                placeholder="jvh@mindriotlabs.com"
+                autocomplete="email"
+                required
+              />
+              <span class="field-hint">
+                Sends a one-time verification link / code via Supabase Auth to your verified Steward email.
+              </span>
+            </div>
+            <div class="form-actions">
+              <button type="submit" id="sendOtpBtn" class="btn btn-secondary">
+                Send Magic Link / One-Time Code
+              </button>
+            </div>
+
+            <div id="otpVerifyContainer" class="otp-verify-box hidden">
+              <div class="form-field" style="margin-top: 1rem;">
+                <label for="otpCodeInput" class="field-label">6-Digit Email Verification Code (if provided in email)</label>
+                <input
+                  type="text"
+                  id="otpCodeInput"
+                  class="text-input"
+                  placeholder="123456"
+                  autocomplete="one-time-code"
+                />
+              </div>
+              <div class="form-actions">
+                <button type="button" id="verifyOtpBtn" class="btn btn-primary">
+                  Verify Code &amp; Open Steward Preview
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <div id="stewardAuthNoticeBox" class="info-banner hidden" role="status" aria-live="polite"></div>
+          <div id="stewardAuthErrorBox" class="error-banner hidden" role="alert" aria-live="assertive"></div>
+        </section>
+
+        <!-- STEP 2: Authenticated Read-Only Steward Preview Workspace -->
+        <div id="stewardWorkspace" class="review-workspace hidden">
+          <!-- Steward Identity, Authority Provenance & SHA-256 Immutability Ledger -->
+          <section class="card-panel steward-provenance-panel" aria-labelledby="provenanceHeading">
+            <div class="provenance-header-row">
+              <div>
+                <div class="panel-eyebrow">Verified Steward Authority &amp; Immutability Receipt</div>
+                <h2 class="section-heading" id="provenanceHeading" style="margin-bottom: 0.25rem;">
+                  Read-Only Steward Inspection Active
+                </h2>
+              </div>
+              <div class="provenance-controls">
+                <select id="workspaceSessionSelect" class="text-input compact-select" aria-label="Switch session"></select>
+                <button type="button" id="refreshPreviewBtn" class="btn btn-secondary btn-sm">
+                  Refresh Read-Only Preview
+                </button>
+              </div>
+            </div>
+
+            <div class="steward-meta-grid" id="stewardIdentityGrid"></div>
+
+            <details class="digest-accordion" open>
+              <summary class="digest-summary-toggle">
+                Live PostgreSQL SHA-256 Evidence Immutability Digests (0 Session Writes · 0 Tokens Minted)
+              </summary>
+              <div class="digest-grid" id="evidenceDigestGrid"></div>
+            </details>
+          </section>
+
+          <!-- Navigation Sub-Tabs for Steward Inspection -->
+          <nav class="steward-view-nav" aria-label="Steward Inspection Views">
+            <button type="button" class="steward-nav-btn active" data-target="viewParticipantPackage">
+              1. Proposed Participant Review Package
+            </button>
+            <button type="button" class="steward-nav-btn" data-target="viewImpactChain">
+              2. Contribution-to-Impact Chain
+            </button>
+            <button type="button" class="steward-nav-btn" data-target="viewEpistemicLedger">
+              3. Epistemic Ledger, Disputed Claims &amp; Uncertainties
+            </button>
+            <button type="button" class="steward-nav-btn" data-target="viewTranscriptTurns">
+              4. Frozen Verbatim Transcript (<span id="navTurnCount">0</span> Turns)
+            </button>
+          </nav>
+
+          <!-- VIEW 1: Proposed Participant Review Package -->
+          <div id="viewParticipantPackage" class="steward-view-pane">
+            <section class="card-panel">
+              <div class="panel-eyebrow">Participant-Facing Welcome &amp; Framing Preview</div>
+              <h2 class="panel-title" id="previewWelcomeTitle"></h2>
+              <p class="panel-subtitle" id="previewWelcomeMessage"></p>
+              <div class="governance-callout" id="previewEpistemicDisclosure"></div>
+              <div class="steward-synthesis-badges" id="synthesisStateBadges"></div>
+            </section>
+
+            <section class="card-panel">
+              <div class="section-header-block">
+                <div class="panel-eyebrow">Curated Thematic Synthesis</div>
+                <h2 class="section-heading">Proposed Executive Review Sections</h2>
+                <p class="section-description">
+                  Each section below shows the concise synthesis proposed for the participant, key bullets,
+                  voice transcript normalization notes, and collapsible verbatim quotes from the frozen interview.
+                </p>
+              </div>
+              <div id="previewSectionsContainer" class="sections-stack"></div>
+            </section>
+
+            <section class="card-panel">
+              <div class="section-header-block">
+                <div class="panel-eyebrow">Decision 3 · Transcript &amp; Interpretation Hygiene</div>
+                <h2 class="section-heading">Flagged Cleanup Recommendations</h2>
+                <p class="section-description">
+                  While preselected in the participant UI for convenience (<code>default_ui_preselected: true</code>),
+                  the server state remains <code>UNDECIDED</code> until the participant explicitly submits their review.
+                </p>
+              </div>
+              <div id="previewCleanupsContainer" class="cleanups-stack"></div>
+            </section>
+
+            <section class="card-panel">
+              <div class="section-header-block">
+                <div class="panel-eyebrow">Epistemic Separation</div>
+                <h2 class="section-heading">OWEN Candidate Architectural Lessons (Machine-Inferred)</h2>
+                <p class="section-description">
+                  Strictly separated from direct participant testimony so machine inferences are never conflated
+                  with human quotes.
+                </p>
+              </div>
+              <div id="previewCandidateLessonsContainer" class="lessons-stack"></div>
+            </section>
+
+            <section class="card-panel">
+              <div class="section-header-block">
+                <div class="panel-eyebrow">Attribution &amp; Sharing Defaults</div>
+                <h2 class="section-heading">Proposed Attribution &amp; Foundry Boundary State</h2>
+              </div>
+              <div id="previewAttributionContainer" class="steward-meta-grid"></div>
+            </section>
+          </div>
+
+          <!-- VIEW 2: Contribution-to-Impact Chain -->
+          <div id="viewImpactChain" class="steward-view-pane hidden">
+            <section class="card-panel">
+              <div class="section-header-block">
+                <div class="panel-eyebrow">Decision 4 · Calibrated Contribution-to-Impact</div>
+                <h2 class="section-heading">How This Interview Informs OWEN Architecture</h2>
+                <p class="section-description" id="previewImpactSummary"></p>
+              </div>
+              <div class="impact-disclosure-banner" id="previewImpactDisclosure"></div>
+              <div id="previewImpactItemsContainer" class="impact-items-grid"></div>
+            </section>
+          </div>
+
+          <!-- VIEW 3: Epistemic Ledger, Disputed Claims & Uncertainties -->
+          <div id="viewEpistemicLedger" class="steward-view-pane hidden">
+            <section class="card-panel">
+              <div class="section-header-block">
+                <div class="panel-eyebrow">Epistemic Discipline · Uncertainties &amp; Open Questions</div>
+                <h2 class="section-heading">Contradictions, Unresolved Questions &amp; Architectural Gaps</h2>
+                <p class="section-description">
+                  Preserved uncertainties and follow-up questions from the session’s
+                  <code>ExperienceBrief</code>.
+                </p>
+              </div>
+              <div id="previewUncertaintiesContainer" class="uncertainties-grid"></div>
+            </section>
+
+            <section class="card-panel">
+              <div class="section-header-block">
+                <div class="panel-eyebrow">Layer 2 · Machine Interpretations &amp; Disputed Claims</div>
+                <h2 class="section-heading">Machine Interpretations (Including Disputed / Superseded)</h2>
+                <p class="section-description">
+                  All machine interpretations recorded during the interview, highlighting any claims disputed
+                  or corrected by the participant.
+                </p>
+              </div>
+              <div id="previewInterpretationsContainer" class="ledger-stack"></div>
+            </section>
+
+            <section class="card-panel">
+              <div class="section-header-block">
+                <div class="panel-eyebrow">Layer 1 · Direct Participant Testimony</div>
+                <h2 class="section-heading">Extracted Participant Statements (<span id="stmtCountBadge">0</span>)</h2>
+                <p class="section-description">
+                  Direct statements linked to source turn IDs and verbatim utterances.
+                </p>
+              </div>
+              <div id="previewStatementsContainer" class="ledger-stack"></div>
+            </section>
+          </div>
+
+          <!-- VIEW 4: Frozen Verbatim Transcript Turns -->
+          <div id="viewTranscriptTurns" class="steward-view-pane hidden">
+            <section class="card-panel">
+              <div class="section-header-block">
+                <div class="panel-eyebrow">Immutable Source Substrate</div>
+                <h2 class="section-heading">Complete Frozen Interview Transcript</h2>
+                <p class="section-description">
+                  Protected by database trigger <code>trg_foundry_preserve_completed_turns</code>. Any attempt
+                  to modify, reorder, or delete completed turns raises
+                  <code>IMMUTABLE_SOURCE_EVIDENCE_VIOLATION</code>.
+                </p>
+              </div>
+              <div id="previewTurnsContainer" class="turns-stack"></div>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="/owen/steward/review/steward-review.js"></script>
+  </body>
+</html>

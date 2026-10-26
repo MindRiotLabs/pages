@@ -1,0 +1,311 @@
+/* ============================================================================
+ * MindRiot Labs — OWEN Human Steward Review Preview Styles (v0.3)
+ * ============================================================================ */
+
+.steward-governance-ribbon {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: linear-gradient(90deg, #3b1d06 0%, #5c2d0c 50%, #3b1d06 100%);
+  border-bottom: 1px solid rgba(251, 191, 36, 0.45);
+  color: #fef3c7;
+  padding: 0.55rem 1.25rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+.ribbon-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.ribbon-pill {
+  background: #f59e0b;
+  color: #111827;
+  font-weight: 700;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ribbon-text {
+  font-weight: 600;
+  color: #fde68a;
+}
+
+.steward-topbar {
+  top: 2.2rem;
+}
+
+.steward-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.btn-sm {
+  padding: 0.38rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.steward-authority-chain-box {
+  margin-bottom: 1.25rem;
+}
+
+.authority-chain-list {
+  margin: 0.55rem 0 0 1.25rem;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.auth-mode-tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+  padding-bottom: 0.75rem;
+}
+
+.auth-tab-btn {
+  background: rgba(15, 23, 42, 0.6);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.auth-tab-btn.active {
+  background: rgba(56, 189, 248, 0.16);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.55);
+}
+
+.info-banner {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #bae6fd;
+  font-size: 0.9rem;
+}
+
+.provenance-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.provenance-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.compact-select {
+  min-width: 260px;
+  padding: 0.42rem 0.75rem;
+  font-size: 0.84rem;
+}
+
+.steward-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.meta-kv-card {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+}
+
+.meta-kv-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin-bottom: 0.25rem;
+}
+
+.meta-kv-value {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #f8fafc;
+  word-break: break-word;
+}
+
+.digest-accordion {
+  margin-top: 0.75rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+  padding-top: 0.75rem;
+}
+
+.digest-summary-toggle {
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #93c5fd;
+  user-select: none;
+}
+
+.digest-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+.digest-card {
+  background: rgba(2, 6, 23, 0.65);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 6px;
+  padding: 0.55rem 0.75rem;
+}
+
+.digest-label {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-bottom: 0.2rem;
+}
+
+.digest-hash {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.74rem;
+  color: #38bdf8;
+  word-break: break-all;
+}
+
+.steward-view-nav {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 1.25rem 0;
+}
+
+.steward-nav-btn {
+  background: rgba(15, 23, 42, 0.75);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.steward-nav-btn.active {
+  background: rgba(56, 189, 248, 0.18);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.65);
+}
+
+.steward-synthesis-badges {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.steward-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #e2e8f0;
+}
+
+.steward-badge.badge-safe {
+  border-color: rgba(52, 211, 153, 0.45);
+  color: #6ee7b7;
+}
+
+.steward-badge.badge-warn {
+  border-color: rgba(251, 191, 36, 0.5);
+  color: #fde68a;
+}
+
+.steward-badge.badge-danger {
+  border-color: rgba(248, 113, 113, 0.55);
+  color: #fca5a5;
+}
+
+.ledger-stack,
+.turns-stack,
+.uncertainties-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.ledger-card,
+.turn-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 10px;
+  padding: 1rem 1.15rem;
+}
+
+.ledger-card.disputed-card {
+  border-color: rgba(248, 113, 113, 0.55);
+  background: rgba(69, 10, 10, 0.28);
+}
+
+.ledger-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.55rem;
+}
+
+.ledger-id-pill {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(2, 6, 23, 0.7);
+  color: #93c5fd;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.turn-card.turn-participant {
+  border-left: 4px solid #34d399;
+}
+
+.turn-card.turn-agent {
+  border-left: 4px solid #38bdf8;
+}
+
+.turn-text {
+  margin: 0.45rem 0 0;
+  line-height: 1.55;
+  color: #f1f5f9;
+  font-size: 0.94rem;
+}

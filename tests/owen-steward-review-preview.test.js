@@ -275,9 +275,24 @@ describe('MindRiotLabs /api/owen/steward/review-preview & /owen/steward/review S
     const cfgText = await cfgRes.text();
     const cfg = JSON.parse(cfgText);
     assert.equal(cfg.environment, 'staging');
+    assert.equal(cfg.auth_provider, 'supabase_auth_google_pkce');
+    assert.equal(cfg.primary_oauth_provider, 'google');
+    assert.equal(cfg.oauth_flow, 'pkce');
+    assert.equal(cfg.code_challenge_method, 'S256');
+    assert.equal(cfg.canonical_superadmin_email, 'jvanharken@gmail.com');
+    assert.ok(Array.isArray(cfg.allowed_redirect_urls));
     assert.equal(cfg.supabase_url, 'https://wfesuspzrknxaqswhksj.supabase.co');
     assert.equal(cfg.supabase_anon_key, 'sb_publishable_synthetic_test_anon_key');
     assert.equal(cfgText.includes('sb_secret_synthetic_do_not_expose_in_responses'), false);
+
+    // Reject unapproved redirect_to on auth-config
+    const badCfgReq = new Request(
+      'https://staging.mindriotlabs.com/api/owen/steward/auth-config?redirect_to=https%3A%2F%2Fevil.example.com%2Fcallback'
+    );
+    const badCfgRes = await getStewardAuthConfig({ request: badCfgReq, env: testEnv });
+    assert.equal(badCfgRes.status, 403);
+    const badCfgBody = await badCfgRes.json();
+    assert.equal(badCfgBody.code, 'UNTRUSTED_REDIRECT_ORIGIN_FORBIDDEN');
 
     const htmlPath = path.resolve('owen/steward/review/index.html');
     const jsPath = path.resolve('owen/steward/review/steward-review.js');
@@ -287,7 +302,92 @@ describe('MindRiotLabs /api/owen/steward/review-preview & /owen/steward/review S
     const htmlContent = fs.readFileSync(htmlPath, 'utf8');
     const jsContent = fs.readFileSync(jsPath, 'utf8');
     assert.match(htmlContent, /STEWARD PREVIEW ONLY/);
+    assert.match(htmlContent, /jvanharken@gmail\.com/);
+    assert.match(jsContent, /grant_type=pkce/);
     assert.equal(jsContent.includes('/api/owen/review/draft'), false);
     assert.equal(jsContent.includes('/api/owen/review/submit'), false);
+  });
+
+  it('8. Enforces canonical Founder Superadmin Google OAuth binding, rejects revoked jvh@mindriotlabs.com, rejects email-only sessions on Google-required bindings, and blocks open/cross-env redirects', async () => {
+    // A. Canonical Founder Superadmin (2285e885-dabb-4abd-bb87-b904d6170423 / jvanharken@gmail.com) via Google OAuth -> 200 OK
+    const founderGoogleReq = new Request(
+      `https://staging.mindriotlabs.com/api/owen/steward/review-preview?session_id=${DEFAULT_STAGING_STEWARD_PREVIEW_SESSION_ID}`,
+      {
+        headers: {
+          Authorization: `Bearer ${TEST_STEWARD_TOKENS.AUTHORIZED_FOUNDER_GOOGLE}`,
+          'x-steward-redirect-origin': 'https://staging.mindriotlabs.com'
+        }
+      }
+    );
+    const founderRes = await getStewardPreview({ request: founderGoogleReq, env: testEnv });
+    assert.equal(founderRes.status, 200);
+    const founderBody = await founderRes.json();
+    const st = founderBody.steward_preview.steward_identity;
+    assert.equal(st.actor_id, 'act-founder-jvh');
+    assert.equal(st.auth_user_id, '2285e885-dabb-4abd-bb87-b904d6170423');
+    assert.equal(st.bound_email, 'jvanharken@gmail.com');
+    assert.equal(st.required_auth_provider, 'google');
+    assert.equal(st.verified_auth_provider, 'google');
+    assert.equal(st.google_identity_verified, true);
+    assert.equal(st.is_superadmin, true);
+    assert.equal(st.project_role, 'SUPERADMIN_FOUNDER');
+    assert.equal(
+      founderBody.steward_preview.governance_guarantees.google_oauth_identity_required,
+      true
+    );
+    assert.equal(
+      founderBody.steward_preview.governance_guarantees.explicit_superadmin_required,
+      true
+    );
+
+    // B. Revoked synthetic jvh@mindriotlabs.com binding (bind-staging-founder-jvh-006) -> 403 STEWARD_IDENTITY_NOT_BOUND
+    const revokedFounderReq = new Request(
+      `https://staging.mindriotlabs.com/api/owen/steward/review-preview?session_id=${DEFAULT_STAGING_STEWARD_PREVIEW_SESSION_ID}`,
+      {
+        headers: { Authorization: `Bearer ${TEST_STEWARD_TOKENS.REVOKED_FOUNDER_EMAIL}` }
+      }
+    );
+    const revokedRes = await getStewardPreview({ request: revokedFounderReq, env: testEnv });
+    assert.equal(revokedRes.status, 403);
+    const revokedBody = await revokedRes.json();
+    assert.equal(revokedBody.code, 'STEWARD_IDENTITY_NOT_BOUND');
+
+    // C. Email-only session on a binding that requires required_auth_provider = 'google' -> 403 GOOGLE_OAUTH_IDENTITY_REQUIRED
+    const emailOnGoogleReq = new Request(
+      `https://staging.mindriotlabs.com/api/owen/steward/review-preview?session_id=${DEFAULT_STAGING_STEWARD_PREVIEW_SESSION_ID}`,
+      {
+        headers: { Authorization: `Bearer ${TEST_STEWARD_TOKENS.EMAIL_ON_GOOGLE_BINDING}` }
+      }
+    );
+    const emailOnGoogleRes = await getStewardPreview({ request: emailOnGoogleReq, env: testEnv });
+    assert.equal(emailOnGoogleRes.status, 403);
+    const emailOnGoogleBody = await emailOnGoogleRes.json();
+    assert.equal(emailOnGoogleBody.code, 'GOOGLE_OAUTH_IDENTITY_REQUIRED');
+
+    // D. Untrusted external redirect URL or cross-environment production origin on staging -> 403 UNTRUSTED_REDIRECT_ORIGIN_FORBIDDEN
+    const openRedirectReq = new Request(
+      `https://staging.mindriotlabs.com/api/owen/steward/review-preview?session_id=${DEFAULT_STAGING_STEWARD_PREVIEW_SESSION_ID}&redirect_to=https%3A%2F%2Fattacker.example.com%2Fsteal`,
+      {
+        headers: { Authorization: `Bearer ${TEST_STEWARD_TOKENS.AUTHORIZED_FOUNDER_GOOGLE}` }
+      }
+    );
+    const openRedirectRes = await getStewardPreview({ request: openRedirectReq, env: testEnv });
+    assert.equal(openRedirectRes.status, 403);
+    const openRedirectBody = await openRedirectRes.json();
+    assert.equal(openRedirectBody.code, 'UNTRUSTED_REDIRECT_ORIGIN_FORBIDDEN');
+
+    const crossEnvOriginReq = new Request(
+      `https://staging.mindriotlabs.com/api/owen/steward/review-preview?session_id=${DEFAULT_STAGING_STEWARD_PREVIEW_SESSION_ID}`,
+      {
+        headers: {
+          Authorization: `Bearer ${TEST_STEWARD_TOKENS.AUTHORIZED_FOUNDER_GOOGLE}`,
+          'x-steward-redirect-origin': 'https://mindriotlabs.com'
+        }
+      }
+    );
+    const crossEnvOriginRes = await getStewardPreview({ request: crossEnvOriginReq, env: testEnv });
+    assert.equal(crossEnvOriginRes.status, 403);
+    const crossEnvOriginBody = await crossEnvOriginRes.json();
+    assert.equal(crossEnvOriginBody.code, 'UNTRUSTED_REDIRECT_ORIGIN_FORBIDDEN');
   });
 });

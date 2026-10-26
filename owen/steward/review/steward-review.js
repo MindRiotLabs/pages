@@ -1,17 +1,23 @@
 /**
- * MindRiot Labs — OWEN Human Steward Review Preview Client (v0.3)
+ * MindRiot Labs — OWEN Human Steward Review Preview Client (v0.3.1)
  *
- * Authenticates the Human Steward via Supabase Auth (`/auth/v1/token?grant_type=password`
- * or `/auth/v1/otp` Magic Link / 6-digit OTP) and calls the read-only server boundary
- * `GET /api/owen/steward/review-preview` using `Authorization: Bearer <access_token>`.
+ * Primary authentication: Google Sign-In via Supabase Auth OAuth 2.0 Authorization Code + PKCE
+ * (`/auth/v1/authorize?provider=google&code_challenge_method=S256` -> `POST /auth/v1/token?grant_type=pkce`),
+ * calling the read-only server boundary `GET /api/owen/steward/review-preview` using
+ * `Authorization: Bearer <access_token>`.
  *
  * Security & Governance Guarantees:
  * - Access tokens are never placed in URL query strings.
- * - Any `#access_token=...` hash fragment from a Supabase Magic Link is immediately
+ * - Any `?code=...` PKCE authorization code or `#access_token=...` hash fragment is immediately
  *   scrubbed from the browser address bar via `history.replaceState`.
+ * - Redirect URLs are validated against the server-approved environment allowlist before
+ *   initiating OAuth.
  * - Strictly read-only inspection: zero participant impersonation, draft save,
  *   review submission, or publication approval controls exist on this surface.
  */
+
+const PKCE_VERIFIER_STORAGE_KEY = 'owen_steward_pkce_code_verifier';
+const PKCE_SESSION_STORAGE_KEY = 'owen_steward_pkce_target_session_id';
 
 const state = {
   authConfig: null,
@@ -21,6 +27,46 @@ const state = {
 };
 
 const el = (id) => document.getElementById(id);
+
+function base64UrlEncode(uint8Array) {
+  let binary = '';
+  for (let i = 0; i < uint8Array.byteLength; i += 1) {
+    binary += String.fromCharCode(uint8Array[i]);
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function generatePkceVerifierAndChallenge() {
+  const randomBytes = new Uint8Array(32);
+  window.crypto.getRandomValues(randomBytes);
+  const codeVerifier = base64UrlEncode(randomBytes);
+  const encoder = new TextEncoder();
+  const digestBuffer = await window.crypto.subtle.digest('SHA-256', encoder.encode(codeVerifier));
+  const codeChallenge = base64UrlEncode(new Uint8Array(digestBuffer));
+  return { codeVerifier, codeChallenge };
+}
+
+function extractAndScrubOauthCallbackParams() {
+  const url = new URL(window.location.href);
+  const authCode = url.searchParams.get('code');
+  const errorCode = url.searchParams.get('error');
+  const errorDesc = url.searchParams.get('error_description');
+
+  if (authCode || errorCode || errorDesc) {
+    url.searchParams.delete('code');
+    url.searchParams.delete('error');
+    url.searchParams.delete('error_code');
+    url.searchParams.delete('error_description');
+    const cleanSearch = url.searchParams.toString();
+    const cleanUrl = url.pathname + (cleanSearch ? `?${cleanSearch}` : '');
+    window.history.replaceState(null, document.title, cleanUrl);
+  }
+
+  return {
+    authCode: authCode ? authCode.trim() : null,
+    oauthError: errorDesc || errorCode || null
+  };
+}
 
 function showError(message) {
   const box = el('stewardAuthErrorBox');
@@ -107,10 +153,14 @@ function populateSessionSelectors(availableSessions = [], defaultSessionId = '')
 }
 
 async function loadAuthConfig() {
-  const res = await fetch('/api/owen/steward/auth-config', {
-    method: 'GET',
-    headers: { Accept: 'application/json' }
-  });
+  const redirectCandidate = `${window.location.origin}/owen/steward/review`;
+  const res = await fetch(
+    `/api/owen/steward/auth-config?redirect_to=${encodeURIComponent(redirectCandidate)}`,
+    {
+      method: 'GET',
+      headers: { Accept: 'application/json' }
+    }
+  );
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || `Failed to load Steward Auth configuration (${res.status}).`);
@@ -123,8 +173,23 @@ async function loadAuthConfig() {
     envBadge.textContent = `Environment: ${String(cfg.environment || 'unknown').toUpperCase()}`;
   }
 
+  const googleBadge = el('googleProviderStatusBadge');
+  if (googleBadge) {
+    if (cfg.google_oauth_provider_enabled === true) {
+      googleBadge.className = 'steward-badge badge-safe';
+      googleBadge.textContent = 'Google OAuth Provider: ENABLED (PKCE S256)';
+    } else if (cfg.google_oauth_provider_enabled === false) {
+      googleBadge.className = 'steward-badge badge-warn';
+      googleBadge.textContent = 'Google OAuth Provider: PENDING SUPABASE DASHBOARD ENABLE';
+    } else {
+      googleBadge.className = 'steward-badge';
+      googleBadge.textContent = 'Google OAuth Provider: PKCE S256 Ready';
+    }
+  }
+
   const urlParams = new URLSearchParams(window.location.search);
-  const requestedSession = (urlParams.get('session_id') || '').trim();
+  const storedPkceSession = window.sessionStorage.getItem(PKCE_SESSION_STORAGE_KEY) || '';
+  const requestedSession = (urlParams.get('session_id') || storedPkceSession || '').trim();
   const initialSession = requestedSession || cfg.default_session_id;
 
   populateSessionSelectors(cfg.available_sessions || [], initialSession);
@@ -134,6 +199,97 @@ async function loadAuthConfig() {
       el('customSessionIdInput').value = requestedSession;
     }
   }
+}
+
+async function startGoogleOauthPkceFlow() {
+  if (!state.authConfig?.supabase_url || !state.authConfig?.supabase_anon_key) {
+    throw new Error('Supabase Auth configuration is not loaded.');
+  }
+
+  const redirectTo = `${window.location.origin}/owen/steward/review`;
+  const allowedList = Array.isArray(state.authConfig.allowed_redirect_urls)
+    ? state.authConfig.allowed_redirect_urls
+    : [];
+  const isAllowed = allowedList.some((allowed) => {
+    try {
+      const a = new URL(allowed);
+      const r = new URL(redirectTo);
+      if (a.hostname === 'mindriotlabs-staging.pages.dev') {
+        return (
+          r.protocol === 'https:' &&
+          r.pathname === '/owen/steward/review' &&
+          (r.hostname === a.hostname || r.hostname.endsWith('.mindriotlabs-staging.pages.dev'))
+        );
+      }
+      return a.origin === r.origin && a.pathname === r.pathname;
+    } catch (_err) {
+      return false;
+    }
+  });
+
+  if (!isAllowed) {
+    throw new Error(
+      `Current redirect URL (${redirectTo}) is not in the approved Steward Preview redirect allowlist [UNTRUSTED_REDIRECT_ORIGIN_FORBIDDEN].`
+    );
+  }
+
+  if (state.authConfig.google_oauth_provider_enabled === false) {
+    throw new Error(
+      'Google OAuth provider is currently disabled in Supabase Auth settings (external.google = false). Complete the Google OAuth Client ID/Secret setup in Supabase Dashboard to enable live browser redirect.'
+    );
+  }
+
+  const { codeVerifier, codeChallenge } = await generatePkceVerifierAndChallenge();
+  window.sessionStorage.setItem(PKCE_VERIFIER_STORAGE_KEY, codeVerifier);
+  window.sessionStorage.setItem(PKCE_SESSION_STORAGE_KEY, getEffectiveSessionId());
+
+  const authorizeUrl = new URL(`${state.authConfig.supabase_url}/auth/v1/authorize`);
+  authorizeUrl.searchParams.set('provider', 'google');
+  authorizeUrl.searchParams.set('redirect_to', redirectTo);
+  authorizeUrl.searchParams.set('code_challenge', codeChallenge);
+  authorizeUrl.searchParams.set('code_challenge_method', 'S256');
+  authorizeUrl.searchParams.set('prompt', 'select_account');
+
+  window.location.assign(authorizeUrl.toString());
+}
+
+async function exchangePkceAuthorizationCode(authCode) {
+  if (!state.authConfig?.supabase_url || !state.authConfig?.supabase_anon_key) {
+    throw new Error('Supabase Auth configuration is not loaded.');
+  }
+  const codeVerifier = window.sessionStorage.getItem(PKCE_VERIFIER_STORAGE_KEY);
+  window.sessionStorage.removeItem(PKCE_VERIFIER_STORAGE_KEY);
+
+  if (!codeVerifier) {
+    throw new Error(
+      'Missing PKCE code_verifier in browser sessionStorage. Please initiate Google Sign-In again from this tab.'
+    );
+  }
+
+  const res = await fetch(
+    `${state.authConfig.supabase_url}/auth/v1/token?grant_type=pkce`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: state.authConfig.supabase_anon_key
+      },
+      body: JSON.stringify({
+        auth_code: authCode,
+        code_verifier: codeVerifier
+      })
+    }
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.access_token) {
+    throw new Error(
+      data.msg ||
+        data.error_description ||
+        data.error ||
+        'Google OAuth PKCE authorization code exchange failed.'
+    );
+  }
+  return data.access_token;
 }
 
 async function signInWithPassword(email, password) {
@@ -231,7 +387,8 @@ async function fetchStewardReviewPreview(sessionId) {
       method: 'GET',
       headers: {
         Accept: 'application/json',
-        Authorization: `Bearer ${state.accessToken}`
+        Authorization: `Bearer ${state.accessToken}`,
+        'x-steward-redirect-origin': window.location.origin
       }
     }
   );
@@ -273,8 +430,15 @@ function renderStewardWorkspace(preview) {
     idGrid.append(
       createMetaCard('Steward Actor ID', `${st.actor_name || ''} (${st.actor_id || ''})`),
       createMetaCard('Verified Auth Email', st.bound_email || '—'),
+      createMetaCard(
+        'Verified OAuth Provider',
+        `${st.verified_auth_provider || '—'} (Required: ${st.required_auth_provider || 'google'})`
+      ),
+      createMetaCard(
+        'Superadmin & Project Role',
+        `Superadmin: ${String(Boolean(st.is_superadmin)).toUpperCase()} · ${sum.project_id || ''} (${st.project_role || ''})`
+      ),
       createMetaCard('Auth Binding ID', st.binding_id || '—'),
-      createMetaCard('Project & Steward Role', `${sum.project_id || ''} · ${st.project_role || ''}`),
       createMetaCard('Target Session ID & Status', `${sum.session_id || ''} (${sum.status || ''})`),
       createMetaCard('Append-Only Audit Receipt', `${aud.audit_id || ''} @ ${aud.audited_at || ''}`)
     );
@@ -645,6 +809,21 @@ function renderStewardWorkspace(preview) {
 }
 
 function wireEvents() {
+  // Primary Google Sign-In (OAuth 2.0 Authorization Code + PKCE)
+  el('googlePkceSignInBtn')?.addEventListener('click', async () => {
+    clearError();
+    showNotice('Preparing Google OAuth 2.0 Authorization Code + PKCE S256 challenge...');
+    const btn = el('googlePkceSignInBtn');
+    if (btn) btn.disabled = true;
+    try {
+      await startGoogleOauthPkceFlow();
+    } catch (err) {
+      showNotice('');
+      showError(err.message);
+      if (btn) btn.disabled = false;
+    }
+  });
+
   // Auth mode tab switching
   const tabPwd = el('tabPasswordMode');
   const tabOtp = el('tabOtpMode');
@@ -799,6 +978,8 @@ function wireEvents() {
     }
     state.accessToken = null;
     state.previewData = null;
+    window.sessionStorage.removeItem(PKCE_VERIFIER_STORAGE_KEY);
+    window.sessionStorage.removeItem(PKCE_SESSION_STORAGE_KEY);
     el('stewardWorkspace')?.classList.add('hidden');
     el('signOutBtn')?.classList.add('hidden');
     el('stewardAuthGatePanel')?.classList.remove('hidden');
@@ -811,8 +992,25 @@ function wireEvents() {
 async function init() {
   wireEvents();
   try {
+    const { authCode, oauthError } = extractAndScrubOauthCallbackParams();
     const hashToken = extractHashAccessToken();
     await loadAuthConfig();
+
+    if (oauthError) {
+      throw new Error(`Google OAuth callback error: ${oauthError}`);
+    }
+
+    if (authCode) {
+      showNotice('Exchanging Google OAuth PKCE authorization code and verifying Superadmin/Steward authority...');
+      const token = await exchangePkceAuthorizationCode(authCode);
+      state.accessToken = token;
+      window.sessionStorage.removeItem(PKCE_SESSION_STORAGE_KEY);
+      const preview = await fetchStewardReviewPreview(getEffectiveSessionId());
+      showNotice('');
+      renderStewardWorkspace(preview);
+      return;
+    }
+
     if (hashToken) {
       state.accessToken = hashToken;
       showNotice('Verifying Supabase Magic Link session and Steward authority...');

@@ -50,11 +50,89 @@ import {
 } from '../review/service.js';
 
 export const DEFAULT_STAGING_STEWARD_PREVIEW_SESSION_ID = 'ses-uat-steward-preview-001';
+export const CANONICAL_FOUNDER_SUPERADMIN_EMAIL = 'jvanharken@gmail.com';
+export const CANONICAL_FOUNDER_SUPERADMIN_AUTH_UUID = '2285e885-dabb-4abd-bb87-b904d6170423';
+
+export const APPROVED_STAGING_REDIRECT_URLS = Object.freeze([
+  'https://staging.mindriotlabs.com/owen/steward/review'
+]);
+
+export const APPROVED_PRODUCTION_REDIRECT_URLS = Object.freeze([
+  'https://mindriotlabs.com/owen/steward/review',
+  'https://www.mindriotlabs.com/owen/steward/review'
+]);
+
+export function getApprovedStewardRedirectUrls(isStaging) {
+  return isStaging ? [...APPROVED_STAGING_REDIRECT_URLS] : [...APPROVED_PRODUCTION_REDIRECT_URLS];
+}
+
+/**
+ * Strictly validates a redirect URL or origin against the environment's approved
+ * domain allowlist. Rejects open redirects, cross-environment redirects, custom
+ * schemes, and credentials in URLs.
+ */
+export function isApprovedStewardRedirectOrOrigin(candidate, isStaging) {
+  if (!candidate || typeof candidate !== 'string') return false;
+  let parsed;
+  try {
+    parsed = new URL(candidate.trim());
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== 'https:') return false;
+  if (parsed.username || parsed.password) return false;
+
+  const allowedUrls = getApprovedStewardRedirectUrls(isStaging);
+  const allowedOrigins = new Set(allowedUrls.map((u) => new URL(u).origin));
+  if (!allowedOrigins.has(parsed.origin)) {
+    return false;
+  }
+  // If a path is present (beyond '/'), require exact match on `/owen/steward/review`
+  const normalizedPath = parsed.pathname.replace(/\/+$/, '') || '/';
+  if (normalizedPath !== '/' && normalizedPath !== '/owen/steward/review') {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Extracts the authenticated provider and verifies whether the Supabase Auth user
+ * possesses a verified Google OAuth identity (`provider === 'google'` with `email_verified !== false`).
+ */
+export function extractVerifiedAuthProviderAndGoogleIdentity(authUser) {
+  if (!authUser || typeof authUser !== 'object') {
+    return { authProvider: 'email', hasVerifiedGoogleIdentity: false };
+  }
+  const identities = Array.isArray(authUser.identities) ? authUser.identities : [];
+  const hasVerifiedGoogleIdentity = identities.some(
+    (id) =>
+      id &&
+      typeof id === 'object' &&
+      String(id.provider || '').toLowerCase() === 'google' &&
+      id.identity_data?.email_verified !== false
+  );
+
+  const rawAppMeta = authUser.app_metadata || authUser.raw_app_meta_data || {};
+  const primaryProvider = String(rawAppMeta.provider || '').toLowerCase();
+  const providersList = Array.isArray(rawAppMeta.providers)
+    ? rawAppMeta.providers.map((p) => String(p).toLowerCase())
+    : [];
+
+  const isGoogleSession =
+    hasVerifiedGoogleIdentity &&
+    (primaryProvider === 'google' || providersList.includes('google'));
+
+  return {
+    authProvider: isGoogleSession ? 'google' : primaryProvider || 'email',
+    hasVerifiedGoogleIdentity
+  };
+}
 
 export const stewardPreviewCorsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-supabase-auth-token',
+  'Access-Control-Allow-Headers':
+    'Content-Type, Authorization, x-supabase-auth-token, x-steward-redirect-origin',
   'Content-Type': 'application/json',
   'Cache-Control': 'no-store, no-cache, must-revalidate, private',
   'Pragma': 'no-cache',
@@ -440,7 +518,10 @@ let cachedStewardMemoryHarness = null;
 
 export const TEST_STEWARD_TOKENS = {
   AUTHORIZED_STEWARD: 'sb_jwt_test_authorized_steward_001',
-  AUTHORIZED_FOUNDER: 'sb_jwt_test_authorized_founder_006',
+  AUTHORIZED_FOUNDER: 'sb_jwt_test_authorized_founder_google_jvh',
+  AUTHORIZED_FOUNDER_GOOGLE: 'sb_jwt_test_authorized_founder_google_jvh',
+  REVOKED_FOUNDER_EMAIL: 'sb_jwt_test_revoked_founder_email_006',
+  EMAIL_ON_GOOGLE_BINDING: 'sb_jwt_test_email_on_google_binding_007',
   UNBOUND_MATCHING_EMAIL: 'sb_jwt_test_unbound_matching_email_002',
   BOUND_COLLABORATOR: 'sb_jwt_test_bound_collaborator_003',
   OTHER_PROJECT_STEWARD: 'sb_jwt_test_other_project_steward_004',
@@ -500,7 +581,9 @@ export async function getSharedStewardMemoryHarness() {
       {
         id: '11111111-2222-4333-8444-555555555001',
         email: 'steward-uat@staging.mindriotlabs.com',
-        email_confirmed_at: '2026-10-25T00:00:00.000Z'
+        email_confirmed_at: '2026-10-25T00:00:00.000Z',
+        app_metadata: { provider: 'email', providers: ['email'] },
+        identities: [{ provider: 'email', identity_data: { email_verified: true } }]
       }
     ],
     [
@@ -508,7 +591,9 @@ export async function getSharedStewardMemoryHarness() {
       {
         id: '11111111-2222-4333-8444-555555555002',
         email: 'matching-email-unbound@staging.mindriotlabs.com',
-        email_confirmed_at: '2026-10-25T00:00:00.000Z'
+        email_confirmed_at: '2026-10-25T00:00:00.000Z',
+        app_metadata: { provider: 'google', providers: ['google'] },
+        identities: [{ provider: 'google', identity_data: { email_verified: true } }]
       }
     ],
     [
@@ -516,7 +601,9 @@ export async function getSharedStewardMemoryHarness() {
       {
         id: '11111111-2222-4333-8444-555555555003',
         email: 'collaborator-uat@staging.mindriotlabs.com',
-        email_confirmed_at: '2026-10-25T00:00:00.000Z'
+        email_confirmed_at: '2026-10-25T00:00:00.000Z',
+        app_metadata: { provider: 'email', providers: ['email'] },
+        identities: [{ provider: 'email', identity_data: { email_verified: true } }]
       }
     ],
     [
@@ -524,7 +611,9 @@ export async function getSharedStewardMemoryHarness() {
       {
         id: '11111111-2222-4333-8444-555555555004',
         email: 'other-project-steward@staging.mindriotlabs.com',
-        email_confirmed_at: '2026-10-25T00:00:00.000Z'
+        email_confirmed_at: '2026-10-25T00:00:00.000Z',
+        app_metadata: { provider: 'email', providers: ['email'] },
+        identities: [{ provider: 'email', identity_data: { email_verified: true } }]
       }
     ],
     [
@@ -532,15 +621,48 @@ export async function getSharedStewardMemoryHarness() {
       {
         id: '11111111-2222-4333-8444-555555555005',
         email: 'unverified-steward@staging.mindriotlabs.com',
-        email_confirmed_at: null
+        email_confirmed_at: null,
+        app_metadata: { provider: 'email', providers: ['email'] },
+        identities: [{ provider: 'email', identity_data: { email_verified: false } }]
       }
     ],
     [
-      TEST_STEWARD_TOKENS.AUTHORIZED_FOUNDER,
+      TEST_STEWARD_TOKENS.REVOKED_FOUNDER_EMAIL,
       {
         id: '11111111-2222-4333-8444-555555555006',
         email: 'jvh@mindriotlabs.com',
-        email_confirmed_at: '2026-10-25T00:00:00.000Z'
+        email_confirmed_at: '2026-10-25T00:00:00.000Z',
+        app_metadata: { provider: 'email', providers: ['email'] },
+        identities: [{ provider: 'email', identity_data: { email_verified: true } }]
+      }
+    ],
+    [
+      TEST_STEWARD_TOKENS.EMAIL_ON_GOOGLE_BINDING,
+      {
+        id: '11111111-2222-4333-8444-555555555007',
+        email: 'email-only-on-google-binding@staging.mindriotlabs.com',
+        email_confirmed_at: '2026-10-25T00:00:00.000Z',
+        app_metadata: { provider: 'email', providers: ['email'] },
+        identities: [{ provider: 'email', identity_data: { email_verified: true } }]
+      }
+    ],
+    [
+      TEST_STEWARD_TOKENS.AUTHORIZED_FOUNDER_GOOGLE,
+      {
+        id: CANONICAL_FOUNDER_SUPERADMIN_AUTH_UUID,
+        email: CANONICAL_FOUNDER_SUPERADMIN_EMAIL,
+        email_confirmed_at: '2026-10-26T00:00:00.000Z',
+        app_metadata: { provider: 'google', providers: ['google'] },
+        identities: [
+          {
+            provider: 'google',
+            identity_data: {
+              email: CANONICAL_FOUNDER_SUPERADMIN_EMAIL,
+              email_verified: true,
+              iss: 'https://accounts.google.com'
+            }
+          }
+        ]
       }
     ]
   ]);
@@ -552,7 +674,8 @@ export async function getSharedStewardMemoryHarness() {
         id: 'act-founder-jvh',
         name: 'Joseph Van Harken',
         actor_type: 'HUMAN',
-        organization: 'MindRiot Labs'
+        organization: 'MindRiot Labs',
+        metadata: { email: CANONICAL_FOUNDER_SUPERADMIN_EMAIL, canonical_superadmin: true }
       }
     ],
     [
@@ -600,6 +723,15 @@ export async function getSharedStewardMemoryHarness() {
         actor_type: 'HUMAN',
         organization: 'MindRiot Labs (Staging)'
       }
+    ],
+    [
+      'actor-google-required-email-only-staging',
+      {
+        id: 'actor-google-required-email-only-staging',
+        name: 'Email-Only On Google Binding (Synthetic UAT)',
+        actor_type: 'HUMAN',
+        organization: 'MindRiot Labs (Staging)'
+      }
     ]
   ]);
 
@@ -611,6 +743,8 @@ export async function getSharedStewardMemoryHarness() {
         auth_user_id: '11111111-2222-4333-8444-555555555001',
         actor_id: 'actor-steward-uat-staging',
         bound_email: 'steward-uat@staging.mindriotlabs.com',
+        required_auth_provider: 'email',
+        is_superadmin: false,
         binding_status: 'ACTIVE'
       }
     ],
@@ -621,6 +755,8 @@ export async function getSharedStewardMemoryHarness() {
         auth_user_id: '11111111-2222-4333-8444-555555555003',
         actor_id: 'act-uat-review-alex-rivera',
         bound_email: 'collaborator-uat@staging.mindriotlabs.com',
+        required_auth_provider: 'email',
+        is_superadmin: false,
         binding_status: 'ACTIVE'
       }
     ],
@@ -631,6 +767,8 @@ export async function getSharedStewardMemoryHarness() {
         auth_user_id: '11111111-2222-4333-8444-555555555004',
         actor_id: 'actor-other-project-steward-staging',
         bound_email: 'other-project-steward@staging.mindriotlabs.com',
+        required_auth_provider: 'email',
+        is_superadmin: false,
         binding_status: 'ACTIVE'
       }
     ],
@@ -641,6 +779,8 @@ export async function getSharedStewardMemoryHarness() {
         auth_user_id: '11111111-2222-4333-8444-555555555005',
         actor_id: 'actor-unverified-steward-staging',
         bound_email: 'unverified-steward@staging.mindriotlabs.com',
+        required_auth_provider: 'email',
+        is_superadmin: false,
         binding_status: 'ACTIVE'
       }
     ],
@@ -651,6 +791,32 @@ export async function getSharedStewardMemoryHarness() {
         auth_user_id: '11111111-2222-4333-8444-555555555006',
         actor_id: 'act-founder-jvh',
         bound_email: 'jvh@mindriotlabs.com',
+        required_auth_provider: 'email',
+        is_superadmin: false,
+        binding_status: 'REVOKED'
+      }
+    ],
+    [
+      '11111111-2222-4333-8444-555555555007',
+      {
+        binding_id: 'bind-staging-google-required-007',
+        auth_user_id: '11111111-2222-4333-8444-555555555007',
+        actor_id: 'actor-google-required-email-only-staging',
+        bound_email: 'email-only-on-google-binding@staging.mindriotlabs.com',
+        required_auth_provider: 'google',
+        is_superadmin: false,
+        binding_status: 'ACTIVE'
+      }
+    ],
+    [
+      CANONICAL_FOUNDER_SUPERADMIN_AUTH_UUID,
+      {
+        binding_id: 'bind-staging-founder-google-jvh',
+        auth_user_id: CANONICAL_FOUNDER_SUPERADMIN_AUTH_UUID,
+        actor_id: 'act-founder-jvh',
+        bound_email: CANONICAL_FOUNDER_SUPERADMIN_EMAIL,
+        required_auth_provider: 'google',
+        is_superadmin: true,
         binding_status: 'ACTIVE'
       }
     ]
@@ -662,7 +828,8 @@ export async function getSharedStewardMemoryHarness() {
     { project_id: 'proj-mrl-service-platform', actor_id: 'actor-unbound-email-twin-staging', role: 'STEWARD' },
     { project_id: 'proj-mrl-service-platform', actor_id: 'act-uat-review-alex-rivera', role: 'COLLABORATOR' },
     { project_id: 'prj-unrelated-venture-staging', actor_id: 'actor-other-project-steward-staging', role: 'STEWARD' },
-    { project_id: 'proj-mrl-service-platform', actor_id: 'actor-unverified-steward-staging', role: 'STEWARD' }
+    { project_id: 'proj-mrl-service-platform', actor_id: 'actor-unverified-steward-staging', role: 'STEWARD' },
+    { project_id: 'proj-mrl-service-platform', actor_id: 'actor-google-required-email-only-staging', role: 'STEWARD' }
   ];
 
   const auditLog = [];
@@ -693,7 +860,9 @@ async function invokeStewardPreviewRpc({
   clientIpHash = null,
   userAgent = null,
   denialOverrideOutcome = null,
-  denialOverrideCode = null
+  denialOverrideCode = null,
+  authProvider = 'email',
+  hasVerifiedGoogleIdentity = false
 }) {
   if (useMemoryStore) {
     const harness = await getSharedStewardMemoryHarness();
@@ -813,6 +982,31 @@ async function invokeStewardPreviewRpc({
       };
     }
 
+    if (
+      binding.required_auth_provider === 'google' &&
+      (String(authProvider || '').toLowerCase() !== 'google' || !hasVerifiedGoogleIdentity)
+    ) {
+      harness.auditLog.push({
+        audit_id: auditId,
+        session_id: sessionId,
+        auth_user_id: authUserId,
+        actor_id: actor.id,
+        outcome: 'DENIED_AUTH_PROVIDER_MISMATCH',
+        denial_code: 'GOOGLE_OAUTH_IDENTITY_REQUIRED',
+        client_ip_hash: clientIpHash,
+        user_agent: userAgent,
+        occurred_at: nowIso
+      });
+      return {
+        authorized: false,
+        http_status: 403,
+        code: 'GOOGLE_OAUTH_IDENTITY_REQUIRED',
+        error: 'This Founder/Steward identity binding requires a verified Google Sign-In (OAuth 2.0) session.',
+        audit_id: auditId,
+        audited_at: nowIso
+      };
+    }
+
     const session = await harness.sessionStore.getSession(sessionId);
     if (!session) {
       harness.auditLog.push({
@@ -843,7 +1037,17 @@ async function invokeStewardPreviewRpc({
         (m.role === 'FOUNDER' || m.role === 'STEWARD')
     );
 
-    if (!member) {
+    let effectiveRole = null;
+    if (member) {
+      effectiveRole = binding.is_superadmin ? `SUPERADMIN_${member.role}` : member.role;
+    } else if (
+      binding.is_superadmin &&
+      harness.foundryMembers.some((m) => m.actor_id === actor.id && m.role === 'FOUNDER')
+    ) {
+      effectiveRole = 'SUPERADMIN_FOUNDER';
+    }
+
+    if (!effectiveRole) {
       harness.auditLog.push({
         audit_id: auditId,
         session_id: session.id,
@@ -860,7 +1064,7 @@ async function invokeStewardPreviewRpc({
         authorized: false,
         http_status: 403,
         code: 'INSUFFICIENT_STEWARD_PERMISSION',
-        error: `Actor ${actor.id} does not hold FOUNDER or STEWARD authority for project ${session.project_id}.`,
+        error: `Actor ${actor.id} does not hold FOUNDER, STEWARD, or explicit SUPERADMIN authority for project ${session.project_id}.`,
         audit_id: auditId,
         audited_at: nowIso
       };
@@ -872,7 +1076,7 @@ async function invokeStewardPreviewRpc({
       project_id: session.project_id,
       auth_user_id: authUserId,
       actor_id: actor.id,
-      actor_role: member.role,
+      actor_role: effectiveRole,
       outcome: 'AUTHORIZED_READ_ONLY_PREVIEW',
       client_ip_hash: clientIpHash,
       user_agent: userAgent,
@@ -892,7 +1096,11 @@ async function invokeStewardPreviewRpc({
         actor_type: actor.actor_type,
         organization: actor.organization,
         project_id: session.project_id,
-        project_role: member.role,
+        project_role: effectiveRole,
+        is_superadmin: Boolean(binding.is_superadmin),
+        required_auth_provider: binding.required_auth_provider || 'google',
+        verified_auth_provider: String(authProvider || 'email').toLowerCase(),
+        google_identity_verified: Boolean(hasVerifiedGoogleIdentity),
         binding_id: binding.binding_id,
         bound_email: binding.bound_email
       },
@@ -930,7 +1138,9 @@ async function invokeStewardPreviewRpc({
       p_client_ip_hash: clientIpHash,
       p_user_agent: userAgent,
       p_denial_override_outcome: denialOverrideOutcome,
-      p_denial_override_code: denialOverrideCode
+      p_denial_override_code: denialOverrideCode,
+      p_auth_provider: authProvider,
+      p_has_verified_google_identity: Boolean(hasVerifiedGoogleIdentity)
     })
   });
 
@@ -1023,6 +1233,29 @@ export async function handleStewardReviewPreviewRequest(request, env = {}) {
       'Authentication tokens must not be passed in URL query parameters. Send the Supabase Auth access token in the Authorization Bearer header.',
       'QUERY_TOKEN_FORBIDDEN',
       401,
+      denial?.audit_id
+    );
+  }
+
+  // 2b. Prevent open redirects & cross-environment redirect origins
+  const redirectCandidate =
+    (url.searchParams.get('redirect_to') || '').trim() ||
+    (request.headers.get('x-steward-redirect-origin') || '').trim();
+  if (redirectCandidate && !isApprovedStewardRedirectOrOrigin(redirectCandidate, isStaging)) {
+    const denial = await invokeStewardPreviewRpc({
+      useMemoryStore,
+      supabaseUrl,
+      supabaseServiceKey,
+      sessionId,
+      clientIpHash,
+      userAgent,
+      denialOverrideOutcome: 'DENIED_UNTRUSTED_REDIRECT_ORIGIN',
+      denialOverrideCode: 'UNTRUSTED_REDIRECT_ORIGIN_FORBIDDEN'
+    });
+    throw new StewardPreviewError(
+      'Redirect URL or origin is not in the approved environment allowlist for Steward Preview.',
+      'UNTRUSTED_REDIRECT_ORIGIN_FORBIDDEN',
+      403,
       denial?.audit_id
     );
   }
@@ -1125,6 +1358,8 @@ export async function handleStewardReviewPreviewRequest(request, env = {}) {
   let authUserId = null;
   let verifiedEmail = null;
   let emailVerified = false;
+  let authProvider = 'email';
+  let hasVerifiedGoogleIdentity = false;
 
   if (useMemoryStore) {
     const harness = await getSharedStewardMemoryHarness();
@@ -1151,6 +1386,9 @@ export async function handleStewardReviewPreviewRequest(request, env = {}) {
     authUserId = mockUser.id;
     verifiedEmail = mockUser.email;
     emailVerified = Boolean(mockUser.email_confirmed_at);
+    const providerMeta = extractVerifiedAuthProviderAndGoogleIdentity(mockUser);
+    authProvider = providerMeta.authProvider;
+    hasVerifiedGoogleIdentity = providerMeta.hasVerifiedGoogleIdentity;
   } else {
     const authRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
       method: 'GET',
@@ -1208,12 +1446,15 @@ export async function handleStewardReviewPreviewRequest(request, env = {}) {
         authUser.confirmed_at ||
         authUser.user_metadata?.email_verified
     );
+    const providerMeta = extractVerifiedAuthProviderAndGoogleIdentity(authUser);
+    authProvider = providerMeta.authProvider;
+    hasVerifiedGoogleIdentity = providerMeta.hasVerifiedGoogleIdentity;
   }
 
   // Caller has presented a cryptographically verified Supabase Auth session
   clearFailedAuthAttempts(request);
 
-  // 8. Enforce explicit UUID->actor binding and project-scoped FOUNDER/STEWARD permission in PostgreSQL
+  // 8. Enforce explicit UUID->actor binding, Google OAuth identity, and project-scoped FOUNDER/STEWARD permission in PostgreSQL
   const rpcResult = await invokeStewardPreviewRpc({
     useMemoryStore,
     supabaseUrl,
@@ -1222,6 +1463,8 @@ export async function handleStewardReviewPreviewRequest(request, env = {}) {
     authUserId,
     verifiedEmail,
     emailVerified,
+    authProvider,
+    hasVerifiedGoogleIdentity,
     clientIpHash,
     userAgent
   });
@@ -1251,7 +1494,9 @@ export async function handleStewardReviewPreviewRequest(request, env = {}) {
         was_dynamically_synthesized: synthesized.was_dynamically_synthesized,
         participant_impersonation_permitted: false,
         publication_or_foundry_ingestion_permitted: false,
-        implicit_email_matching_permitted: false
+        implicit_email_matching_permitted: false,
+        google_oauth_identity_required: rpcResult.steward?.required_auth_provider === 'google',
+        explicit_superadmin_required: Boolean(rpcResult.steward?.is_superadmin)
       },
       audit_receipt: {
         audit_id: rpcResult.audit_id,

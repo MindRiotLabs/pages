@@ -43,59 +43,46 @@
       </header>
 
       <main class="owen-main steward-main" id="mainContent">
-        <!-- STEP 1: Supabase Auth Individual Human Steward Login Gate -->
+        <!-- STEP 1: Supabase Auth Google OAuth (PKCE) Individual Human Steward Login Gate -->
+        <!--email_off-->
         <section class="card-panel" id="stewardAuthGatePanel" aria-labelledby="stewardAuthHeading">
-          <div class="panel-eyebrow">Option B · Individual Supabase Auth + Explicit Actor Binding</div>
+          <div class="panel-eyebrow">Option B (Standardized v0.3.1) · Google OAuth 2.0 (PKCE) + Explicit Superadmin Actor Binding</div>
           <h1 class="panel-title" id="stewardAuthHeading">
             Human Steward Review Preview
           </h1>
           <p class="panel-subtitle">
-            Authenticate with your verified MindRiot Labs Steward identity to inspect a completed interview’s
+            Authenticate with your verified Google-linked MindRiot Labs Founder / Superadmin or Steward identity
+            (primary Founder Superadmin: <code>jvanharken@gmail.com</code>) to inspect a completed interview’s
             proposed <code>ExperienceReviewPackage</code>, <code>ContributionToImpactChain</code>,
             epistemic ledger, uncertainties, and frozen verbatim testimony—without provisioning a participant
             review token or modifying source evidence.
           </p>
 
           <div class="governance-callout steward-authority-chain-box" role="note">
-            <strong>Enforced Server-Side Authority Chain (ADR-0021):</strong>
+            <strong>Enforced Server-Side Authority Chain (ADR-0021 v0.3.1):</strong>
             <ol class="authority-chain-list">
               <li>
-                <strong>Verified Human Identity:</strong> Individual Supabase Auth session
-                (<code>auth.users</code> with confirmed email).
+                <strong>Verified Google OAuth Identity (Authorization Code + PKCE):</strong> Individual Supabase Auth
+                session (<code>auth.users</code> + <code>auth.identities</code> with <code>provider = 'google'</code>
+                and <code>email_verified = true</code>).
               </li>
               <li>
                 <strong>Explicit UUID-to-Actor Binding:</strong> Active linkage in
-                <code>public.foundry_actor_auth_bindings</code> to a <code>HUMAN</code> actor in
-                <code>public.core_actors</code>. Matching email addresses alone never grant access.
+                <code>public.foundry_actor_auth_bindings</code> (e.g., canonical Founder Auth UUID
+                <code>2285e885-dabb-4abd-bb87-b904d6170423</code> &rarr; <code>act-founder-jvh</code> with
+                <code>required_auth_provider = 'google'</code>). Matching email addresses alone never grant access.
               </li>
               <li>
-                <strong>Project-Scoped Steward Role:</strong> Verified <code>FOUNDER</code> or
-                <code>STEWARD</code> membership in <code>public.foundry_members</code> for the session’s
-                <code>project_id</code>.
+                <strong>Explicit Superadmin &amp; Project-Scoped Steward Role:</strong> Explicit
+                <code>is_superadmin = TRUE</code> and/or verified <code>FOUNDER</code> / <code>STEWARD</code>
+                membership in <code>public.foundry_members</code> for the session’s <code>project_id</code>.
+              </li>
+              <li>
+                <strong>Approved Redirect Allowlist &amp; Read-Only Immutability:</strong> OAuth redirects restricted
+                strictly to approved staging/production Steward Preview URLs; zero participant review tokens minted;
+                zero evidence writes.
               </li>
             </ol>
-          </div>
-
-          <!-- Auth Mode Tabs -->
-          <div class="auth-mode-tabs" role="tablist" aria-label="Steward Sign-In Method">
-            <button
-              type="button"
-              id="tabPasswordMode"
-              class="auth-tab-btn active"
-              role="tab"
-              aria-selected="true"
-            >
-              Email &amp; Password Sign-In
-            </button>
-            <button
-              type="button"
-              id="tabOtpMode"
-              class="auth-tab-btn"
-              role="tab"
-              aria-selected="false"
-            >
-              Email Magic Link / OTP Code
-            </button>
           </div>
 
           <!-- Target Session Selector -->
@@ -113,81 +100,143 @@
             />
           </div>
 
-          <!-- Form A: Email + Password -->
-          <form id="passwordLoginForm" class="auth-form" novalidate>
-            <div class="form-field">
-              <label for="stewardEmailInput" class="field-label">Steward Email Address</label>
-              <input
-                type="email"
-                id="stewardEmailInput"
-                class="text-input"
-                placeholder="jvh@mindriotlabs.com"
-                autocomplete="username"
-                required
-              />
-            </div>
-            <div class="form-field">
-              <label for="stewardPasswordInput" class="field-label">Password</label>
-              <input
-                type="password"
-                id="stewardPasswordInput"
-                class="text-input"
-                placeholder="Enter your Supabase Auth password..."
-                autocomplete="current-password"
-                required
-              />
-            </div>
-            <div class="form-actions">
-              <button type="submit" id="passwordSignInBtn" class="btn btn-primary">
-                Sign In &amp; Open Read-Only Steward Preview
-              </button>
-            </div>
-          </form>
-
-          <!-- Form B: Email Magic Link / One-Time Code -->
-          <form id="otpLoginForm" class="auth-form hidden" novalidate>
-            <div class="form-field">
-              <label for="otpEmailInput" class="field-label">Steward Email Address</label>
-              <input
-                type="email"
-                id="otpEmailInput"
-                class="text-input"
-                placeholder="jvh@mindriotlabs.com"
-                autocomplete="email"
-                required
-              />
-              <span class="field-hint">
-                Sends a one-time verification link / code via Supabase Auth to your verified Steward email.
+          <!-- Primary Authentication: Google Sign-In (OAuth 2.0 Authorization Code + PKCE) -->
+          <div class="google-oauth-primary-box" id="googleOauthPrimaryBox">
+            <div class="google-oauth-header">
+              <div>
+                <div class="panel-eyebrow" style="margin-bottom: 0.2rem;">Primary Founder / Superadmin Sign-In</div>
+                <h2 class="section-heading" style="font-size: 1.08rem; margin: 0;">
+                  Google Sign-In (OAuth 2.0 Authorization Code + PKCE)
+                </h2>
+              </div>
+              <span class="steward-badge" id="googleProviderStatusBadge">
+                Google OAuth Provider: Checking...
               </span>
             </div>
+            <p class="field-hint" style="margin: 0.55rem 0 1rem;">
+              Canonical Founder Superadmin identity: <code>jvanharken@gmail.com</code> &rarr;
+              <code>act-founder-jvh</code> (<code>required_auth_provider = 'google'</code>,
+              <code>is_superadmin = TRUE</code>). Uses RFC 7636 S256 PKCE code challenge and exchanges the
+              single-use authorization code via <code>POST /auth/v1/token?grant_type=pkce</code>.
+            </p>
             <div class="form-actions">
-              <button type="submit" id="sendOtpBtn" class="btn btn-secondary">
-                Send Magic Link / One-Time Code
+              <button type="button" id="googlePkceSignInBtn" class="btn btn-primary google-signin-btn">
+                Sign in with Google (OAuth 2.0 + PKCE)
+              </button>
+            </div>
+          </div>
+
+          <!-- Secondary Collapsible Section: Synthetic Staging UAT / Diagnostic Sign-In -->
+          <details class="digest-accordion" id="diagnosticStagingAuthDetails" style="margin-top: 1.25rem;">
+            <summary class="digest-summary-toggle">
+              Synthetic Staging UAT &amp; Diagnostic Sign-In (Email/Password or OTP for Non-Google Test Bindings)
+            </summary>
+            <p class="field-hint" style="margin: 0.5rem 0 0.85rem;">
+              Note: Any Steward binding with <code>required_auth_provider = 'google'</code> (including
+              <code>act-founder-jvh</code>) will reject password/OTP sessions server-side with
+              <code>403 GOOGLE_OAUTH_IDENTITY_REQUIRED</code>. This section is retained for synthetic staging UAT
+              verification.
+            </p>
+
+            <!-- Auth Mode Tabs -->
+            <div class="auth-mode-tabs" role="tablist" aria-label="Diagnostic Steward Sign-In Method">
+              <button
+                type="button"
+                id="tabPasswordMode"
+                class="auth-tab-btn active"
+                role="tab"
+                aria-selected="true"
+              >
+                Synthetic UAT Email &amp; Password
+              </button>
+              <button
+                type="button"
+                id="tabOtpMode"
+                class="auth-tab-btn"
+                role="tab"
+                aria-selected="false"
+              >
+                Email Magic Link / OTP Code
               </button>
             </div>
 
-            <div id="otpVerifyContainer" class="otp-verify-box hidden">
-              <div class="form-field" style="margin-top: 1rem;">
-                <label for="otpCodeInput" class="field-label">6-Digit Email Verification Code (if provided in email)</label>
+            <!-- Form A: Email + Password -->
+            <form id="passwordLoginForm" class="auth-form" novalidate>
+              <div class="form-field">
+                <label for="stewardEmailInput" class="field-label">Steward Email Address</label>
                 <input
-                  type="text"
-                  id="otpCodeInput"
+                  type="email"
+                  id="stewardEmailInput"
                   class="text-input"
-                  placeholder="123456"
-                  autocomplete="one-time-code"
+                  placeholder="steward-uat@staging.mindriotlabs.com"
+                  autocomplete="username"
+                  required
+                />
+              </div>
+              <div class="form-field">
+                <label for="stewardPasswordInput" class="field-label">Password</label>
+                <input
+                  type="password"
+                  id="stewardPasswordInput"
+                  class="text-input"
+                  placeholder="Enter synthetic staging UAT password..."
+                  autocomplete="current-password"
+                  required
                 />
               </div>
               <div class="form-actions">
-                <button type="button" id="verifyOtpBtn" class="btn btn-primary">
-                  Verify Code &amp; Open Steward Preview
+                <button type="submit" id="passwordSignInBtn" class="btn btn-secondary">
+                  Sign In (Diagnostic / UAT) &amp; Open Steward Preview
                 </button>
               </div>
-            </div>
-          </form>
+            </form>
+
+            <!-- Form B: Email Magic Link / One-Time Code -->
+            <form id="otpLoginForm" class="auth-form hidden" novalidate>
+              <div class="form-field">
+                <label for="otpEmailInput" class="field-label">Steward Email Address</label>
+                <input
+                  type="email"
+                  id="otpEmailInput"
+                  class="text-input"
+                  placeholder="steward-uat@staging.mindriotlabs.com"
+                  autocomplete="email"
+                  required
+                />
+                <span class="field-hint">
+                  Sends a one-time verification link / code via Supabase Auth.
+                </span>
+              </div>
+              <div class="form-actions">
+                <button type="submit" id="sendOtpBtn" class="btn btn-secondary">
+                  Send Magic Link / One-Time Code
+                </button>
+              </div>
+
+              <div id="otpVerifyContainer" class="otp-verify-box hidden">
+                <div class="form-field" style="margin-top: 1rem;">
+                  <label for="otpCodeInput" class="field-label">6-Digit Email Verification Code (if provided in email)</label>
+                  <input
+                    type="text"
+                    id="otpCodeInput"
+                    class="text-input"
+                    placeholder="123456"
+                    autocomplete="one-time-code"
+                  />
+                </div>
+                <div class="form-actions">
+                  <button type="button" id="verifyOtpBtn" class="btn btn-primary">
+                    Verify Code &amp; Open Steward Preview
+                  </button>
+                </div>
+              </div>
+            </form>
+          </details>
 
           <div id="stewardAuthNoticeBox" class="info-banner hidden" role="status" aria-live="polite"></div>
           <div id="stewardAuthErrorBox" class="error-banner hidden" role="alert" aria-live="assertive"></div>
         </section>
+        <!--/email_off-->
 
         <!-- STEP 2: Authenticated Read-Only Steward Preview Workspace -->
         <div id="stewardWorkspace" class="review-workspace hidden">
